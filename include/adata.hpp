@@ -3416,7 +3416,7 @@ namespace adata
 	template<typename string_ty>
 	ADATA_INLINE void adata_write_link_string(zero_copy_buffer& stream, string_ty& str)
 	{
-		if (str.capacity() < (typename string_ty::size_type)stream.m_write_bytes)
+		if (str.size() < (typename string_ty::size_type)stream.m_write_bytes)
 		{
 			str.resize(stream.m_write_bytes);
 		}

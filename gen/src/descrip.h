@@ -86,7 +86,8 @@ struct member_define
 	bool													m_deleted;
 	int														m_tag;
 	int														m_parser_lines;
-	int														m_parser_cols;
+  int														m_parser_cols;
+  std::string                   m_parser_include;
 
   member_define() :m_type(unknow), m_typedef(NULL), m_fixed(false), m_deleted(false), m_tag(0), m_parser_lines(0), m_parser_cols(0)
 	{
@@ -144,13 +145,20 @@ struct type_define
 {
 	typedef std::vector<member_define>	member_list_type;
 	std::string										m_name;
+  namespace_type const*         m_namespace;
 	member_list_type							m_members;
 	int														m_parser_lines;
-	int														m_parser_cols;
+  int														m_parser_cols;
+  std::string                   m_parser_include;
   int                           m_index;
   bool                          m_ismulti;
 
-  type_define() :m_parser_lines(0), m_parser_cols(0), m_index(0), m_ismulti(false)
+  type_define() 
+    : m_namespace(nullptr)
+    , m_parser_lines(0)
+    , m_parser_cols(0)
+    , m_index(0)
+    , m_ismulti(false)
 	{
 	}
 
@@ -162,6 +170,7 @@ struct option_value
 	std::string m_value;
 	int					m_parser_lines;
 	int					m_parser_cols;
+  std::string m_parser_include;
 	option_value():m_parser_lines(0),m_parser_cols(0)
 	{
 
