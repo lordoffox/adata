@@ -788,7 +788,7 @@ local wt_tag = adata_m.wt_tag;
 			}
 			if (max_field > 52)
 			{
-				for (int i = 53; i < max_field+1; ++i)
+				for (int i = 53; i < (int)max_field+1; ++i)
 				{
 					os << "local mask" << i << "= int64.int64(" << (1LL << i) << ");" << std::endl;
 				}

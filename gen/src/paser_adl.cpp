@@ -64,11 +64,12 @@ namespace
 
 struct parse_execption : std::exception
 {
-	parse_execption(const char * error_info,int line,int col)
-		:exception(error_info),m_lines(line),m_cols(col)
+	parse_execption(const char * error_info,int line,int col, std::string include)
+  :exception(error_info), m_lines(line), m_cols(col), m_include(std::move(include))
 	{}
 	int m_lines;
 	int m_cols;
+  std::string m_include;
 };
 
 struct paser_adl
@@ -78,6 +79,7 @@ struct paser_adl
 	int			m_len;
 	int			m_cols;
 	int			m_lines;
+  std::string m_include;
 	bool		m_eof;
 
 	paser_adl(descrip_define& define, char * doc, int len)
@@ -176,7 +178,7 @@ struct paser_adl
 		char indetify[256] = { 0 };
 		if(c && !is_string_header(c))
 		{
-			throw parse_execption("unknow identity",m_lines,m_cols);
+			throw parse_execption("unknow identity",m_lines,m_cols, m_include);
 		}
 		int len = 0;
 		indetify[len++] = lower_case ? lower_case_char(c) : c;
@@ -206,7 +208,7 @@ struct paser_adl
 		char indetify[256] = { 0 };
 		if (c && !is_string_header(c))
 		{
-			throw parse_execption("unknow identity", m_lines, m_cols);
+      throw parse_execption("unknow identity", m_lines, m_cols, m_include);
 		}
 		int len = 0;
 		indetify[len++] = c;
@@ -251,7 +253,7 @@ struct paser_adl
 		char indetify[256] = { 0 };
 		if (!is_number_header(c))
 		{
-			throw parse_execption("unknow identity", m_lines, m_cols);
+      throw parse_execption("unknow identity", m_lines, m_cols, m_include);
 		}
 		int len = 0;
 		indetify[len++] = c;
@@ -276,7 +278,7 @@ struct paser_adl
 		}
 		else
 		{
-			throw parse_execption("unknow value format, must be string or number", m_lines, m_cols);
+      throw parse_execption("unknow value format, must be string or number", m_lines, m_cols, m_include);
 		}
 		return std::string(indetify);
 	}
@@ -298,7 +300,7 @@ struct paser_adl
 		}
 		else
 		{
-			throw parse_execption("unknow value format, must be string or number", m_lines, m_cols);
+      throw parse_execption("unknow value format, must be string or number", m_lines, m_cols, m_include);
 		}
 		return std::string(indetify);
 	}
@@ -313,7 +315,7 @@ struct paser_adl
 				std::string identity = parser_string();
 				if (identity.empty())
 				{
-					throw parse_execption("namespace syntax error , usage namespace = data.xyz;", m_lines, m_cols);
+					throw parse_execption("namespace syntax error , usage namespace = data.xyz;", m_lines, m_cols, m_include);
 				}
 				m_define.m_namespace.m_fullname += identity;
 				c = skip_ws();
@@ -329,11 +331,11 @@ struct paser_adl
 					return;
 				}
 			} while (!m_eof);
-			throw parse_execption("namespace syntax error , miss ; at line end", m_lines, m_cols);
+			throw parse_execption("namespace syntax error , miss ; at line end", m_lines, m_cols, m_include);
 		}
 		else
 		{
-			throw parse_execption("namespace syntax error,usage namespace = data.xyz;", m_lines, m_cols);
+			throw parse_execption("namespace syntax error,usage namespace = data.xyz;", m_lines, m_cols, m_include);
 		}
 	}
 
@@ -342,7 +344,7 @@ struct paser_adl
 		std::string identity = parser_string();
 		if (identity.empty())
 		{
-			throw parse_execption("option syntax error , option name not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols);
+			throw parse_execption("option syntax error , option name not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols, m_include);
 		}
 		char c = skip_ws();
 		if (c == '=')
@@ -350,7 +352,7 @@ struct paser_adl
 			std::string value = parser_source_value();
 				if (value.empty())
 				{
-					throw parse_execption("option syntax error , option value not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols);
+					throw parse_execption("option syntax error , option value not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols, m_include);
 				}
 				c = skip_ws();
 				if (c == ';')
@@ -362,11 +364,11 @@ struct paser_adl
 					m_define.m_option_values.insert(make_pair(identity,v));
 					return;
 				}
-			throw parse_execption("option syntax error , miss ; at line end", m_lines, m_cols);
+			throw parse_execption("option syntax error , miss ; at line end", m_lines, m_cols, m_include);
 		}
 		else
 		{
-			throw parse_execption("option syntax error,usage option opt1 = 3758;", m_lines, m_cols);
+			throw parse_execption("option syntax error,usage option opt1 = 3758;", m_lines, m_cols, m_include);
 		}
 	}
 
@@ -380,7 +382,7 @@ struct paser_adl
 				std::string paramter_type_name = parser_string();
 				if (paramter_type_name.empty())
 				{
-					throw parse_execption("type syntax error ,member type declaration paramter type, usage list<int32> list_value;", m_lines, m_cols);
+					throw parse_execption("type syntax error ,member type declaration paramter type, usage list<int32> list_value;", m_lines, m_cols, m_include);
 				}
 
         if (m_define.has_decl_type(paramter_type_name))
@@ -388,7 +390,7 @@ struct paser_adl
 					e_base_type p_type = get_type(paramter_type_name);
 					if (is_container(p_type))
 					{
-						throw parse_execption("type member syntax error , container parameter couldn't be container", m_lines, m_cols);
+						throw parse_execption("type member syntax error , container parameter couldn't be container", m_lines, m_cols, m_include);
 					}
 					member_define p_define;
 					p_define.m_typename = paramter_type_name;
@@ -408,7 +410,7 @@ struct paser_adl
 							}
 							else
 							{
-								throw parse_execption("type member syntax error , string size limit option miss ) at end", m_lines, m_cols);
+								throw parse_execption("type member syntax error , string size limit option miss ) at end", m_lines, m_cols, m_include);
 							}
 						}
 						else
@@ -423,25 +425,25 @@ struct paser_adl
 						c = skip_ws();
 						if( c != ',')
 						{
-							throw parse_execption("type member syntax error , container parameter type too less", m_lines, m_cols);
+							throw parse_execption("type member syntax error , container parameter type too less", m_lines, m_cols, m_include);
 						}
 					}
 					f_define.m_template_parameters.push_back(p_define);
 				}
 				else
 				{
-					throw parse_execption("type member syntax error ,unknow type declaration", m_lines, m_cols);
+					throw parse_execption("type member syntax error ,unknow type declaration", m_lines, m_cols, m_include);
 				}
 			} while (!m_eof && parmeter_count);
 			c = skip_ws();
 			if(c != '>')
 			{
-				throw parse_execption("type member syntax error , container type declaration miss > at end", m_lines, m_cols);
+				throw parse_execption("type member syntax error , container type declaration miss > at end", m_lines, m_cols, m_include);
 			}
 		}
 		else
 		{
-			throw parse_execption("type member syntax error , container type declaration miss <", m_lines, m_cols);
+			throw parse_execption("type member syntax error , container type declaration miss <", m_lines, m_cols, m_include);
 		}
 	}
 
@@ -476,11 +478,11 @@ struct paser_adl
 			std::string member_name = parser_string();
 			if(member_name.empty())
 			{
-				throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols);
+				throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
 			}
 			if(t_define.has_member(member_name))
 			{
-				throw parse_execption("type member syntax error , redefine member name", m_lines, m_cols);
+				throw parse_execption("type member syntax error , redefine member name", m_lines, m_cols, m_include);
 			}
 			f_define.m_name = member_name;
 			do 
@@ -498,7 +500,7 @@ struct paser_adl
 					}
 					else
 					{
-						throw parse_execption("type member syntax error , redefine default value", m_lines, m_cols);
+						throw parse_execption("type member syntax error , redefine default value", m_lines, m_cols, m_include);
 					}
 				}
 				else if( c == '(')
@@ -511,7 +513,7 @@ struct paser_adl
 					}
 					else
 					{
-						throw parse_execption("type member syntax error , range miss ) at end", m_lines, m_cols);
+						throw parse_execption("type member syntax error , range miss ) at end", m_lines, m_cols, m_include);
 					}
 				}
 				else if (c == '[')
@@ -519,14 +521,14 @@ struct paser_adl
 					std::string option_name = parser_string();
 					if (option_name.empty())
 					{
-						throw parse_execption("type syntax error ,member type declaration option, usage int32 value = 1[delete];", m_lines, m_cols);
+						throw parse_execption("type syntax error ,member type declaration option, usage int32 value = 1[delete];", m_lines, m_cols, m_include);
 					}
 
 					std::string option_value;
 					auto find = f_define.m_options.find(option_name);
 					if(find != f_define.m_options.end())
 					{
-						throw parse_execption("type member syntax error , redefine option", m_lines, m_cols);
+						throw parse_execption("type member syntax error , redefine option", m_lines, m_cols, m_include);
 					}
 					c = skip_ws();
 					if( c == '=' )
@@ -540,14 +542,14 @@ struct paser_adl
 					}
 					else
 					{
-						throw parse_execption("type member syntax error , option miss ] at end", m_lines, m_cols);
+						throw parse_execption("type member syntax error , option miss ] at end", m_lines, m_cols, m_include);
 					}
 				}
 			} while (!m_eof);
 		}
 		else
 		{
-			throw parse_execption("type member syntax error , miss space after type declaration", m_lines, m_cols);
+			throw parse_execption("type member syntax error , miss space after type declaration", m_lines, m_cols, m_include);
 		}
 	}
 
@@ -556,7 +558,7 @@ struct paser_adl
 		char c = skip_ws();
 		if( c != '{')
 		{
-			throw parse_execption("type syntax error , miss { after type declaration", m_lines, m_cols);
+			throw parse_execption("type syntax error , miss { after type declaration", m_lines, m_cols, m_include);
 		}
 		do 
 		{
@@ -572,7 +574,7 @@ struct paser_adl
 				std::string member_type_name = parser_string();
 				if(member_type_name.empty())
 				{
-					throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols);
+					throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
 				}
         
 				if (m_define.has_decl_type(member_type_name))
@@ -586,7 +588,7 @@ struct paser_adl
 				}
 				else
 				{
-					throw parse_execption("type syntax error ,unknow member type declaration", m_lines, m_cols);
+					throw parse_execption("type syntax error ,unknow member type declaration", m_lines, m_cols, m_include);
 				}
 			}
 		} while (!m_eof);
@@ -662,12 +664,12 @@ struct paser_adl
 				}
 				else
 				{
-					throw parse_execption("option syntax error ,cpp_alloc option parameter invalid", v.m_parser_lines, v.m_parser_cols);
+					throw parse_execption("option syntax error ,cpp_alloc option parameter invalid", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
 				}
 			}
 			else
 			{
-				throw parse_execption("option syntax error ,unknow option parameter", v.m_parser_lines, v.m_parser_cols);
+        throw parse_execption("option syntax error ,unknow option parameter", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
 			}
 		}
 
@@ -675,7 +677,7 @@ struct paser_adl
 		{
       if (tdefine.m_members.size() > 63)
       {
-        throw parse_execption("type syntax error ,member of type max is 63", tdefine.m_parser_lines, tdefine.m_parser_cols);
+        throw parse_execption("type syntax error ,member of type max is 63", tdefine.m_parser_lines, tdefine.m_parser_cols, tdefine.m_parser_include);
       }
 			for( auto& member : tdefine.m_members)
 			{
@@ -695,7 +697,7 @@ struct paser_adl
 					{
 						if (!valid_integer_value_string(member.m_default_value))
 						{
-							throw parse_execption("member syntax error ,default value is not an integer", member.m_parser_lines, member.m_parser_cols);
+              throw parse_execption("member syntax error ,default value is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
 						}
 					}
 					else
@@ -709,7 +711,7 @@ struct paser_adl
 					{
 						if (!valid_float_value_string(member.m_default_value))
 						{
-							throw parse_execption("member syntax error ,default value is not a float", member.m_parser_lines, member.m_parser_cols);
+              throw parse_execption("member syntax error ,default value is not a float", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
 						}
 					}
 					else
@@ -724,12 +726,12 @@ struct paser_adl
 					{
 						if (!valid_integer_value_string(member.m_size))
 						{
-							throw parse_execption("member syntax error ,container size limit option is not an integer", member.m_parser_lines, member.m_parser_cols);
+              throw parse_execption("member syntax error ,container size limit option is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
 						}
 						int vmax = atoi(member.m_size.c_str());
 						if(vmax <= 0)
 						{
-							throw parse_execption("member syntax error ,container size limit option should > 0", member.m_parser_lines, member.m_parser_cols);
+              throw parse_execption("member syntax error ,container size limit option should > 0", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
 						}
 					}
 					for (auto& ptype : member.m_template_parameters)
@@ -745,12 +747,12 @@ struct paser_adl
 							{
 								if (!valid_integer_value_string(ptype.m_size))
 								{
-									throw parse_execption("member syntax error ,string size limit option is not an integer", ptype.m_parser_lines, ptype.m_parser_cols);
+                  throw parse_execption("member syntax error ,string size limit option is not an integer", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
 								}
 								int vmax = atoi(ptype.m_size.c_str());
 								if (vmax <= 0)
 								{
-									throw parse_execption("member syntax error ,string size limit option should > 0", ptype.m_parser_lines, ptype.m_parser_cols);
+                  throw parse_execption("member syntax error ,string size limit option should > 0", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
 								}
 							}
 						}
@@ -792,21 +794,23 @@ struct paser_adl
 				}
 				else
 				{
-					throw parse_execption("redefine namespace", m_lines, m_cols);
+					throw parse_execption("redefine namespace", m_lines, m_cols, m_include);
 				}
 			}
 			else
 			{
 				if( m_define.find_decl_type(identity) )
 				{
-					throw parse_execption("redefine type", m_lines, m_cols);
+					throw parse_execption("redefine type", m_lines, m_cols, m_include);
 				}
 				else
 				{
 					type_define t_define;
 					t_define.m_parser_lines = m_lines;
 					t_define.m_parser_cols = m_cols;
+          t_define.m_parser_include = m_include;
 					t_define.m_name = identity;
+          t_define.m_namespace = &m_define.m_namespace;
           t_define.m_index = (int)m_define.m_types.size();
 					m_define.m_types.push_back(t_define);
 					parser_type(m_define.m_types[m_define.m_types.size() - 1]);
@@ -843,7 +847,13 @@ bool load_from_adl(descrip_define& define, const std::string& adl_file, std::str
 	}
 	catch (parse_execption& e)
 	{
-		std::cerr << "parser file :" << adl_file << "(line " << e.m_lines << ":col " << e.m_cols << ")" << " error:" << e.what() << std::endl;
+    std::cerr << "parser file :" << adl_file << "(";
+    if (!e.m_include.empty())
+    {
+      std::cerr << "include - " << e.m_include << ", ";
+    }
+    std::cerr << "line " << e.m_lines << ":col " 
+      << e.m_cols << ")" << " error:" << e.what() << std::endl;
 	}
 	delete[] read_buffer;
 	return true;
