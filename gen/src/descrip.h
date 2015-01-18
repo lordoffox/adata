@@ -89,9 +89,16 @@ struct member_define
   int														m_parser_cols;
   std::string                   m_parser_include;
 
-  member_define() :m_type(unknow), m_typedef(NULL), m_fixed(false), m_deleted(false), m_tag(0), m_parser_lines(0), m_parser_cols(0)
+  member_define() 
+    : m_type(unknow)
+    , m_typedef(NULL)
+    , m_fixed(false)
+    , m_deleted(false)
+    , m_tag(0)
+    , m_parser_lines(0)
+    , m_parser_cols(0)
 	{
-	}					 
+	}
 
 	inline bool	is_fixed()const
 	{
@@ -145,7 +152,6 @@ struct type_define
 {
 	typedef std::vector<member_define>	member_list_type;
 	std::string										m_name;
-  namespace_type const*         m_namespace;
 	member_list_type							m_members;
 	int														m_parser_lines;
   int														m_parser_cols;
@@ -153,9 +159,8 @@ struct type_define
   int                           m_index;
   bool                          m_ismulti;
 
-  type_define() 
-    : m_namespace(nullptr)
-    , m_parser_lines(0)
+  type_define()
+    : m_parser_lines(0)
     , m_parser_cols(0)
     , m_index(0)
     , m_ismulti(false)
@@ -171,26 +176,46 @@ struct option_value
 	int					m_parser_lines;
 	int					m_parser_cols;
   std::string m_parser_include;
-	option_value():m_parser_lines(0),m_parser_cols(0)
-	{
 
+	option_value()
+    : m_parser_lines(0)
+    , m_parser_cols(0)
+	{
 	}
+};
+
+struct descrip_define;
+struct include_define
+{
+  std::string m_name;
+  namespace_type m_namespace;
+  descrip_define const& m_descrip;
+
+  explicit include_define(descrip_define const& descrip)
+    : m_descrip(descrip)
+  {
+  }
 };
 
 struct descrip_define
 {
-	typedef std::vector<type_define>	type_list_type;
-	typedef std::map<std::string, option_value> option_map_type;
-	namespace_type								m_namespace;
-	option_type										m_option;
-	option_map_type								m_option_values;
-	type_list_type								m_types;
-	bool	has_decl_type(const std::string& type) const;
-	const type_define * find_decl_type(const std::string& type)const;
+  typedef std::vector<type_define>	type_list_type;
+  typedef std::map<std::string, option_value> option_map_type;
+  typedef std::map<std::string, include_define> include_map_type;
+
+  include_map_type m_includes;
+  namespace_type m_namespace;
+  option_type m_option;
+  option_map_type m_option_values;
+  type_list_type m_types;
+  // Nous Xiong: add include type_defines
+  type_list_type m_include_types;
+
+  bool has_decl_type(const std::string& type) const;
+  const type_define* find_decl_type(const std::string& type) const;
 };
 
 typedef std::map<std::string, std::string> typename_map_type;
 
 typename_map_type& get_cpp_typename_map();
-
 typename_map_type& get_csharp_typename_map();

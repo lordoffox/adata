@@ -23,6 +23,7 @@ int main(int ac, char* av[])
 			("help", "produce help message")
 			("input_file,I", po::value<std::string>(&opt.input_file), "idl file(json,adl)")
 			("output_path,O", po::value< std::string >(&opt.output_path)->default_value("./"), "output source path")
+      ("include_paths,P", po::value<std::vector<std::string> >(&opt.include_paths), "include paths for other adl")
 			("gen,G", po::value<std::vector<std::string> >(&opt.gen), "gen source cpp,csharp,lua(lua51,lua52,lua53,luajit),js")
 			;
 
@@ -37,6 +38,8 @@ int main(int ac, char* av[])
 		}
 		else
 		{
+      // default include path is curr dir
+      opt.include_paths.push_back(".");
 			run_program(opt);
 		}
 	}

@@ -1,4 +1,5 @@
 #include "descrip.h"
+#include <algorithm>
 
 bool type_define::has_member(const std::string& member_name) const
 {
@@ -17,13 +18,27 @@ bool descrip_define::has_decl_type(const std::string& type)	const
 	e_base_type e_type = get_type(type);
 	if( e_type == e_base_type::type)
 	{
-		for(const auto& define : this->m_types)
-		{
-			if( define.m_name == type )
-			{
-				return true;
-			}
-		}
+    if (
+      std::find_if(
+        std::begin(m_types), std::end(m_types), 
+        [&type](type_define const& define){ return define.m_name == type; }
+        ) != std::end(m_types)
+      )
+    {
+      return true;
+    }
+
+    // Nous Xiong: check include types
+    if (
+      std::find_if(
+        std::begin(m_include_types), std::end(m_include_types),
+        [&type](type_define const& define){ return define.m_name == type; }
+        ) != std::end(m_include_types)
+      )
+    {
+      return true;
+    }
+
 		return false;
 	}
 	return true;
@@ -34,13 +49,28 @@ const type_define * descrip_define::find_decl_type(const std::string& type) cons
 	e_base_type e_type = get_type(type);
 	if (e_type == e_base_type::type)
 	{
-		for (auto& define : this->m_types)
-		{
-			if (define.m_name == type)
-			{
-				return &define;
-			}
-		}
+    auto itr = 
+      std::find_if(
+        std::begin(m_types), std::end(m_types),
+        [&type](type_define const& define){ return define.m_name == type; }
+        );
+
+    if (itr != std::end(m_types))
+    {
+      return std::addressof(*itr);
+    }
+
+    // Nous Xiong: find from include types
+    itr =
+      std::find_if(
+        std::begin(m_include_types), std::end(m_include_types),
+        [&type](type_define const& define){ return define.m_name == type; }
+        );
+
+    if (itr != std::end(m_include_types))
+    {
+      return std::addressof(*itr);
+    }
 	}
 	return NULL;
 }

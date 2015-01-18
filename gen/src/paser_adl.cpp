@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "parser.h"
+#include <cstdio>
+#include <memory>
 
 namespace
 {
@@ -72,9 +74,26 @@ struct parse_execption : std::exception
   std::string m_include;
 };
 
+class file_deleter
+{
+public:
+  void operator()(FILE* fd)
+  {
+    if (fd != nullptr)
+    {
+      std::fclose(fd);
+    }
+  }
+};
+
+typedef std::unique_ptr<FILE, file_deleter> file_ptr;
+typedef std::unique_ptr<char[], std::default_delete<char[]>> file_buffer_ptr;
+
 struct paser_adl
 {
 	descrip_define& m_define;
+  std::vector<std::string> const& m_include_paths;
+
 	char *	m_doc;
 	int			m_len;
 	int			m_cols;
@@ -82,8 +101,14 @@ struct paser_adl
   std::string m_include;
 	bool		m_eof;
 
-	paser_adl(descrip_define& define, char * doc, int len)
-		:m_define(define), m_doc(doc), m_len(len), m_cols(0), m_lines(0), m_eof(false)
+  paser_adl(descrip_define& define, std::vector<std::string> const& include_paths, char * doc, int len)
+		: m_define(define)
+    , m_include_paths(include_paths)
+    , m_doc(doc)
+    , m_len(len)
+    , m_cols(0)
+    , m_lines(0)
+    , m_eof(false)
 	{
 
 	}
@@ -305,7 +330,117 @@ struct paser_adl
 		return std::string(indetify);
 	}
 
-	void parser_namespace()
+  inline std::string parser_typename()
+  {
+    std::string type_name;
+    do
+    {
+      std::string identity = parser_string();
+      if (identity.empty())
+      {
+        throw parse_execption("typename syntax error , usage data.xyz;", m_lines, m_cols, m_include);
+      }
+      type_name += identity;
+      char c = skip_ws();
+      if (c == '.')
+      {
+        type_name += ".";
+      }
+      else
+      {
+        break;
+      }
+    } while (!m_eof);
+    --m_doc;
+    --m_cols;
+    return type_name;
+  }
+
+  inline void parser_include()
+  {
+    char c = skip_ws();
+    if (c == '=')
+    {
+      include_define inc(m_define);
+      std::string filename;
+      do
+      {
+        std::string identity = parser_string();
+        if (identity.empty())
+        {
+          throw parse_execption("include syntax error , usage include = data.xyz;", m_lines, m_cols, m_include);
+        }
+        inc.m_name += identity;
+        c = skip_ws();
+        if (c == '.')
+        {
+          inc.m_name += ".";
+          continue;
+        }
+        if (c == ';')
+        {
+          filename = identity;
+          filename += ".adl";
+          break;
+        }
+      } while (!m_eof);
+
+      // find include adl file
+      for (auto path : m_include_paths)
+      {
+        if (path.empty())
+        {
+          continue;
+        }
+
+        if (path.back() != '/' && path.back() != '\\')
+        {
+          path += '/';
+        }
+
+        path += filename;
+        file_ptr f;
+        file_buffer_ptr read_buffer;
+        FILE* fd = nullptr;
+        if (0 != ::fopen_s(&fd, filename.c_str(), "r"))
+        {
+          std::string errmsg = "include file open failed, file: ";
+          errmsg += path;
+          throw parse_execption(errmsg.c_str(), m_lines, m_cols, m_include);
+        }
+
+        f.reset(fd);
+        fseek(fd, 0, SEEK_END);
+
+        int size = ftell(fd);
+        read_buffer.reset(new char[size + 1]);
+        fseek(fd, 0, SEEK_SET);
+        std::size_t len = fread(read_buffer.get(), 1, size, fd);
+        read_buffer[len] = 0;
+
+        try
+        {
+          
+        }
+        catch (parse_execption& e)
+        {
+          std::cerr << "parser include file :" << path << "(";
+          if (!e.m_include.empty())
+          {
+            std::cerr << "include - " << e.m_include << ", ";
+          }
+          std::cerr << "line " << e.m_lines << ":col "
+            << e.m_cols << ")" << " error:" << e.what() << std::endl;
+        }
+      }
+    }
+    else
+    {
+      throw parse_execption("include syntax error,usage include = data.xyz;", m_lines, m_cols, m_include);
+    }
+  }
+
+	inline void parser_namespace()
 	{
 		char c = skip_ws();
 		if ( c == '=' )
@@ -797,23 +932,29 @@ struct paser_adl
 					throw parse_execption("redefine namespace", m_lines, m_cols, m_include);
 				}
 			}
+      else if (identity == "include")
+      {
+        parser_include();
+      }
 			else
 			{
+        //// Noux Xiong: using namespace to change to full name
+        //identity = m_define.m_namespace.m_fullname + "." + identity;
+
 				if( m_define.find_decl_type(identity) )
 				{
 					throw parse_execption("redefine type", m_lines, m_cols, m_include);
 				}
 				else
 				{
-					type_define t_define;
+          type_define t_define;
 					t_define.m_parser_lines = m_lines;
 					t_define.m_parser_cols = m_cols;
           t_define.m_parser_include = m_include;
 					t_define.m_name = identity;
-          t_define.m_namespace = &m_define.m_namespace;
           t_define.m_index = (int)m_define.m_types.size();
 					m_define.m_types.push_back(t_define);
-					parser_type(m_define.m_types[m_define.m_types.size() - 1]);
+					parser_type(m_define.m_types.back());
 				}
 			}
 		}
@@ -822,26 +963,33 @@ private:
   paser_adl& operator = (const paser_adl&);
 };
 
-bool load_from_adl(descrip_define& define, const std::string& adl_file, std::string& error_message)
+bool load_from_adl(
+  descrip_define& define, 
+  std::vector<std::string> const& include_paths,
+  const std::string& adl_file, 
+  std::string& error_message
+  )
 {
-	char * read_buffer;
-	FILE * fd;
+  file_ptr f;
+  file_buffer_ptr read_buffer;
+  FILE* fd = nullptr;
 	if (0 != ::fopen_s(&fd, adl_file.c_str(), "r"))
 	{
 		error_message = "open file error.";
 		return false;
 	}
+  f.reset(fd);
 
 	fseek(fd, 0, SEEK_END);
 
 	int size = ftell(fd);
-	read_buffer = new char[size + 1];
+	read_buffer.reset(new char[size + 1]);
 	fseek(fd, 0, SEEK_SET);
-	std::size_t len = fread(read_buffer, 1, size, fd);
+	std::size_t len = fread(read_buffer.get(), 1, size, fd);
 	read_buffer[len] = 0;
 	try
 	{
-		paser_adl parser(define, read_buffer, size);
+    paser_adl parser(define, include_paths, read_buffer.get(), size);
 		parser.parser();
 		parser.valid();
 	}
@@ -855,6 +1003,5 @@ bool load_from_adl(descrip_define& define, const std::string& adl_file, std::str
     std::cerr << "line " << e.m_lines << ":col " 
       << e.m_cols << ")" << " error:" << e.what() << std::endl;
 	}
-	delete[] read_buffer;
 	return true;
 }

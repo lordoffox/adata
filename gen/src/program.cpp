@@ -74,7 +74,7 @@ void run_program(const options& opt)
 	if (input_file_ext == "adl")
 	{
 		std::string error;
-		bool ret = load_from_adl(define, opt.input_file, error);
+		bool ret = load_from_adl(define, opt.include_paths, opt.input_file, error);
 		if( ret == false )
 		{
 			return;
