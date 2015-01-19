@@ -330,9 +330,21 @@ struct paser_adl
 		return std::string(indetify);
 	}
 
+  inline char parser_typename_delim()
+  {
+    char c = read_char();
+    if (c != '.')
+    {
+      --m_doc;
+      --m_cols;
+    }
+    return c;
+  }
+
   inline std::string parser_typename()
   {
     std::string type_name;
+    bool has_dot = false;
     do
     {
       std::string identity = parser_string();
@@ -341,9 +353,11 @@ struct paser_adl
         throw parse_execption("typename syntax error , usage data.xyz;", m_lines, m_cols, m_include);
       }
       type_name += identity;
-      char c = skip_ws();
+
+      char c = parser_typename_delim();
       if (c == '.')
       {
+        has_dot = true;
         type_name += ".";
       }
       else
@@ -351,8 +365,16 @@ struct paser_adl
         break;
       }
     } while (!m_eof);
-    --m_doc;
-    --m_cols;
+
+    //if (!has_dot)
+    //{
+    //  e_base_type ty = get_type(type_name);
+    //  if (ty == type)
+    //  {
+    //    // add full name
+    //    type_name = m_define.m_namespace.m_fullname + "." + type_name;
+    //  }
+    //}
     return type_name;
   }
 
@@ -514,7 +536,8 @@ struct paser_adl
 		{
 			do 
 			{
-				std::string paramter_type_name = parser_string();
+        // Nous Xiong: change parser_string to parser_typename
+				std::string paramter_type_name = parser_typename();
 				if (paramter_type_name.empty())
 				{
 					throw parse_execption("type syntax error ,member type declaration paramter type, usage list<int32> list_value;", m_lines, m_cols, m_include);
@@ -610,7 +633,7 @@ struct paser_adl
 		char c = read_char();
 		if(is_ws(c))
 		{
-			std::string member_name = parser_string();
+      std::string member_name = parser_string();
 			if(member_name.empty())
 			{
 				throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
@@ -706,7 +729,8 @@ struct paser_adl
 			{
 				--m_doc;
         --m_cols;
-				std::string member_type_name = parser_string();
+        // Nous Xiong: change parser_string to parser_typename for get fullname (e.g. ns.my.xxx_t)
+				std::string member_type_name = parser_typename();
 				if(member_type_name.empty())
 				{
 					throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
@@ -763,6 +787,112 @@ struct paser_adl
 		return true;
 	}
 
+  void valid_types(descrip_define::type_list_type& types)
+  {
+    for (auto& tdefine : types)
+    {
+      if (tdefine.m_members.size() > 63)
+      {
+        throw parse_execption("type syntax error ,member of type max is 63", tdefine.m_parser_lines, tdefine.m_parser_cols, tdefine.m_parser_include);
+      }
+      for (auto& member : tdefine.m_members)
+      {
+        if (member.m_type == e_base_type::type)
+        {
+          type_define * tdef = (type_define *)m_define.find_decl_type(member.m_typename);
+          member.m_typedef = tdef;
+        }
+        if (member.is_fixed())
+        {
+          member.m_type = (e_base_type)(member.m_type + e_base_type::int8 - e_base_type::fix_int8);
+          member.m_fixed = true;
+        }
+        if (member.is_integer())
+        {
+          if (member.m_default_value.length())
+          {
+            if (!valid_integer_value_string(member.m_default_value))
+            {
+              throw parse_execption("member syntax error ,default value is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
+            }
+          }
+          else
+          {
+            member.m_default_value = "0";
+          }
+        }
+        if (member.is_float())
+        {
+          if (member.m_default_value.length())
+          {
+            if (!valid_float_value_string(member.m_default_value))
+            {
+              throw parse_execption("member syntax error ,default value is not a float", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
+            }
+          }
+          else
+          {
+            member.m_default_value = "0.0";
+          }
+        }
+        if (member.is_container())
+        {
+          tdefine.m_ismulti = true;
+          if (member.m_size.length())
+          {
+            if (!valid_integer_value_string(member.m_size))
+            {
+              throw parse_execption("member syntax error ,container size limit option is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
+            }
+            int vmax = atoi(member.m_size.c_str());
+            if (vmax <= 0)
+            {
+              throw parse_execption("member syntax error ,container size limit option should > 0", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
+            }
+          }
+          for (auto& ptype : member.m_template_parameters)
+          {
+            if (ptype.m_type == e_base_type::type)
+            {
+              type_define * tdef = (type_define *)m_define.find_decl_type(ptype.m_typename);
+              ptype.m_typedef = tdef;
+            }
+            if (ptype.m_type == e_base_type::string)
+            {
+              if (ptype.m_size.length())
+              {
+                if (!valid_integer_value_string(ptype.m_size))
+                {
+                  throw parse_execption("member syntax error ,string size limit option is not an integer", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
+                }
+                int vmax = atoi(ptype.m_size.c_str());
+                if (vmax <= 0)
+                {
+                  throw parse_execption("member syntax error ,string size limit option should > 0", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
+                }
+              }
+            }
+          }
+          if (member.m_template_parameters.size() >= 2)
+          {
+            member.m_template_parameters[1].m_name = "second";
+          }
+          if (member.m_template_parameters.size() >= 1)
+          {
+            member.m_template_parameters[0].m_name = "first";
+          }
+        }
+        for (auto& option : member.m_options)
+        {
+          if (option.first == "delete")
+          {
+            member.m_deleted = true;
+          }
+        }
+      }
+    }
+  }
+
 	void valid()
 	{
 		if(m_define.m_namespace.m_names.size())
@@ -808,108 +938,9 @@ struct paser_adl
 			}
 		}
 
-		for( auto& tdefine : m_define.m_types)
-		{
-      if (tdefine.m_members.size() > 63)
-      {
-        throw parse_execption("type syntax error ,member of type max is 63", tdefine.m_parser_lines, tdefine.m_parser_cols, tdefine.m_parser_include);
-      }
-			for( auto& member : tdefine.m_members)
-			{
-        if (member.m_type == e_base_type::type)
-        {
-          type_define * tdef = (type_define *)m_define.find_decl_type(member.m_typename);
-          member.m_typedef = tdef;
-        }
-				if (member.is_fixed())
-				{
-					member.m_type = (e_base_type)(member.m_type + e_base_type::int8 - e_base_type::fix_int8);
-					member.m_fixed = true;
-				}
-				if (member.is_integer())
-				{
-					if (member.m_default_value.length())
-					{
-						if (!valid_integer_value_string(member.m_default_value))
-						{
-              throw parse_execption("member syntax error ,default value is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
-						}
-					}
-					else
-					{
-						member.m_default_value = "0";
-					}
-				}
-				if (member.is_float())
-				{
-					if (member.m_default_value.length())
-					{
-						if (!valid_float_value_string(member.m_default_value))
-						{
-              throw parse_execption("member syntax error ,default value is not a float", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
-						}
-					}
-					else
-					{
-						member.m_default_value = "0.0";
-					}
-				}
-				if(member.is_container())
-				{
-          tdefine.m_ismulti = true;
-					if (member.m_size.length())
-					{
-						if (!valid_integer_value_string(member.m_size))
-						{
-              throw parse_execption("member syntax error ,container size limit option is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
-						}
-						int vmax = atoi(member.m_size.c_str());
-						if(vmax <= 0)
-						{
-              throw parse_execption("member syntax error ,container size limit option should > 0", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
-						}
-					}
-					for (auto& ptype : member.m_template_parameters)
-					{
-            if (ptype.m_type == e_base_type::type)
-            {
-              type_define * tdef = (type_define *)m_define.find_decl_type(ptype.m_typename);
-              ptype.m_typedef = tdef;
-            }
-            if (ptype.m_type == e_base_type::string)
-						{
-							if (ptype.m_size.length())
-							{
-								if (!valid_integer_value_string(ptype.m_size))
-								{
-                  throw parse_execption("member syntax error ,string size limit option is not an integer", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
-								}
-								int vmax = atoi(ptype.m_size.c_str());
-								if (vmax <= 0)
-								{
-                  throw parse_execption("member syntax error ,string size limit option should > 0", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
-								}
-							}
-						}
-					}
-					if (member.m_template_parameters.size() >= 2)
-					{
-						member.m_template_parameters[1].m_name = "second";
-					}
-					if (member.m_template_parameters.size() >= 1)
-					{
-						member.m_template_parameters[0].m_name = "first";
-					}
-				}
-				for (auto& option : member.m_options)
-				{
-					if (option.first == "delete")
-					{
-						member.m_deleted = true;
-					}
-				}
-			}
-		}
+    // Nous Xiong: add include_types valid
+    valid_types(m_define.m_include_types);
+    valid_types(m_define.m_types);
 	}
 
 	void parser()
