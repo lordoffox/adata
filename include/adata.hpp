@@ -7,7 +7,11 @@
 #define ADATA_HPP_HEADER_
 
 #include <cstddef>
-#include <cstdint>
+#if _MSC_VER >= 1500
+# include <cstdint>
+#else
+# include "stdint.hpp"
+#endif
 #include <string.h>
 
 #include <vector>

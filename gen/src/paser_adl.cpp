@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "parser.h"
+#include <boost/assert.hpp>
 #include <cstdio>
 #include <memory>
 
@@ -89,248 +90,304 @@ public:
 typedef std::unique_ptr<FILE, file_deleter> file_ptr;
 typedef std::unique_ptr<char[], std::default_delete<char[]>> file_buffer_ptr;
 
-struct paser_adl
+class adl_file
 {
-	descrip_define& m_define;
+public:
+  explicit adl_file(std::string const& adl_file)
+    : f_(load(adl_file))
+  {
+  }
+
+  ~adl_file()
+  {
+    if (f_ != nullptr)
+    {
+      std::fclose(f_);
+    }
+  }
+
+public:
+  std::pair<file_buffer_ptr, int> read()
+  {
+    BOOST_ASSERT(f_ != nullptr);
+
+    fseek(f_, 0, SEEK_END);
+
+    int size = ftell(f_);
+    file_buffer_ptr buff(new char[size + 1]);
+    fseek(f_, 0, SEEK_SET);
+    std::size_t len = fread(buff.get(), 1, size, f_);
+    buff[len] = 0;
+    return std::make_pair(std::move(buff), size);
+  }
+
+private:
+  FILE* load(std::string const& adl_file)
+  {
+    FILE* fd = nullptr;
+    if (0 != ::fopen_s(&fd, adl_file.c_str(), "r"))
+    {
+      throw std::runtime_error("open file error.");
+    }
+    return fd;
+  }
+
+private:
+  FILE* f_;
+};
+
+// Noux Xiong: add for both main file and include parsing
+class parser
+{
+  descrip_define& m_define;
   std::vector<std::string> const& m_include_paths;
 
-	char *	m_doc;
-	int			m_len;
-	int			m_cols;
-	int			m_lines;
+  char* m_doc;
+  int m_len;
+  int m_cols;
+  int m_lines;
   std::string m_include;
-	bool		m_eof;
+  bool m_eof;
+  bool m_is_include;
 
-  paser_adl(descrip_define& define, std::vector<std::string> const& include_paths, char * doc, int len)
-		: m_define(define)
+public:
+  parser(
+    descrip_define& define,
+    std::vector<std::string> const& include_paths,
+    char * doc,
+    int len,
+    bool is_include = false
+    )
+    : m_define(define)
     , m_include_paths(include_paths)
     , m_doc(doc)
     , m_len(len)
     , m_cols(0)
     , m_lines(0)
     , m_eof(false)
-	{
+    , m_is_include(is_include)
+  {
+  }
 
-	}
+public:
+  char read_char()
+  {
+    char c = *m_doc;
+    if (c > 0)
+    {
+      ++m_doc;
+      ++m_cols;
+    }
+    else
+    {
+      m_eof = true;
+    }
+    if (c == '\n')
+    {
+      ++m_lines;
+      m_cols = 0;
+    }
+    return c;
+  }
 
-	inline char read_char()
-	{
-		char c = *m_doc;
-		if(c > 0)
-		{
-			++m_doc;
-			++m_cols;
-		}
-		else
-		{
-			m_eof = true;
-		}
-		if( c == '\n')
-		{
-			++m_lines;
-			m_cols = 0;
-		}
-		return c;
-	}
+  char peek_char()
+  {
+    char c = *m_doc;
+    return c;
+  }
 
-	inline char peek_char()
-	{
-		char c = *m_doc;
-		return c;
-	}
-
-	char skip_ws()
-	{
-		char c;
-		while ((c = read_char())!=0)
-		{
-			switch (c)
-			{
-			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
-			{
-				break;
-			}
+  char skip_ws()
+  {
+    char c;
+    while ((c = read_char()) != 0)
+    {
+      switch (c)
+      {
+      case ' ':
+      case '\t':
+      case '\r':
+      case '\n':
+      {
+                 break;
+      }
       case '/':
       {
-        c = read_char();
-        if(c == '/')
+                c = read_char();
+                if (c == '/')
+                {
+                  while ((c = read_char()) != 0)
+                  {
+                    if (c == '\n')
+                    {
+                      break;
+                    }
+                  }
+                }
+                else
+                {
+                  m_doc -= 2;
+                  m_cols -= 2;
+                }
+      }
+      default:
+      {
+               return c;
+      }
+      }
+    }
+    return c;
+  }
+
+  void parser_string_body(char * pos, bool lower_case = true)
+  {
+    char c;
+    while ((c = read_char()) != 0)
+    {
+      if (!is_string_header(c) && !is_digest(c))
+      {
+        break;
+      }
+      *pos++ = lower_case ? lower_case_char(c) : c;
+    }
+    *pos = 0;
+    --m_doc;
+    --m_cols;
+  }
+
+  std::string parser_string(bool lower_case = true)
+  {
+    char c = skip_ws();
+    char indetify[256] = { 0 };
+    if (c && !is_string_header(c))
+    {
+      throw parse_execption("unknow identity", m_lines, m_cols, m_include);
+    }
+    int len = 0;
+    indetify[len++] = lower_case ? lower_case_char(c) : c;
+    parser_string_body(indetify + 1, lower_case);
+    return std::string(indetify);
+  }
+
+  void parser_source_string_body(char * pos)
+  {
+    char c;
+    while ((c = read_char()))
+    {
+      if (!is_string_header(c) && !is_digest(c) && !is_source_trem(c))
+      {
+        break;
+      }
+      *pos++ = c;
+    }
+    *pos = 0;
+    --m_doc;
+    --m_cols;
+  }
+
+  std::string parser_source_string()
+  {
+    char c = skip_ws();
+    char indetify[256] = { 0 };
+    if (c && !is_string_header(c))
+    {
+      throw parse_execption("unknow identity", m_lines, m_cols, m_include);
+    }
+    int len = 0;
+    indetify[len++] = c;
+    parser_source_string_body(indetify + 1);
+    return std::string(indetify);
+  }
+
+  void parser_number_body(char * pos)
+  {
+    int dot_count = 0;
+    char c;
+    while ((c = read_char()) != 0)
+    {
+      if (!is_digest(c))
+      {
+        if (c == '.')
         {
-          while((c = read_char())!=0)
+          if (dot_count == 1)
           {
-            if(c == '\n')
-            {
-              break;
-            }
+            break;
+          }
+          else
+          {
+            ++dot_count;
           }
         }
         else
         {
-          m_doc -= 2;
-          m_cols -= 2;
+          break;
         }
       }
-			default:
-			{
-				return c;
-			}
-			}
-		}
-		return c;
-	}
-
-	void parser_string_body(char * pos, bool lower_case = true)
-	{
-		char c;
-		while ((c = read_char())!=0)
-		{
-			if (!is_string_header(c) && !is_digest(c))
-			{
-				break;
-			}
-			*pos++ = lower_case ? lower_case_char(c) : c;
-		}
-		*pos = 0;
-		--m_doc;
+      *pos++ = c;
+    }
+    *pos = 0;
+    --m_doc;
     --m_cols;
-	}
+  }
 
-	inline std::string parser_string(bool lower_case = true)
-	{
-		char c = skip_ws();
-		char indetify[256] = { 0 };
-		if(c && !is_string_header(c))
-		{
-			throw parse_execption("unknow identity",m_lines,m_cols, m_include);
-		}
-		int len = 0;
-		indetify[len++] = lower_case ? lower_case_char(c) : c;
-		parser_string_body(indetify + 1, lower_case);
-		return std::string(indetify);
-	}
-
-	void parser_source_string_body(char * pos)
-	{
-		char c;
-		while ((c = read_char()))
-		{
-			if (!is_string_header(c) && !is_digest(c) && !is_source_trem(c))
-			{
-				break;
-			}
-			*pos++ = c;
-		}
-		*pos = 0;
-		--m_doc;
-    --m_cols;
-	}
-
-	inline std::string parser_source_string()
-	{
-		char c = skip_ws();
-		char indetify[256] = { 0 };
-		if (c && !is_string_header(c))
-		{
+  std::string parser_number()
+  {
+    char c = skip_ws();
+    char indetify[256] = { 0 };
+    if (!is_number_header(c))
+    {
       throw parse_execption("unknow identity", m_lines, m_cols, m_include);
-		}
-		int len = 0;
-		indetify[len++] = c;
-		parser_source_string_body(indetify + 1);
-		return std::string(indetify);
-	}
+    }
+    int len = 0;
+    indetify[len++] = c;
+    parser_number_body(indetify + 1);
+    return std::string(indetify);
+  }
 
-	void parser_number_body(char * pos)
-	{
-		int dot_count = 0;
-		char c;
-		while ((c = read_char())!=0)
-		{
-			if (!is_digest(c))
-			{
-				if (c == '.')
-				{
-					if (dot_count == 1)
-					{
-						break;
-					}
-					else
-					{
-						++dot_count;
-					}
-				}
-				else
-				{
-					break;
-				}
-			}
-			*pos++ = c;
-		}
-		*pos = 0;
-		--m_doc;
-    --m_cols;
-	}
-
-	inline std::string parser_number()
-	{
-		char c = skip_ws();
-		char indetify[256] = { 0 };
-		if (!is_number_header(c))
-		{
-      throw parse_execption("unknow identity", m_lines, m_cols, m_include);
-		}
-		int len = 0;
-		indetify[len++] = c;
-		parser_number_body(indetify + 1);
-		return std::string(indetify);
-	}
-
-	inline std::string parser_value()
-	{
-		char c = skip_ws();
-		char indetify[256] = { 0 };
-		int len = 0;
-		if (is_string_header(c))
-		{
-			indetify[len++] = c;
-			parser_string_body(indetify + 1, false);
-		}
-		else if(is_number_header(c))
-		{
-			indetify[len++] = c;
-			parser_number_body(indetify + 1);
-		}
-		else
-		{
+  std::string parser_value()
+  {
+    char c = skip_ws();
+    char indetify[256] = { 0 };
+    int len = 0;
+    if (is_string_header(c))
+    {
+      indetify[len++] = c;
+      parser_string_body(indetify + 1, false);
+    }
+    else if (is_number_header(c))
+    {
+      indetify[len++] = c;
+      parser_number_body(indetify + 1);
+    }
+    else
+    {
       throw parse_execption("unknow value format, must be string or number", m_lines, m_cols, m_include);
-		}
-		return std::string(indetify);
-	}
+    }
+    return std::string(indetify);
+  }
 
-	inline std::string parser_source_value()
-	{
-		char c = skip_ws();
-		char indetify[256] = { 0 };
-		int len = 0;
-		if (is_string_header(c))
-		{
-			indetify[len++] = c;
-			parser_source_string_body(indetify + 1);
-		}
-		else if (is_number_header(c))
-		{
-			indetify[len++] = c;
-			parser_number_body(indetify + 1);
-		}
-		else
-		{
+  std::string parser_source_value()
+  {
+    char c = skip_ws();
+    char indetify[256] = { 0 };
+    int len = 0;
+    if (is_string_header(c))
+    {
+      indetify[len++] = c;
+      parser_source_string_body(indetify + 1);
+    }
+    else if (is_number_header(c))
+    {
+      indetify[len++] = c;
+      parser_number_body(indetify + 1);
+    }
+    else
+    {
       throw parse_execption("unknow value format, must be string or number", m_lines, m_cols, m_include);
-		}
-		return std::string(indetify);
-	}
+    }
+    return std::string(indetify);
+  }
 
-  inline char parser_typename_delim()
+  char parser_typename_delim()
   {
     char c = read_char();
     if (c != '.')
@@ -341,7 +398,7 @@ struct paser_adl
     return c;
   }
 
-  inline std::string parser_typename()
+  std::string parser_typename()
   {
     std::string type_name;
     bool has_dot = false;
@@ -378,7 +435,7 @@ struct paser_adl
     return type_name;
   }
 
-  inline void parser_include()
+  void parser_include()
   {
     char c = skip_ws();
     if (c == '=')
@@ -442,7 +499,7 @@ struct paser_adl
 
         try
         {
-          
+
         }
         catch (parse_execption& e)
         {
@@ -462,330 +519,320 @@ struct paser_adl
     }
   }
 
-	inline void parser_namespace()
-	{
-		char c = skip_ws();
-		if ( c == '=' )
-		{
-			do 
-			{
-				std::string identity = parser_string();
-				if (identity.empty())
-				{
-					throw parse_execption("namespace syntax error , usage namespace = data.xyz;", m_lines, m_cols, m_include);
-				}
-				m_define.m_namespace.m_fullname += identity;
-				c = skip_ws();
-				if(c == '.')
-				{
-					m_define.m_namespace.m_fullname += ".";
-					m_define.m_namespace.m_names.push_back(identity);
-					continue;
-				}
-				if (c == ';')
-				{
-					m_define.m_namespace.m_names.push_back(identity);
-					return;
-				}
-			} while (!m_eof);
-			throw parse_execption("namespace syntax error , miss ; at line end", m_lines, m_cols, m_include);
-		}
-		else
-		{
-			throw parse_execption("namespace syntax error,usage namespace = data.xyz;", m_lines, m_cols, m_include);
-		}
-	}
+  void parser_namespace(namespace_type& ns)
+  {
+    char c = skip_ws();
+    if (c == '=')
+    {
+      do
+      {
+        std::string identity = parser_string();
+        if (identity.empty())
+        {
+          throw parse_execption("namespace syntax error , usage namespace = data.xyz;", m_lines, m_cols, m_include);
+        }
+        ns.m_fullname += identity;
+        c = skip_ws();
+        if (c == '.')
+        {
+          ns.m_fullname += ".";
+          ns.m_names.push_back(identity);
+          continue;
+        }
+        if (c == ';')
+        {
+          ns.m_names.push_back(identity);
+          return;
+        }
+      } while (!m_eof);
+      throw parse_execption("namespace syntax error , miss ; at line end", m_lines, m_cols, m_include);
+    }
+    else
+    {
+      throw parse_execption("namespace syntax error,usage namespace = data.xyz;", m_lines, m_cols, m_include);
+    }
+  }
 
-	inline void parser_option()
-	{
-		std::string identity = parser_string();
-		if (identity.empty())
-		{
-			throw parse_execption("option syntax error , option name not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols, m_include);
-		}
-		char c = skip_ws();
-		if (c == '=')
-		{
-			std::string value = parser_source_value();
-				if (value.empty())
-				{
-					throw parse_execption("option syntax error , option value not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols, m_include);
-				}
-				c = skip_ws();
-				if (c == ';')
-				{
-					option_value v;
-					v.m_value = value;
-					v.m_parser_lines = m_lines;
-					v.m_parser_cols = m_cols;
-					m_define.m_option_values.insert(make_pair(identity,v));
-					return;
-				}
-			throw parse_execption("option syntax error , miss ; at line end", m_lines, m_cols, m_include);
-		}
-		else
-		{
-			throw parse_execption("option syntax error,usage option opt1 = 3758;", m_lines, m_cols, m_include);
-		}
-	}
+  void parser_option()
+  {
+    std::string identity = parser_string();
+    if (identity.empty())
+    {
+      throw parse_execption("option syntax error , option name not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols, m_include);
+    }
+    char c = skip_ws();
+    if (c == '=')
+    {
+      std::string value = parser_source_value();
+      if (value.empty())
+      {
+        throw parse_execption("option syntax error , option value not define , usage option cpp_alloc = user_alloc;", m_lines, m_cols, m_include);
+      }
+      c = skip_ws();
+      if (c == ';')
+      {
+        option_value v;
+        v.m_value = value;
+        v.m_parser_lines = m_lines;
+        v.m_parser_cols = m_cols;
+        m_define.m_option_values.insert(make_pair(identity, v));
+        return;
+      }
+      throw parse_execption("option syntax error , miss ; at line end", m_lines, m_cols, m_include);
+    }
+    else
+    {
+      throw parse_execption("option syntax error,usage option opt1 = 3758;", m_lines, m_cols, m_include);
+    }
+  }
 
-	void parser_template_parameter(type_define& , member_define& f_define , int parmeter_count)
-	{
-		char c = skip_ws();
-		if( c == '<')
-		{
-			do 
-			{
+  void parser_template_parameter(type_define&, member_define& f_define, int parmeter_count)
+  {
+    char c = skip_ws();
+    if (c == '<')
+    {
+      do
+      {
         // Nous Xiong: change parser_string to parser_typename
-				std::string paramter_type_name = parser_typename();
-				if (paramter_type_name.empty())
-				{
-					throw parse_execption("type syntax error ,member type declaration paramter type, usage list<int32> list_value;", m_lines, m_cols, m_include);
-				}
+        std::string paramter_type_name = parser_typename();
+        if (paramter_type_name.empty())
+        {
+          throw parse_execption("type syntax error ,member type declaration paramter type, usage list<int32> list_value;", m_lines, m_cols, m_include);
+        }
 
         if (m_define.has_decl_type(paramter_type_name))
-				{
-					e_base_type p_type = get_type(paramter_type_name);
-					if (is_container(p_type))
-					{
-						throw parse_execption("type member syntax error , container parameter couldn't be container", m_lines, m_cols, m_include);
-					}
-					member_define p_define;
-					p_define.m_typename = paramter_type_name;
-					p_define.m_type = p_type;
-					p_define.m_parser_lines = m_lines;
-					p_define.m_parser_cols = m_cols;
-					if(p_type == e_base_type::string)
-					{
-						c = skip_ws();
-						if( c == '(')
-						{
-							std::string size = parser_number();
-							c = skip_ws();
-							if(c == ')')
-							{
-								p_define.m_size = size;
-							}
-							else
-							{
-								throw parse_execption("type member syntax error , string size limit option miss ) at end", m_lines, m_cols, m_include);
-							}
-						}
-						else
-						{
-							--m_doc;
+        {
+          e_base_type p_type = get_type(paramter_type_name);
+          if (is_container(p_type))
+          {
+            throw parse_execption("type member syntax error , container parameter couldn't be container", m_lines, m_cols, m_include);
+          }
+          member_define p_define;
+          p_define.m_typename = paramter_type_name;
+          p_define.m_type = p_type;
+          p_define.m_parser_lines = m_lines;
+          p_define.m_parser_cols = m_cols;
+          if (p_type == e_base_type::string)
+          {
+            c = skip_ws();
+            if (c == '(')
+            {
+              std::string size = parser_number();
+              c = skip_ws();
+              if (c == ')')
+              {
+                p_define.m_size = size;
+              }
+              else
+              {
+                throw parse_execption("type member syntax error , string size limit option miss ) at end", m_lines, m_cols, m_include);
+              }
+            }
+            else
+            {
+              --m_doc;
               --m_cols;
-						}
-					}
-					--parmeter_count;
-					if(parmeter_count)
-					{
-						c = skip_ws();
-						if( c != ',')
-						{
-							throw parse_execption("type member syntax error , container parameter type too less", m_lines, m_cols, m_include);
-						}
-					}
-					f_define.m_template_parameters.push_back(p_define);
-				}
-				else
-				{
-					throw parse_execption("type member syntax error ,unknow type declaration", m_lines, m_cols, m_include);
-				}
-			} while (!m_eof && parmeter_count);
-			c = skip_ws();
-			if(c != '>')
-			{
-				throw parse_execption("type member syntax error , container type declaration miss > at end", m_lines, m_cols, m_include);
-			}
-		}
-		else
-		{
-			throw parse_execption("type member syntax error , container type declaration miss <", m_lines, m_cols, m_include);
-		}
-	}
+            }
+          }
+          --parmeter_count;
+          if (parmeter_count)
+          {
+            c = skip_ws();
+            if (c != ',')
+            {
+              throw parse_execption("type member syntax error , container parameter type too less", m_lines, m_cols, m_include);
+            }
+          }
+          f_define.m_template_parameters.push_back(p_define);
+        }
+        else
+        {
+          throw parse_execption("type member syntax error ,unknow type declaration", m_lines, m_cols, m_include);
+        }
+      } while (!m_eof && parmeter_count);
+      c = skip_ws();
+      if (c != '>')
+      {
+        throw parse_execption("type member syntax error , container type declaration miss > at end", m_lines, m_cols, m_include);
+      }
+    }
+    else
+    {
+      throw parse_execption("type member syntax error , container type declaration miss <", m_lines, m_cols, m_include);
+    }
+  }
 
-	inline void parser_member(type_define& t_define, member_define& f_define)
-	{
-		f_define.m_type = get_type(f_define.m_typename);
-		int parmeter_count = 0;
-		switch (f_define.m_type)
-		{
-		case e_base_type::list:
-		{
-			parmeter_count = 1;
-			break;
-		}
-		case e_base_type::map:
-		{
-			parmeter_count = 2;
-			break;
-		}
-		default:
-		{
-			break;
-		}
-		}
-		if(parmeter_count > 0)
-		{
-			parser_template_parameter(t_define, f_define, parmeter_count);
-		}
-		char c = read_char();
-		if(is_ws(c))
-		{
+  void parser_member(type_define& t_define, member_define& f_define)
+  {
+    f_define.m_type = get_type(f_define.m_typename);
+    int parmeter_count = 0;
+    switch (f_define.m_type)
+    {
+    case e_base_type::list: parmeter_count = 1; break;
+    case e_base_type::map: parmeter_count = 2; break;
+    default: break;
+    }
+
+    if (parmeter_count > 0)
+    {
+      parser_template_parameter(t_define, f_define, parmeter_count);
+    }
+    char c = read_char();
+    if (is_ws(c))
+    {
       std::string member_name = parser_string();
-			if(member_name.empty())
-			{
-				throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
-			}
-			if(t_define.has_member(member_name))
-			{
-				throw parse_execption("type member syntax error , redefine member name", m_lines, m_cols, m_include);
-			}
-			f_define.m_name = member_name;
-			do 
-			{
-				c = skip_ws();
-				if (c == ';')
-				{
-					break;
-				}
-				else if( c == '=')
-				{
-					if(f_define.m_default_value.empty())
-					{
-						f_define.m_default_value = parser_number();
-					}
-					else
-					{
-						throw parse_execption("type member syntax error , redefine default value", m_lines, m_cols, m_include);
-					}
-				}
-				else if( c == '(')
-				{
-					std::string range_value = parser_number();
-					c = skip_ws();
-					if( c == ')')
-					{
-						f_define.m_size = range_value;
-					}
-					else
-					{
-						throw parse_execption("type member syntax error , range miss ) at end", m_lines, m_cols, m_include);
-					}
-				}
-				else if (c == '[')
-				{
-					std::string option_name = parser_string();
-					if (option_name.empty())
-					{
-						throw parse_execption("type syntax error ,member type declaration option, usage int32 value = 1[delete];", m_lines, m_cols, m_include);
-					}
+      if (member_name.empty())
+      {
+        throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
+      }
+      if (t_define.has_member(member_name))
+      {
+        throw parse_execption("type member syntax error , redefine member name", m_lines, m_cols, m_include);
+      }
+      f_define.m_name = member_name;
+      do
+      {
+        c = skip_ws();
+        if (c == ';')
+        {
+          break;
+        }
+        else if (c == '=')
+        {
+          if (f_define.m_default_value.empty())
+          {
+            f_define.m_default_value = parser_number();
+          }
+          else
+          {
+            throw parse_execption("type member syntax error , redefine default value", m_lines, m_cols, m_include);
+          }
+        }
+        else if (c == '(')
+        {
+          std::string range_value = parser_number();
+          c = skip_ws();
+          if (c == ')')
+          {
+            f_define.m_size = range_value;
+          }
+          else
+          {
+            throw parse_execption("type member syntax error , range miss ) at end", m_lines, m_cols, m_include);
+          }
+        }
+        else if (c == '[')
+        {
+          std::string option_name = parser_string();
+          if (option_name.empty())
+          {
+            throw parse_execption("type syntax error ,member type declaration option, usage int32 value = 1[delete];", m_lines, m_cols, m_include);
+          }
 
-					std::string option_value;
-					auto find = f_define.m_options.find(option_name);
-					if(find != f_define.m_options.end())
-					{
-						throw parse_execption("type member syntax error , redefine option", m_lines, m_cols, m_include);
-					}
-					c = skip_ws();
-					if( c == '=' )
-					{
-						option_value = parser_value();
-						c = skip_ws();
-					}
-					if( c == ']')
-					{
-						f_define.m_options.insert(std::make_pair(option_name, option_value));
-					}
-					else
-					{
-						throw parse_execption("type member syntax error , option miss ] at end", m_lines, m_cols, m_include);
-					}
-				}
-			} while (!m_eof);
-		}
-		else
-		{
-			throw parse_execption("type member syntax error , miss space after type declaration", m_lines, m_cols, m_include);
-		}
-	}
+          std::string option_value;
+          auto find = f_define.m_options.find(option_name);
+          if (find != f_define.m_options.end())
+          {
+            throw parse_execption("type member syntax error , redefine option", m_lines, m_cols, m_include);
+          }
+          c = skip_ws();
+          if (c == '=')
+          {
+            option_value = parser_value();
+            c = skip_ws();
+          }
+          if (c == ']')
+          {
+            f_define.m_options.insert(std::make_pair(option_name, option_value));
+          }
+          else
+          {
+            throw parse_execption("type member syntax error , option miss ] at end", m_lines, m_cols, m_include);
+          }
+        }
+      } while (!m_eof);
+    }
+    else
+    {
+      throw parse_execption("type member syntax error , miss space after type declaration", m_lines, m_cols, m_include);
+    }
+  }
 
-	void parser_type(type_define& t_define)
-	{
-		char c = skip_ws();
-		if( c != '{')
-		{
-			throw parse_execption("type syntax error , miss { after type declaration", m_lines, m_cols, m_include);
-		}
-		do 
-		{
-			char c = skip_ws();
-			if ( c == '}')
-			{
-				return;
-			}
-			if(is_string_header(c))
-			{
-				--m_doc;
+  void parser_type(type_define& t_define)
+  {
+    char c = skip_ws();
+    if (c != '{')
+    {
+      throw parse_execption("type syntax error , miss { after type declaration", m_lines, m_cols, m_include);
+    }
+    do
+    {
+      char c = skip_ws();
+      if (c == '}')
+      {
+        return;
+      }
+      if (is_string_header(c))
+      {
+        --m_doc;
         --m_cols;
         // Nous Xiong: change parser_string to parser_typename for get fullname (e.g. ns.my.xxx_t)
-				std::string member_type_name = parser_typename();
-				if(member_type_name.empty())
-				{
-					throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
-				}
-        
-				if (m_define.has_decl_type(member_type_name))
-				{
-					member_define f_define;
-					f_define.m_parser_lines = m_lines;
-					f_define.m_parser_cols = m_cols;
-					f_define.m_typename = member_type_name;
-					t_define.m_members.push_back(f_define);
-					parser_member(t_define, t_define.m_members[t_define.m_members.size() - 1]);
-				}
-				else
-				{
-					throw parse_execption("type syntax error ,unknow member type declaration", m_lines, m_cols, m_include);
-				}
-			}
-		} while (!m_eof);
-	}
+        std::string member_type_name = parser_typename();
+        if (member_type_name.empty())
+        {
+          throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
+        }
 
-	inline bool valid_integer_value_string(const std::string& value)
-	{
-		for (auto c : value)
-		{
-			if (c < '0' && c > '9')
-			{
-				return false;
-			}
-		}
-		return true;
-	}
+        if (m_define.has_decl_type(member_type_name))
+        {
+          member_define f_define;
+          f_define.m_parser_lines = m_lines;
+          f_define.m_parser_cols = m_cols;
+          f_define.m_typename = member_type_name;
+          t_define.m_members.push_back(f_define);
+          parser_member(t_define, t_define.m_members[t_define.m_members.size() - 1]);
+        }
+        else
+        {
+          throw parse_execption("type syntax error ,unknow member type declaration", m_lines, m_cols, m_include);
+        }
+      }
+    } while (!m_eof);
+  }
 
-	inline bool valid_float_value_string(const std::string& value)
-	{
-		int dot_count = 0;
-		for (auto c : value)
-		{
-			if (c == '.')
-			{
-				if (dot_count > 0)
-				{
-					return false;
-				}
-				++dot_count;
-				continue;
-			}
-			if (c < '0' && c > '9')
-			{
-				return false;
-			}
-		}
-		return true;
-	}
+  bool valid_integer_value_string(const std::string& value)
+  {
+    for (auto c : value)
+    {
+      if (c < '0' && c > '9')
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool valid_float_value_string(const std::string& value)
+  {
+    int dot_count = 0;
+    for (auto c : value)
+    {
+      if (c == '.')
+      {
+        if (dot_count > 0)
+        {
+          return false;
+        }
+        ++dot_count;
+        continue;
+      }
+      if (c < '0' && c > '9')
+      {
+        return false;
+      }
+    }
+    return true;
+  }
 
   void valid_types(descrip_define::type_list_type& types)
   {
@@ -893,16 +940,16 @@ struct paser_adl
     }
   }
 
-	void valid()
-	{
-		if(m_define.m_namespace.m_names.size())
-		{
+  void valid()
+  {
+    if (m_define.m_namespace.m_names.size())
+    {
       bool first_element = true;
-			for (auto& name : m_define.m_namespace.m_names)
-			{
-				m_define.m_namespace.m_cpp_fullname += "::";
-				m_define.m_namespace.m_cpp_fullname += name;
-        if(first_element)
+      for (auto& name : m_define.m_namespace.m_names)
+      {
+        m_define.m_namespace.m_cpp_fullname += "::";
+        m_define.m_namespace.m_cpp_fullname += name;
+        if (first_element)
         {
           first_element = false;
         }
@@ -916,123 +963,107 @@ struct paser_adl
         m_define.m_namespace.m_js_fullname += name;
         m_define.m_namespace.m_csharp_fullname += name;
       }
-			m_define.m_namespace.m_cpp_fullname += "::";
-		}
-		for (auto& opt : m_define.m_option_values)
-		{
-			option_value& v = opt.second;
-			if (opt.first == "cpp_alloc")
-			{
-				if( is_string_header(v.m_value[0]) )
-				{
-					m_define.m_option.m_cpp_allocator = v.m_value;
-				}
-				else
-				{
-					throw parse_execption("option syntax error ,cpp_alloc option parameter invalid", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
-				}
-			}
-			else
-			{
+      m_define.m_namespace.m_cpp_fullname += "::";
+    }
+    for (auto& opt : m_define.m_option_values)
+    {
+      option_value& v = opt.second;
+      if (opt.first == "cpp_alloc")
+      {
+        if (is_string_header(v.m_value[0]))
+        {
+          m_define.m_option.m_cpp_allocator = v.m_value;
+        }
+        else
+        {
+          throw parse_execption("option syntax error ,cpp_alloc option parameter invalid", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
+        }
+      }
+      else
+      {
         throw parse_execption("option syntax error ,unknow option parameter", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
-			}
-		}
+      }
+    }
 
     // Nous Xiong: add include_types valid
     valid_types(m_define.m_include_types);
     valid_types(m_define.m_types);
-	}
+  }
 
-	void parser()
-	{
-		while(!m_eof)
-		{
-			std::string identity = parser_string();
-			if(identity.empty())
-			{
-				return;
-			}
-			if (identity == "namespace")
-			{
-				if (m_define.m_namespace.m_fullname.empty())
-				{
-					parser_namespace();
-				}
-				else
-				{
-					throw parse_execption("redefine namespace", m_lines, m_cols, m_include);
-				}
-			}
+  void parse()
+  {
+    while (!m_eof)
+    {
+      std::string identity = parser_string();
+      if (identity.empty())
+      {
+        return;
+      }
+      if (identity == "namespace")
+      {
+        if (m_define.m_namespace.m_fullname.empty())
+        {
+          parser_namespace(m_define.m_namespace);
+        }
+        else
+        {
+          throw parse_execption("redefine namespace", m_lines, m_cols, m_include);
+        }
+      }
       else if (identity == "include")
       {
         parser_include();
       }
-			else
-			{
+      else
+      {
         //// Noux Xiong: using namespace to change to full name
         //identity = m_define.m_namespace.m_fullname + "." + identity;
 
-				if( m_define.find_decl_type(identity) )
-				{
-					throw parse_execption("redefine type", m_lines, m_cols, m_include);
-				}
-				else
-				{
+        if (m_define.find_decl_type(identity))
+        {
+          throw parse_execption("redefine type", m_lines, m_cols, m_include);
+        }
+        else
+        {
           type_define t_define;
-					t_define.m_parser_lines = m_lines;
-					t_define.m_parser_cols = m_cols;
+          t_define.m_parser_lines = m_lines;
+          t_define.m_parser_cols = m_cols;
           t_define.m_parser_include = m_include;
-					t_define.m_name = identity;
+          t_define.m_name = identity;
           t_define.m_index = (int)m_define.m_types.size();
-					m_define.m_types.push_back(t_define);
-					parser_type(m_define.m_types.back());
-				}
-			}
-		}
-	}
-private:
-  paser_adl& operator = (const paser_adl&);
+          m_define.m_types.push_back(t_define);
+          parser_type(m_define.m_types.back());
+        }
+      }
+    }
+  }
 };
 
-bool load_from_adl(
-  descrip_define& define, 
+bool parse_adl_file(
+  descrip_define& define,
   std::vector<std::string> const& include_paths,
-  const std::string& adl_file, 
+  const std::string& file,
   std::string& error_message
   )
 {
-  file_ptr f;
-  file_buffer_ptr read_buffer;
-  FILE* fd = nullptr;
-	if (0 != ::fopen_s(&fd, adl_file.c_str(), "r"))
-	{
-		error_message = "open file error.";
-		return false;
-	}
-  f.reset(fd);
-
-	fseek(fd, 0, SEEK_END);
-
-	int size = ftell(fd);
-	read_buffer.reset(new char[size + 1]);
-	fseek(fd, 0, SEEK_SET);
-	std::size_t len = fread(read_buffer.get(), 1, size, fd);
-	read_buffer[len] = 0;
-	try
-	{
-    paser_adl parser(define, include_paths, read_buffer.get(), size);
-		parser.parser();
-		parser.valid();
-	}
-	catch (parse_execption& e)
-	{
-    std::cerr << "parser file :" << adl_file << "(";
+  try
+  {
+    adl_file adl(file);
+    std::pair<file_buffer_ptr, int> r = adl.read();
+    parser p(define, include_paths, r.first.get(), r.second);
+    p.parse();
+    p.valid();
+  }
+  catch (parse_execption& e)
+  {
+    std::cerr << "parser file :" << file << "(";
     if (!e.m_include.empty())
     {
       std::cerr << "include - " << e.m_include << ", ";
     }
-    std::cerr << "line " << e.m_lines << ":col " 
+    std::cerr << "line " << e.m_lines << ":col "
       << e.m_cols << ")" << " error:" << e.what() << std::endl;
-	}
-	return true;
+    return false;
+  }
+  return true;
 }

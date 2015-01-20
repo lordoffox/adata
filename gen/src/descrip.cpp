@@ -18,10 +18,11 @@ bool descrip_define::has_decl_type(const std::string& type)	const
 	e_base_type e_type = get_type(type);
 	if( e_type == e_base_type::type)
 	{
+    auto pred = [&type](type_define const& define){ return define.m_name == type; };
     if (
       std::find_if(
         std::begin(m_types), std::end(m_types), 
-        [&type](type_define const& define){ return define.m_name == type; }
+        pred
         ) != std::end(m_types)
       )
     {
@@ -32,7 +33,7 @@ bool descrip_define::has_decl_type(const std::string& type)	const
     if (
       std::find_if(
         std::begin(m_include_types), std::end(m_include_types),
-        [&type](type_define const& define){ return define.m_name == type; }
+        pred
         ) != std::end(m_include_types)
       )
     {
@@ -49,11 +50,8 @@ const type_define * descrip_define::find_decl_type(const std::string& type) cons
 	e_base_type e_type = get_type(type);
 	if (e_type == e_base_type::type)
 	{
-    auto itr = 
-      std::find_if(
-        std::begin(m_types), std::end(m_types),
-        [&type](type_define const& define){ return define.m_name == type; }
-        );
+    auto pred = [&type](type_define const& define){ return define.m_name == type; };
+    auto itr = std::find_if(std::begin(m_types), std::end(m_types), pred);
 
     if (itr != std::end(m_types))
     {
@@ -61,11 +59,7 @@ const type_define * descrip_define::find_decl_type(const std::string& type) cons
     }
 
     // Nous Xiong: find from include types
-    itr =
-      std::find_if(
-        std::begin(m_include_types), std::end(m_include_types),
-        [&type](type_define const& define){ return define.m_name == type; }
-        );
+    itr = std::find_if(std::begin(m_include_types), std::end(m_include_types), pred);
 
     if (itr != std::end(m_include_types))
     {

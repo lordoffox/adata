@@ -9,7 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
-#include <stdint.h>
+#if _MSC_VER >= 1500
+# include <stdint.h>
+#else
+# include "stdint.hpp"
+#endif
 
 #ifndef ADATA_INLINE
 # ifdef __cplusplus
