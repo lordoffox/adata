@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "parser.h"
+#include <boost/lexical_cast.hpp>
 #include <boost/assert.hpp>
 #include <cstdio>
 #include <memory>
@@ -93,8 +94,9 @@ typedef std::unique_ptr<char[], std::default_delete<char[]>> file_buffer_ptr;
 class adl_file
 {
 public:
-  explicit adl_file(std::string const& adl_file)
-    : f_(load(adl_file))
+  explicit adl_file(std::string adl_file)
+    : adl_file_(std::move(adl_file))
+    , f_(nullptr)
   {
   }
 
@@ -107,32 +109,40 @@ public:
   }
 
 public:
+  bool open()
+  {
+    BOOST_ASSERT(!f_);
+    f_ = open(adl_file_);
+    return f_ != nullptr;
+  }
+
   std::pair<file_buffer_ptr, int> read()
   {
     BOOST_ASSERT(f_ != nullptr);
 
-    fseek(f_, 0, SEEK_END);
+    std::fseek(f_, 0, SEEK_END);
 
-    int size = ftell(f_);
+    int size = std::ftell(f_);
     file_buffer_ptr buff(new char[size + 1]);
-    fseek(f_, 0, SEEK_SET);
-    std::size_t len = fread(buff.get(), 1, size, f_);
+    std::fseek(f_, 0, SEEK_SET);
+    std::size_t len = std::fread(buff.get(), 1, size, f_);
     buff[len] = 0;
     return std::make_pair(std::move(buff), size);
   }
 
 private:
-  FILE* load(std::string const& adl_file)
+  static FILE* open(std::string const& adl_file)
   {
     FILE* fd = nullptr;
-    if (0 != ::fopen_s(&fd, adl_file.c_str(), "r"))
+    if (::fopen_s(&fd, adl_file.c_str(), "r") != 0)
     {
-      throw std::runtime_error("open file error.");
+      return nullptr;
     }
     return fd;
   }
 
 private:
+  std::string const adl_file_;
   FILE* f_;
 };
 
@@ -148,7 +158,12 @@ class parser
   int m_lines;
   std::string m_include;
   bool m_eof;
-  bool m_is_include;
+
+  bool is_include_;
+  namespace_type include_namespace_;
+  namespace_type& namespace_;
+
+  std::vector<std::unique_ptr<parser>> include_parsers_;
 
 public:
   parser(
@@ -165,7 +180,8 @@ public:
     , m_cols(0)
     , m_lines(0)
     , m_eof(false)
-    , m_is_include(is_include)
+    , is_include_(is_include)
+    , namespace_(is_include_ ? include_namespace_ : m_define.m_namespace)
   {
   }
 
@@ -423,15 +439,15 @@ public:
       }
     } while (!m_eof);
 
-    //if (!has_dot)
-    //{
-    //  e_base_type ty = get_type(type_name);
-    //  if (ty == type)
-    //  {
-    //    // add full name
-    //    type_name = m_define.m_namespace.m_fullname + "." + type_name;
-    //  }
-    //}
+    if (!has_dot && is_include_)
+    {
+      e_base_type ty = get_type(type_name);
+      if (ty == type)
+      {
+        // add full name
+        type_name = m_define.m_namespace.m_fullname + "." + type_name;
+      }
+    }
     return type_name;
   }
 
@@ -440,7 +456,7 @@ public:
     char c = skip_ws();
     if (c == '=')
     {
-      include_define inc(m_define);
+      std::string include_name;
       std::string filename;
       do
       {
@@ -449,11 +465,11 @@ public:
         {
           throw parse_execption("include syntax error , usage include = data.xyz;", m_lines, m_cols, m_include);
         }
-        inc.m_name += identity;
+        include_name += identity;
         c = skip_ws();
         if (c == '.')
         {
-          inc.m_name += ".";
+          include_name += ".";
           continue;
         }
         if (c == ';')
@@ -464,7 +480,16 @@ public:
         }
       } while (!m_eof);
 
+      auto pr = m_define.m_includes.emplace(include_name, include_define(m_define));
+      if (!pr.second)
+      {
+        return;
+      }
+      auto& include_define = pr.first->second;
+      include_define.m_name = std::move(include_name);
+
       // find include adl file
+      bool ok = false;
       for (auto path : m_include_paths)
       {
         if (path.empty())
@@ -478,28 +503,31 @@ public:
         }
 
         path += filename;
-        file_ptr f;
-        file_buffer_ptr read_buffer;
-        FILE* fd = nullptr;
-        if (0 != ::fopen_s(&fd, filename.c_str(), "r"))
-        {
-          std::string errmsg = "include file open failed, file: ";
-          errmsg += path;
-          throw parse_execption(errmsg.c_str(), m_lines, m_cols, m_include);
-        }
-
-        f.reset(fd);
-        fseek(fd, 0, SEEK_END);
-
-        int size = ftell(fd);
-        read_buffer.reset(new char[size + 1]);
-        fseek(fd, 0, SEEK_SET);
-        std::size_t len = fread(read_buffer.get(), 1, size, fd);
-        read_buffer[len] = 0;
 
         try
         {
+          adl_file adl(path);
+          if (!adl.open())
+          {
+            continue;
+          }
+          std::pair<file_buffer_ptr, int> r = adl.read();
 
+          include_parsers_.emplace_back(
+            new parser(
+              m_define, 
+              m_include_paths, 
+              r.first.get(), 
+              r.second, 
+              true
+              )
+            );
+          parser* p = include_parsers_.back().get();
+          p->parse();
+          p->valid();
+
+          ok = true;
+          break;
         }
         catch (parse_execption& e)
         {
@@ -510,7 +538,13 @@ public:
           }
           std::cerr << "line " << e.m_lines << ":col "
             << e.m_cols << ")" << " error:" << e.what() << std::endl;
+          throw;
         }
+      }
+
+      if (!ok)
+      {
+        throw parse_execption("include file open failed", m_lines, m_cols, m_include);
       }
     }
     else
@@ -519,7 +553,7 @@ public:
     }
   }
 
-  void parser_namespace(namespace_type& ns)
+  void parser_namespace()
   {
     char c = skip_ws();
     if (c == '=')
@@ -531,17 +565,17 @@ public:
         {
           throw parse_execption("namespace syntax error , usage namespace = data.xyz;", m_lines, m_cols, m_include);
         }
-        ns.m_fullname += identity;
+        namespace_.m_fullname += identity;
         c = skip_ws();
         if (c == '.')
         {
-          ns.m_fullname += ".";
-          ns.m_names.push_back(identity);
+          namespace_.m_fullname += ".";
+          namespace_.m_names.push_back(identity);
           continue;
         }
         if (c == ';')
         {
-          ns.m_names.push_back(identity);
+          namespace_.m_names.push_back(identity);
           return;
         }
       } while (!m_eof);
@@ -891,7 +925,7 @@ public:
             {
               throw parse_execption("member syntax error ,container size limit option is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
             }
-            int vmax = atoi(member.m_size.c_str());
+            int vmax = boost::lexical_cast<int>(member.m_size);
             if (vmax <= 0)
             {
               throw parse_execption("member syntax error ,container size limit option should > 0", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
@@ -912,7 +946,7 @@ public:
                 {
                   throw parse_execption("member syntax error ,string size limit option is not an integer", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
                 }
-                int vmax = atoi(ptype.m_size.c_str());
+                int vmax = boost::lexical_cast<int>(ptype.m_size);
                 if (vmax <= 0)
                 {
                   throw parse_execption("member syntax error ,string size limit option should > 0", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
@@ -942,52 +976,56 @@ public:
 
   void valid()
   {
-    if (m_define.m_namespace.m_names.size())
+    if (namespace_.m_names.size())
     {
       bool first_element = true;
-      for (auto& name : m_define.m_namespace.m_names)
+      for (auto& name : namespace_.m_names)
       {
-        m_define.m_namespace.m_cpp_fullname += "::";
-        m_define.m_namespace.m_cpp_fullname += name;
+        namespace_.m_cpp_fullname += "::";
+        namespace_.m_cpp_fullname += name;
         if (first_element)
         {
           first_element = false;
         }
         else
         {
-          m_define.m_namespace.m_lua_fullname += "_";
-          m_define.m_namespace.m_js_fullname += "_";
-          m_define.m_namespace.m_csharp_fullname += ".";
+          namespace_.m_lua_fullname += "_";
+          namespace_.m_js_fullname += "_";
+          namespace_.m_csharp_fullname += ".";
         }
-        m_define.m_namespace.m_lua_fullname += name;
-        m_define.m_namespace.m_js_fullname += name;
-        m_define.m_namespace.m_csharp_fullname += name;
+        namespace_.m_lua_fullname += name;
+        namespace_.m_js_fullname += name;
+        namespace_.m_csharp_fullname += name;
       }
-      m_define.m_namespace.m_cpp_fullname += "::";
+      namespace_.m_cpp_fullname += "::";
     }
-    for (auto& opt : m_define.m_option_values)
+
+    if (!is_include_)
     {
-      option_value& v = opt.second;
-      if (opt.first == "cpp_alloc")
+      for (auto& opt : m_define.m_option_values)
       {
-        if (is_string_header(v.m_value[0]))
+        option_value& v = opt.second;
+        if (opt.first == "cpp_alloc")
         {
-          m_define.m_option.m_cpp_allocator = v.m_value;
+          if (is_string_header(v.m_value[0]))
+          {
+            m_define.m_option.m_cpp_allocator = v.m_value;
+          }
+          else
+          {
+            throw parse_execption("option syntax error ,cpp_alloc option parameter invalid", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
+          }
         }
         else
         {
-          throw parse_execption("option syntax error ,cpp_alloc option parameter invalid", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
+          throw parse_execption("option syntax error ,unknow option parameter", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
         }
       }
-      else
-      {
-        throw parse_execption("option syntax error ,unknow option parameter", v.m_parser_lines, v.m_parser_cols, v.m_parser_include);
-      }
-    }
 
-    // Nous Xiong: add include_types valid
-    valid_types(m_define.m_include_types);
-    valid_types(m_define.m_types);
+      // Nous Xiong: add include_types valid
+      valid_types(m_define.m_include_types);
+      valid_types(m_define.m_types);
+    }
   }
 
   void parse()
@@ -1001,9 +1039,9 @@ public:
       }
       if (identity == "namespace")
       {
-        if (m_define.m_namespace.m_fullname.empty())
+        if (namespace_.m_fullname.empty())
         {
-          parser_namespace(m_define.m_namespace);
+          parser_namespace();
         }
         else
         {
@@ -1016,8 +1054,11 @@ public:
       }
       else
       {
-        //// Noux Xiong: using namespace to change to full name
-        //identity = m_define.m_namespace.m_fullname + "." + identity;
+        if (is_include_)
+        {
+          // Noux Xiong: using namespace to change to full name
+          identity = namespace_.m_fullname + "." + identity;
+        }
 
         if (m_define.find_decl_type(identity))
         {
@@ -1030,9 +1071,18 @@ public:
           t_define.m_parser_cols = m_cols;
           t_define.m_parser_include = m_include;
           t_define.m_name = identity;
-          t_define.m_index = (int)m_define.m_types.size();
-          m_define.m_types.push_back(t_define);
-          parser_type(m_define.m_types.back());
+          if (identity.find('.') != std::string::npos)
+          {
+            t_define.m_index = (int)m_define.m_include_types.size();
+            m_define.m_include_types.push_back(t_define);
+            parser_type(m_define.m_include_types.back());
+          }
+          else
+          {
+            t_define.m_index = (int)m_define.m_types.size();
+            m_define.m_types.push_back(t_define);
+            parser_type(m_define.m_types.back());
+          }
         }
       }
     }
@@ -1049,6 +1099,10 @@ bool parse_adl_file(
   try
   {
     adl_file adl(file);
+    if (!adl.open())
+    {
+      return false;
+    }
     std::pair<file_buffer_ptr, int> r = adl.read();
     parser p(define, include_paths, r.first.get(), r.second);
     p.parse();

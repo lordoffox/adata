@@ -45,7 +45,7 @@ inline const char * type_name(int type, bool fix)
 errno_t static inline fopen_s(FILE **f, const char *name, const char *mode) {
 	errno_t ret = 0;
 	assert(f);
-	*f = fopen(name, mode);
+  *f = fopen(name, mode);
 	/* Can't be sure about 1-to-1 mapping of errno and MS' errno_t */
 	if (!*f)
 		ret = errno;

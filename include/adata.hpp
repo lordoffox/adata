@@ -12,7 +12,7 @@
 #else
 # include "stdint.hpp"
 #endif
-#include <string.h>
+#include <cstring>
 
 #include <vector>
 #include <map>

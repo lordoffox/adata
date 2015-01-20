@@ -1,9 +1,11 @@
-#include <vector>
-#include <fstream>
-#include <ctime>
 
 #include "descrip.h"
 #include "util.h"
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/assert.hpp>
+#include <vector>
+#include <fstream>
+#include <ctime>
 
 using namespace std;
 
@@ -18,12 +20,26 @@ namespace cpp_gen
     auto find = map_define.find(name);
     if (find == map_define.end())
     {
-      if (desc_define.find_decl_type(name))
+      type_define const* ty = desc_define.find_decl_type(name);
+      BOOST_ASSERT_MSG(ty != nullptr, name.c_str());
+      
+      if (name.find('.') != std::string::npos)
       {
-        return name;
+        // Noux Xiong: if has dot, then poof it is include type
+        // repalce all '.' to "::"
+        std::string ty = "::";
+        return ty + boost::algorithm::replace_all_copy(name, ".", "::");
+      }
+      else
+      {
+        // Noux Xiong: none include type, just add cpp fullname in namespace
+        return desc_define.m_namespace.m_cpp_fullname + name;
       }
     }
-    return find->second;
+    else
+    {
+      return find->second;
+    }
   }
 
   std::string make_type_desc(const descrip_define& desc_define, const member_define& define)
@@ -39,18 +55,18 @@ namespace cpp_gen
         type_name = find->second;
       }
       type_name += "<";
-			if (define.m_template_parameters[0].m_type == e_base_type::type)
+			/*if (define.m_template_parameters[0].m_type == e_base_type::type)
 			{
 				type_name += desc_define.m_namespace.m_cpp_fullname;
-			}
+			}*/
       type_name += make_typename(desc_define, define.m_template_parameters[0].m_typename);
       if (define.m_type == e_base_type::map)
       {
         type_name += ",";
-				if (define.m_template_parameters[1].m_type == e_base_type::type)
+				/*if (define.m_template_parameters[1].m_type == e_base_type::type)
 				{
 					type_name += desc_define.m_namespace.m_cpp_fullname;
-				}
+				}*/
 				type_name += make_typename(desc_define, define.m_template_parameters[1].m_typename);
       }
       if (desc_define.m_option.m_cpp_allocator.length())
@@ -73,10 +89,10 @@ namespace cpp_gen
     else
     {
       type_name = make_typename(desc_define, define.m_typename);
-			if (define.m_type == e_base_type::type)
+			/*if (define.m_type == e_base_type::type)
 			{
 				type_name = desc_define.m_namespace.m_cpp_fullname + type_name;
-			}
+			}*/
 		}
     return type_name;
   }
@@ -633,6 +649,17 @@ namespace cpp_gen
     os << "}" << std::endl << std::endl;
   }
 
+  void gen_include(const descrip_define& desc_define, std::ofstream& os)
+  {
+    for (auto const& inc : desc_define.m_includes)
+    {
+      std::string inc_path = boost::algorithm::replace_all_copy(inc.first, ".", "/");
+      inc_path += ".adl.h";
+      os << "#include <" << inc_path << ">" << std::endl;
+    }
+    os << std::endl;
+  }
+
   void gen_type_code(const descrip_define& desc_define, std::ofstream& os)
   {
     for (const auto& name : desc_define.m_namespace.m_names)
@@ -683,8 +710,9 @@ namespace cpp_gen
     os << "#ifndef " << header_id << std::endl;
     os << "#define " << header_id << std::endl << std::endl;
 
-    os << "#include <adata.hpp>" << std::endl << std::endl;
+    os << "#include <adata.hpp>" << std::endl;
 
+    gen_include(define, os);
     gen_type_code(define, os);
 
     gen_adata_operator_code(define, os);
