@@ -158,6 +158,8 @@ struct type_define
   std::string                   m_parser_include;
   int                           m_index;
   bool                          m_ismulti;
+  // Nous Xiong: add filename
+  std::string                   m_filename;
 
   type_define()
     : m_parser_lines(0)
@@ -210,6 +212,8 @@ struct descrip_define
   type_list_type m_types;
   // Nous Xiong: add include type_defines
   type_list_type m_include_types;
+  // Nous Xiong: add filename
+  std::string m_filename;
 
   bool has_decl_type(const std::string& type) const;
   const type_define* find_decl_type(const std::string& type) const;

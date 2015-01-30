@@ -3,6 +3,7 @@ local ffi = require'ffi';
 local jcore = require'adata_jit_core';
 
 ffi.cdef[[
+  void free (void *ptr);
   typedef void * (__stdcall *adata_new_buf_ft)(size_t size);
   typedef void (__stdcall *adata_buf_opt_ft)(void * buf);
   typedef int (__stdcall *adata_resize_buf_ft)(void * zbuf, size_t size);

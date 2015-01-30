@@ -1,12 +1,14 @@
-#include <vector>
-#include <set>
-#include <fstream>
-#include <ctime>
-#include <boost/lexical_cast.hpp>
 
 #include "adata.hpp"
 #include "descrip.h"
 #include "util.h"
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/lexical_cast.hpp>
+#include <string>
+#include <vector>
+#include <set>
+#include <fstream>
+#include <ctime>
 
 using namespace std;
 
@@ -70,6 +72,39 @@ namespace lua_gen
 		gen_contex() :use_field_type(use_field_direct), use_luajit(false)
 		{}
 	};
+
+  // Nous Xiong: change xxx.xx_t to ns.xxx_xx_t; if no '.' then do nothing
+  inline std::string make_typename(std::string const& name)
+  {
+    std::size_t s = name.find_last_of('.');
+    std::string tab;
+    if (s != std::string::npos)
+    {
+      std::string ns = name.substr(0, s);
+      boost::algorithm::replace_all(ns, ".", "_");
+      tab = "ns.";
+      return tab + ns + name.substr(s);
+    }
+    else
+    {
+      tab = "m.";
+      return tab + name;
+    }
+  }
+
+  // Nous Xiong: gen requires
+  void gen_include(const descrip_define& desc_define, std::ostream& os)
+  {
+    for (auto const& inc : desc_define.m_includes)
+    {
+      auto s = inc.first.find_last_of('.');
+      BOOST_ASSERT(s != std::string::npos);
+      std::string require = inc.first.substr(s+1);
+      require += "_adl";
+      os << "require\'" << require << "\'" << std::endl;
+    }
+    os << std::endl;
+  }
 
 	inline void gen_meta(std::ostream& os, const type_define& t_define, int tab)
 	{
@@ -227,7 +262,8 @@ namespace lua_gen
 		}
 		case e_base_type::type:
 		{
-			os << "local temp = m." << m_define.m_typename << "(); ";
+      auto name = make_typename(m_define.m_typename);
+      os << "local temp = " << name << "(); ";
 			os << "ec = temp:skip_read(buf);";
 			break;
 		}
@@ -825,7 +861,9 @@ local wt_tag = adata_m.wt_tag;
 				gen_meta_imp(os, t_define, idx, ctx);
 				++idx;
 			}
-			os << "ns." << define.m_namespace.m_lua_fullname << " = m;" << std::endl;
+      std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+      os << "ns." << ns << " = m;" << std::endl;
 			os << "return m;" << std::endl;
 			os.close();
 		}
@@ -1077,7 +1115,9 @@ local wt_tag = adata_m.wt_tag;
 				gen_meta_imp(os, t_define, idx, ctx);
 				++idx;
 			}
-			os << "ns." << define.m_namespace.m_lua_fullname << " = m;" << std::endl;
+      std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+      os << "ns." << ns << " = m;" << std::endl;
 			os << "return m;" << std::endl;
 			os.close();
 		}
@@ -1143,7 +1183,8 @@ local set_read_data = adata_m.set_read_data;
 			}
 			case e_base_type::type:
 			{
-				os << "m." << m_define.m_typedef->m_name << "()";
+        auto name = make_typename(m_define.m_typedef->m_name);
+        os << name << "()";
 			}
 			default:
 			{}
@@ -1189,9 +1230,10 @@ local set_read_data = adata_m.set_read_data;
 				{
 					gem_meta_member_read(os, m_define, tab + 2, ctx);
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
-					os << tabs(tab + 1) << "else" << std::endl;
+					//os << tabs(tab + 1) << "else" << std::endl;
 				}
-				gem_meta_member_skip_read(os, m_define, tab + 2, ctx);
+        // Nous Xiong: comment skip read bcz read_tag already marked which member exist
+				//gem_meta_member_skip_read(os, m_define, tab + 2, ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1277,6 +1319,7 @@ local set_read_data = adata_m.set_read_data;
 			ctx.use_field_type = gen_contex::use_field_list;
 			gen_filed_type_info(os, define,ctx);
 			gen_filed_name_info(os, define, ctx);
+      gen_include(define, os);
 
 			os << "local mt = {};" << std::endl << std::endl;
 			os << "local m = {" << std::endl;
@@ -1298,7 +1341,19 @@ local set_read_data = adata_m.set_read_data;
 				gen_meta_imp(os, t_define, idx, ctx);
 				++idx;
 			}
-			os << "ns." << define.m_namespace.m_lua_fullname << " = m;" << std::endl;
+			std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+      os << "if ns." << ns << " == nil then" << std::endl;
+      os << tabs(1) << "ns." << ns << " = m;" << std::endl;
+      os << "else" << std::endl;
+      for (auto& t_define : define.m_types)
+      {
+        os << tabs(1) << "ns." << ns << "." << t_define.m_name 
+          << " = m." << t_define.m_name << std::endl;
+      }
+      os << "end" << std::endl;
+
+      //os << "ns." << ns << " = m;" << std::endl;
 			os << "return m;" << std::endl;
 			os.close();
 		}

@@ -65,11 +65,13 @@ void run_program(const options& opt)
 	{
 		output_file_name = output_file_name.substr(path_pos + 1);
 	}
+  std::string filename = output_file_name.to_string();
 
 	std::string outputfile = opt.output_path;
-	outputfile.append(output_file_name.to_string());
+  outputfile.append(filename);
 
 	descrip_define define;
+  define.m_filename = std::move(filename);
 
 	if (input_file_ext == "adl")
 	{

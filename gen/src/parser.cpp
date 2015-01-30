@@ -458,6 +458,7 @@ public:
     {
       std::string include_name;
       std::string filename;
+      std::string file;
       do
       {
         std::string identity = parser_string();
@@ -475,6 +476,7 @@ public:
         if (c == ';')
         {
           filename = identity;
+          file = filename;
           filename += ".adl";
           break;
         }
@@ -523,8 +525,9 @@ public:
               )
             );
           parser* p = include_parsers_.back().get();
-          p->parse();
+          p->parse(file);
           p->valid();
+          include_define.m_namespace = p->namespace_;
 
           ok = true;
           break;
@@ -997,7 +1000,10 @@ public:
         namespace_.m_js_fullname += name;
         namespace_.m_csharp_fullname += name;
       }
-      namespace_.m_cpp_fullname += "::";
+      namespace_.m_cpp_fullname += "::"; 
+      namespace_.m_lua_fullname += "_";
+      namespace_.m_js_fullname += "_";
+      namespace_.m_csharp_fullname += ".";
     }
 
     if (!is_include_)
@@ -1028,7 +1034,7 @@ public:
     }
   }
 
-  void parse()
+  void parse(std::string const& filename = "")
   {
     while (!m_eof)
     {
@@ -1071,6 +1077,7 @@ public:
           t_define.m_parser_cols = m_cols;
           t_define.m_parser_include = m_include;
           t_define.m_name = identity;
+          t_define.m_filename = filename;
           if (identity.find('.') != std::string::npos)
           {
             t_define.m_index = (int)m_define.m_include_types.size();

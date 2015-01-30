@@ -1,9 +1,11 @@
-#include <vector>
-#include <fstream>
-#include <ctime>
 
 #include "descrip.h"
 #include "util.h"
+#include <boost/assert.hpp>
+#include <set>
+#include <vector>
+#include <fstream>
+#include <ctime>
 
 using namespace std;
 
@@ -18,10 +20,19 @@ namespace csharp_gen
     auto find = map_define.find(name);
     if (find == map_define.end())
     {
-      if (desc_define.find_decl_type(name))
-      {
-        return name;
-      }
+      type_define const* ty = desc_define.find_decl_type(name);
+      BOOST_ASSERT_MSG(ty != nullptr, name.c_str());
+
+      //if (name.find('.') == std::string::npos)
+      //{
+      //  // Noux Xiong: none include type, just add cpp fullname in namespace
+      //  return desc_define.m_namespace.m_csharp_fullname + name;
+      //}
+      //else
+      //{
+      //  return name;
+      //}
+      return name;
     }
     return find->second;
   }
@@ -192,6 +203,19 @@ namespace csharp_gen
     return "";
   }
 
+  std::string gen_stream_ns(const member_define& mdefine)
+  {
+    auto s = mdefine.m_typedef->m_name.find_last_of('.');
+    std::string ns;
+    if (s != std::string::npos)
+    {
+      ns = mdefine.m_typedef->m_name.substr(0, s + 1);
+      ns += mdefine.m_typedef->m_filename;
+      ns += "_stream.";
+    }
+    return std::move(ns);
+  }
+
   void gen_adata_operator_read_member_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
   {
     if (mdefine.is_multi())
@@ -269,6 +293,12 @@ namespace csharp_gen
 			{
 				os << "adata.stream.";
 			}
+      else
+      {
+        // Nous Xiong: add full namespace 
+        auto stream_ns = gen_stream_ns(mdefine);
+        os << stream_ns;
+      }
       if (mdefine.m_fixed)
       {
         os << "fix_";
@@ -337,7 +367,13 @@ namespace csharp_gen
 			if (mdefine.m_type != e_base_type::type)
 			{
 				os << "adata.stream.";
-			}
+      }
+      else
+      {
+        // Nous Xiong: add full namespace 
+        auto stream_ns = gen_stream_ns(mdefine);
+        os << stream_ns;
+      }
 			if (mdefine.m_fixed)
       {
         os << "fix_";
@@ -512,7 +548,13 @@ namespace csharp_gen
 			if (mdefine.m_type != e_base_type::type)
 			{
 				os << "adata.stream.";
-			}
+      }
+      else
+      {
+        // Nous Xiong: add full namespace 
+        auto stream_ns = gen_stream_ns(mdefine);
+        os << stream_ns;
+      }
 			if (mdefine.m_fixed)
       {
         os << "fix_";
@@ -610,7 +652,13 @@ namespace csharp_gen
 			if (mdefine.m_type != e_base_type::type)
 			{
 				os << "adata.stream.";
-			}
+      }
+      else
+      {
+        // Nous Xiong: add full namespace 
+        auto stream_ns = gen_stream_ns(mdefine);
+        os << stream_ns;
+      }
 			if (mdefine.m_fixed)
       {
         os << "fix_";
@@ -663,15 +711,10 @@ namespace csharp_gen
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
   }
 
-const char * op_code_define = R"(
-  class stream
-  {
-
-)";
-
   void gen_adata_operator_code(const descrip_define& desc_define, std::ofstream& os)
   {
-    os << op_code_define;
+    os << "class " << desc_define.m_filename << "_stream" << std::endl;
+    os << "{" << std::endl;
 
     for (auto& t_define : desc_define.m_types)
     {
