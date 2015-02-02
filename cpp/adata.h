@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
-#if _MSC_VER >= 1500
-# include <stdint.h>
+#if !defined(_MSC_VER) || _MSC_VER >= 1500
+# include <cstdint>
 #else
 # include "stdint.hpp"
 #endif
@@ -238,7 +238,7 @@ char * adata_stream_buffer_get_trace_info(adata_stream_buffer * sbuf)
 {
   size_t len = 0;
   char num_buffer[32];
-  for (int32_t i = 0; i < sbuf->m_trace_info_count; ++i)
+  for (size_t i = 0; i < sbuf->m_trace_info_count; ++i)
   {
     len += (strlen(sbuf->m_trace_infos[i].m_tag_name) + 1);
     if (sbuf->m_trace_infos[i].m_sub_index > -1)
@@ -254,7 +254,7 @@ char * adata_stream_buffer_get_trace_info(adata_stream_buffer * sbuf)
   }
   char * buffer = (char*)calloc(1, len);
   char * ptr = buffer;
-  for (int32_t i = 0; i < sbuf->m_trace_info_count; ++i)
+  for (size_t i = 0; i < sbuf->m_trace_info_count; ++i)
   {
     size_t slen = strlen(sbuf->m_trace_infos[i].m_tag_name);
     memcpy(ptr, sbuf->m_trace_infos[i].m_tag_name, len);

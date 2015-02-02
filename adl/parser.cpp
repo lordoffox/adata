@@ -1,10 +1,22 @@
+///
+/// Copyright (c) 2014-2015 Ning Ding (lordoffox@gmail.com)
+/// Copyright (c) 2015 Nous Xiong (348944179@qq.com)
+///
+/// Distributed under the Boost Software License, Version 1.0. (See accompanying
+/// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+///
+/// See https://github.com/lordoffox/adata for latest version.
+///
+
 #include <iostream>
 
 #include "parser.h"
+#include "util.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/assert.hpp>
 #include <cstdio>
 #include <memory>
+#include <stdexcept>
 
 namespace
 {
@@ -66,10 +78,13 @@ namespace
 	}
 }
 
-struct parse_execption : std::exception
+struct parse_execption : std::runtime_error
 {
 	parse_execption(const char * error_info,int line,int col, std::string include)
-  :exception(error_info), m_lines(line), m_cols(col), m_include(std::move(include))
+    : std::runtime_error(error_info)
+    , m_lines(line)
+    , m_cols(col)
+    , m_include(std::move(include))
 	{}
 	int m_lines;
 	int m_cols;

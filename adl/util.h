@@ -1,10 +1,23 @@
-#pragma once
+///
+/// Copyright (c) 2014-2015 Ning Ding (lordoffox@gmail.com)
+/// Copyright (c) 2015 Nous Xiong (348944179@qq.com)
+///
+/// Distributed under the Boost Software License, Version 1.0. (See accompanying
+/// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+///
+/// See https://github.com/lordoffox/adata for latest version.
+///
+
+#ifndef ADL_UTIL_H
+#define ADL_UTIL_H
+
+#include "descrip.h"
+#include <boost/predef.h>
 #include <string>
 #include <vector>
 #include <cstdint>
 #include <algorithm>
-
-#include "descrip.h"
+#include <cerrno>
 
 int member_cmp(member_define* const a, member_define* const b);
 
@@ -41,9 +54,10 @@ inline const char * type_name(int type, bool fix)
 	return data_type_name[0];
 }
 
-#ifndef _MSC_VER
-errno_t static inline fopen_s(FILE **f, const char *name, const char *mode) {
-	errno_t ret = 0;
+#if !BOOST_COMP_MSVC
+inline int fopen_s(FILE **f, const char *name, const char *mode) 
+{
+	int ret = 0;
 	assert(f);
   *f = fopen(name, mode);
 	/* Can't be sure about 1-to-1 mapping of errno and MS' errno_t */
@@ -52,4 +66,6 @@ errno_t static inline fopen_s(FILE **f, const char *name, const char *mode) {
 	return ret;
 }
 #endif
+
+#endif /// ADL_UTIL_H
 

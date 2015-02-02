@@ -1,3 +1,12 @@
+///
+/// Copyright (c) 2014-2015 Ning Ding (lordoffox@gmail.com)
+/// Copyright (c) 2015 Nous Xiong (348944179@qq.com)
+///
+/// Distributed under the Boost Software License, Version 1.0. (See accompanying
+/// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+///
+/// See https://github.com/lordoffox/adata for latest version.
+///
 
 #include "descrip.h"
 #include "util.h"
@@ -22,16 +31,6 @@ namespace csharp_gen
     {
       type_define const* ty = desc_define.find_decl_type(name);
       BOOST_ASSERT_MSG(ty != nullptr, name.c_str());
-
-      //if (name.find('.') == std::string::npos)
-      //{
-      //  // Noux Xiong: none include type, just add cpp fullname in namespace
-      //  return desc_define.m_namespace.m_csharp_fullname + name;
-      //}
-      //else
-      //{
-      //  return name;
-      //}
       return name;
     }
     return find->second;
@@ -402,7 +401,7 @@ namespace csharp_gen
   void gen_adata_operator_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void stream_read(zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void stream_read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     os << tabs(3) << "UInt64 tag = 0;" << std::endl;
     os << tabs(3) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
@@ -416,7 +415,7 @@ namespace csharp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-    os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
+    os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (adata.error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
     os << tabs(2) << "}" << std::endl << std::endl;
   }
 
@@ -430,7 +429,7 @@ namespace csharp_gen
   void gen_adata_operator_skip_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void skip_read(zero_copy_buffer stream, " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void skip_read(adata.zero_copy_buffer stream, " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     os << tabs(3) << "UInt64 tag = 0;" << std::endl;
     os << tabs(3) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
@@ -444,14 +443,14 @@ namespace csharp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-    os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
+    os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (adata.error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
     os << tabs(2) << "}" << std::endl << std::endl;
   }
 
   inline void gen_size_check_write_member_code(const descrip_define&, const type_define&, const member_define& mdefine, std::ofstream& os, int tab_indent, bool trace_error = true)
   {
     os << tabs(tab_indent) << "if(len" << tab_indent << ">" << mdefine.m_size
-      << "){ stream.error_code = (error_code_t.number_of_element_not_macth);}";
+      << "){ stream.error_code = (adata.error_code_t.number_of_element_not_macth);}";
     if (trace_error)os << std::endl;
     gen_trace_error_info(os, tab_indent, "stream", mdefine.m_name, trace_error);
     if (trace_error)os << std::endl;
@@ -568,7 +567,7 @@ namespace csharp_gen
   void gen_adata_operator_pre_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void pre_write(zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void pre_write(adata.zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     uint64_t tag_mask = 1;
@@ -672,7 +671,7 @@ namespace csharp_gen
   void gen_adata_operator_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void stream_write(zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void stream_write(adata.zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     os << tabs(3) << "adata.stream.stream_write(stream,tag);" << std::endl;
@@ -742,7 +741,6 @@ namespace csharp_gen
 const char * using_define = R"(using System;
 using System.IO;
 using System.Collections.Generic;
-using adata;
 
 )";
 

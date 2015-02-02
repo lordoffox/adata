@@ -1,3 +1,13 @@
+///
+/// Copyright (c) 2014-2015 Ning Ding (lordoffox@gmail.com)
+/// Copyright (c) 2015 Nous Xiong (348944179@qq.com)
+///
+/// Distributed under the Boost Software License, Version 1.0. (See accompanying
+/// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+///
+/// See https://github.com/lordoffox/adata for latest version.
+///
+
 #include <string>
 #include <iostream>
 
@@ -32,10 +42,10 @@ namespace lua_gen
 	}
 }
 
-namespace js_gen
-{
-  void gen_code(const descrip_define&, const std::string&);
-}
+//namespace js_gen
+//{
+//  void gen_code(const descrip_define&, const std::string&);
+//}
 
 void run_program(const options& opt)
 {
@@ -118,9 +128,10 @@ void run_program(const options& opt)
 		{
 			lua_gen::lua_jit::gen_code(define, outputfile + "_adl.lua");
 		}
-		else if (gen_type == "js")
+    /// Noux Xiong: temp no js support
+		/*else if (gen_type == "js")
     {
       js_gen::gen_code(define, outputfile + "_adl.js");
-    }
+    }*/
   }
 }
