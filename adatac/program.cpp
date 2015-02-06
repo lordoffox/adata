@@ -78,6 +78,11 @@ void run_program(const options& opt)
   std::string filename = output_file_name.to_string();
 
 	std::string outputfile = opt.output_path;
+  // Nous Xiong: add '/','\' and none of them compatibility
+  if (outputfile.back() != '/' && outputfile.back() != '\\')
+  {
+    outputfile += '/';
+  }
   outputfile.append(filename);
 
 	descrip_define define;

@@ -1,85 +1,81 @@
 ADATA v1.0
 =======
 
-ADATA is an C++ serialization library.
+ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
+Note: JavaScript and Java not support yet.
 
 Features Overview
 ---------------
 
-* Lightweight, fast and efficient serialization implementations
-* Only one macro to register C++ struct, one line code that's all
-* Header only, no need to build library, just three hpp files
-* Support C++03 and C++11 (Need AMSG_STD_CXX11 macro)
-* Default support C++ built-in types and all std containters (include C++11's)
+* Lightweight, fast and efficient serialization implementations, specifically for game development and other performance-critical applications
+* Flexible, using keyword "delete" to mark discarded fields, that means forwards compatibility
+* Header only, no need to build library, just a fews hpp files
+* Strongly typed, errors happen at compile time
+* Cross platform C/C++(03,11)/C#/Lua/Java/JavaScript code with no dependencies
 
-What is AMSG?
+Usage in brief
 ---------------
 
-```cpp
-struct person
-{
-  std::string  name;
-  int          age;
+* Write a schema file that allows you to define the data structures you may want to serialize. Fields can have a scalar type (ints/floats of all sizes), or they can be a: string; array of any type; reference to yet another object
+* Use adatac (the ADATA compiler) to generate a C++ header (or Lua/JavaScript script or Java/C#/ classes) with helper classes to access and construct serialized data. This header (say mydata.adl.h) only depends on adata.h/hpp, which defines the core functionality
+* Store or send your buffer somewhere
 
-  bool operator==(person const& rhs) const
-  {
-    return name == rhs.name && age == rhs.age;
-  }
-};
-
-AMSG(person, (name)(age));
-
-#define ENOUGH_SIZE 4096
-unsigned char buf[ENOUGH_SIZE];
-
-// serialize
-person src;
-src.name = "lordoffox"
-src.age = 33
-
-amsg::zero_copy_buffer writer(buf, ENOUGH_SIZE);
-amsg::write(writer, src);
-assert(!writer.bad());
-
-// deserialize
-person des;
-
-amsg::zero_copy_buffer reader(buf, ENOUGH_SIZE);
-amsg::read(reader, des);
-assert(!reader.bad());
-
-assert(src == des);
-```
-
-Dependencies
+Build the compiler
 ------------
 
+To build adatac, we need:
 * CMake 2.8 and newer
-* Boost 1.55.0 and newer (Header only)
+* Boost 1.55.0 and newer (Headers and Boost.Program Options)
+* GCC >= 4.9 or VC >= 12.0
 
-Supported Compilers
+Build Boost.Program Options:
+* Please ref Boost's doc - http://www.boost.org/doc/libs/1_57_0/more/getting_started/ 
+* Note: please build boost using stage mode.
+
+Build adatac:
+* Suppose that adata already unzip to dir adata/
+* cd adata
+* Make a dir named build
+* cd build
+* cmake -G "Visual Studio 12 2013"(or on unix-like platform: "Unix MakeFiles") -DBOOST_ROOT=[your_boost_root_dir]
+* Build whatever generated
+* If success, will get a exe named adatac
+
+Use the compiler
 -------------------
 
-* GCC >= 4.6
-* VC >= 9.0 (sp1)
+adatac [-I PATH] [-O PATH] [-P PATH] [-G language] [--help]
+* -I PATH: the adl file to generate, e.g. -I/home/username/work/project/xxx.adl
+* -O PATH: the path that output generated files, e.g. -O/home/username/work/project/generated
+* -P PATH: include path for other adl, could set more than once, e.g. -P/home/username/work/project/adl -P/home/username/work/project/include
+* -G language: which language source to generate, could set more than once, e.g. -Gcpp -Glua(lua51,lua52,lua53,luajit) -Gcsharp -Gjs -Gjava
+* --help: show help messages
 
-Support C++11
+Writing a schema (.adl file)
 -------------------
 
-Define AMSG_STD_CXX11 in your project or just before include amsg hpps
+Let's look at an example first
 
 ```cpp
-#define AMSG_STD_CXX11
-#include <amsg/all.hpp>
 
-// C++11's forward_list
-#include <forward_list>
+namespace = my.country;
 
-std::forward_list<int> fwd_list = {1,2,3,4,5};
-unsigned char buf[4096];
-amsg::zero_copy_buffer writer(buf, 4096);
-amsg::write(writer, fwd_list);
-assert(!writer.bad());
+person
+{
+  string name(30); //this is a comment
+  int32 age = 18;
+  bool married = false;
+}
+
+test
+{
+  fix_int16 i = 1;
+  float32 f = 3.0;
+  list<int32> lis;
+  map<int32,int64> ms;
+  sub_type sub;
+}
+
 ```
 
 amsg::size_of

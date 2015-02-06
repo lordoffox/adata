@@ -115,10 +115,9 @@ namespace adata
 		enum { max_trace_info_count = 64 };
 		trace_info								m_trace_infos[max_trace_info_count];
 		int32_t										m_trace_info_count;
-		int32_t										m_write_bytes;
 		error_code_t							m_error_code;
 
-		stream_context() :m_trace_info_count(0), m_write_bytes(0), m_error_code(success)
+		stream_context() :m_trace_info_count(0), m_error_code(success)
     {
     }
 
@@ -153,7 +152,6 @@ namespace adata
 		ADATA_INLINE void clear()
 		{
 			this->m_trace_info_count = 0;
-			this->m_write_bytes = 0;
 			this->m_error_code = success;
 		}
 
@@ -228,57 +226,57 @@ namespace adata
 	}
 
 	template<typename ty>
-  ADATA_INLINE void fix_pre_write(const ty&, stream_context& context)
+  ADATA_INLINE int32_t fix_size_of(const ty&)
 	{
-		context.m_write_bytes += sizeof(ty);
+		return sizeof(ty);
 	}
 
-	ADATA_INLINE void pre_write(const uint8_t& value, stream_context& context)
-	{
-		if (value & const_tag_as_type)
-		{
-			context.m_write_bytes += 2;
-		}
-		else
-		{
-			context.m_write_bytes += 1;
-		}
-	}
-
-	ADATA_INLINE void pre_write(const int8_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const uint8_t& value)
 	{
 		if (value & const_tag_as_type)
 		{
-			context.m_write_bytes += 2;
+			return 2;
 		}
 		else
 		{
-			context.m_write_bytes += 1;
+			return 1;
 		}
 	}
 
-	ADATA_INLINE void pre_write(const uint16_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const int8_t& value)
+	{
+		if (value & const_tag_as_type)
+		{
+      return 2;
+		}
+		else
+		{
+      return 1;
+		}
+	}
+
+  ADATA_INLINE int32_t size_of(const uint16_t& value)
 	{
 		if (value < const_tag_as_type)
 		{
-			context.m_write_bytes += 1;
+      return 1;
 		}
 		else if (value < 0x100)
 		{
-			context.m_write_bytes += 2;
+      return 2;
 		}
 		else
 		{
-			context.m_write_bytes += 3;
+      return 3;
 		}
 	}
 
-	ADATA_INLINE void pre_write(const int16_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const int16_t& value)
 	{
 		typedef int16_t value_type;
 		if (0 <= value && value < const_tag_as_type)
 		{
-			context.m_write_bytes += 1;
+      return 1;
 		}
 		else
 		{
@@ -289,45 +287,45 @@ namespace adata
 			}
 			if (temp < 0x100)
 			{
-				context.m_write_bytes += 2;
+        return 2;
 			}
 			else
 			{
-				context.m_write_bytes += 3;
+        return 3;
 			}
 		}
 	}
 
-	ADATA_INLINE void pre_write(const uint32_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const uint32_t& value)
 	{
 		if (value < const_tag_as_type)
 		{
-			context.m_write_bytes += 1;
+      return 1;
 		}
 		else if (value < 0x100)
 		{
-			context.m_write_bytes += 2;
+      return 2;
 		}
 		else if (value < 0x10000)
 		{
-			context.m_write_bytes += 3;
+      return 3;
 		}
 		else if (value < 0x1000000)
 		{
-			context.m_write_bytes += 4;
+      return 4;
 		}
 		else
 		{
-			context.m_write_bytes += 5;
+      return 5;
 		}
 	}
 
-	ADATA_INLINE void pre_write(const int32_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const int32_t& value)
 	{
 		typedef int32_t value_type;
 		if (0 <= value && value < const_tag_as_type)
 		{
-			context.m_write_bytes += 1;
+      return 1;
 		}
 		else
 		{
@@ -338,69 +336,69 @@ namespace adata
 			}
 			if (temp < 0x100)
 			{
-				context.m_write_bytes += 2;
+        return 2;
 			}
 			else if (temp < 0x10000)
 			{
-				context.m_write_bytes += 3;
+        return 3;
 			}
 			else if (temp < 0x1000000)
 			{
-				context.m_write_bytes += 4;
+        return 4;
 			}
 			else
 			{
-				context.m_write_bytes += 5;
+        return 5;
 			}
 		}
 	}
 
-	ADATA_INLINE void pre_write(const uint64_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const uint64_t& value)
 	{
 		if (value < const_tag_as_type)
 		{
-			context.m_write_bytes += 1;
+      return 1;
 		}
 		else if (value < 0x100)
 		{
-			context.m_write_bytes += 2;
+      return 2;
 		}
 		else if (value < 0x10000)
 		{
-			context.m_write_bytes += 3;
+      return 3;
 		}
 		else if (value < 0x1000000)
 		{
-			context.m_write_bytes += 4;
+      return 4;
 		}
 		else if (value < 0x100000000)
 		{
-			context.m_write_bytes += 5;
+      return 5;
 		}
 		else if (value < 0x10000000000LL)
 		{
-			context.m_write_bytes += 6;
+      return 6;
 		}
 		else if (value < 0x1000000000000LL)
 		{
-			context.m_write_bytes += 7;
+      return 7;
 		}
 		else if (value < 0x100000000000000LL)
 		{
-			context.m_write_bytes += 8;
+      return 8;
 		}
 		else
 		{
-			context.m_write_bytes += 9;
+      return 9;
 		}
 	}
 
-	ADATA_INLINE void pre_write(const int64_t& value, stream_context& context)
+  ADATA_INLINE int32_t size_of(const int64_t& value)
 	{
 		typedef int64_t value_type;
 		if (0 <= value && value < const_tag_as_type)
 		{
-			context.m_write_bytes += 1;
+      return 1;
 		}
 		else
 		{
@@ -411,47 +409,47 @@ namespace adata
 			}
 			if (temp < 0x100)
 			{
-				context.m_write_bytes += 2;
+        return 2;
 			}
 			else if (temp < 0x10000)
 			{
-				context.m_write_bytes += 3;
+        return 3;
 			}
 			else if (temp < 0x1000000)
 			{
-				context.m_write_bytes += 4;
+        return 4;
 			}
 			else if (temp < 0x100000000)
 			{
-				context.m_write_bytes += 5;
+        return 5;
 			}
 			else if (temp < 0x10000000000LL)
 			{
-				context.m_write_bytes += 6;
+        return 6;
 			}
 			else if (temp < 0x1000000000000LL)
 			{
-				context.m_write_bytes += 7;
+        return 7;
 			}
 			else if (temp < 0x100000000000000LL)
 			{
-				context.m_write_bytes += 8;
+        return 8;
 			}
 			else
 			{
-				context.m_write_bytes += 9;
+        return 9;
 			}
 		}
 	}
 
-	ADATA_INLINE void pre_write(const float& , stream_context& context)
+  ADATA_INLINE int32_t size_of(const float&)
 	{
-		context.m_write_bytes += sizeof(float);
+		return sizeof(float);
 	};
 
-	ADATA_INLINE void pre_write(const double& , stream_context& context)
+  ADATA_INLINE int32_t size_of(const double&)
 	{
-		context.m_write_bytes += sizeof(double);
+    return sizeof(double);
 	};
 
 	template<typename stream_ty>
@@ -3410,22 +3408,6 @@ namespace adata
 	{
 		stream_read(stream, value);
 		return !stream.bad();
-	}
-
-	template<typename string_ty>
-	ADATA_INLINE void adata_read_link_string(zero_copy_buffer& stream, string_ty& str)
-	{
-		stream.set_read(str.data(), str.length());
-	}
-
-	template<typename string_ty>
-	ADATA_INLINE void adata_write_link_string(zero_copy_buffer& stream, string_ty& str)
-	{
-		if (str.size() < (typename string_ty::size_type)stream.m_write_bytes)
-		{
-			str.resize(stream.m_write_bytes);
-		}
-		stream.set_write(str.data(), str.length());
 	}
 
 	template<typename stream_ty, typename ty>

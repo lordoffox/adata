@@ -431,15 +431,6 @@ namespace cpp_gen
     os << tabs(1) << "}" << std::endl << std::endl;
   }
 
-  inline void gen_size_check_write_member_code(const descrip_define&, const type_define&, const member_define& mdefine, std::ofstream& os, int tab_indent, bool trace_error = true)
-  {
-    os << tabs(tab_indent) << "if(len>" << mdefine.m_size
-      << "){ context.set_error_code(number_of_element_not_macth);}";
-    if (trace_error)os << std::endl;
-    gen_trace_error_info(os, tab_indent, "context", mdefine.m_name, trace_error);
-    if (trace_error)os << std::endl;
-  }
-
   void gen_adata_operator_write_tag_code(const descrip_define&, const type_define& tdefine, std::ofstream& os, int tab_indent)
   {
     uint64_t tag = 0;
@@ -464,41 +455,56 @@ namespace cpp_gen
     }
   }
 
-  void gen_member_pre_write_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
+  void gen_member_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
   {
     if (mdefine.is_multi())
     {
-      os << tabs(tab_indent) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
-      if (mdefine.m_size.length())
+      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
+
+      // Nous Xiong: remove size_of length check
+      /*if (mdefine.m_size.length())
       {
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
-      }
-      os << tabs(tab_indent) << "pre_write(len,context);" << std::endl;
+      }*/
+      // Nous Xiong: change to size_of
+      os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
+
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "context.m_write_bytes += len;";
+        // Nous Xiong: change for size_of
+        os << tabs(tab_indent) << "size += len;";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
-        os << tabs(tab_indent) << "int32_t count = 0;" << std::endl;
-        os << tabs(tab_indent) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i, ++count)" << std::endl;
+        // Nous Xiong: remove count bcz no error check
+        //os << tabs(tab_indent) << "int32_t count = 0;" << std::endl;
+
+        os << tabs(tab_indent) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent) << "{" << std::endl;
-        gen_member_pre_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "*i", false);
-        gen_trace_error_info(os, tab_indent + 1, "context", mdefine.m_name, true, "count");
-        os << std::endl;
+        gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "*i", false);
+
+        // Nous Xiong: rmv trace error bcz no need for that
+        //gen_trace_error_info(os, tab_indent + 1, "context", mdefine.m_name, true, "count");
+        //os << std::endl;
+
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::map)
       {
-        os << tabs(tab_indent) << "int32_t count = 0;" << std::endl;
-        os << tabs(tab_indent) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i, ++count)" << std::endl;
+        // Nous Xiong: remove count bcz no error check
+        //os << tabs(tab_indent) << "int32_t count = 0;" << std::endl;
+
+        os << tabs(tab_indent) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent) << "{" << std::endl;
-        gen_member_pre_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i->first", false);
-        gen_member_pre_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "i->second", false);
-        gen_trace_error_info(os, tab_indent + 1, "context", mdefine.m_name, true, "count");
-        os << std::endl;
+        gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i->first", false);
+        gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "i->second", false);
+        
+        // Nous Xiong: rmv trace error bcz no need for that
+        //gen_trace_error_info(os, tab_indent + 1, "context", mdefine.m_name, true, "count");
+        //os << std::endl;
+
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
@@ -506,21 +512,32 @@ namespace cpp_gen
     else
     {
       os << tabs(tab_indent);
+
+      // Nous Xiong: add size += 
+      os << "size += ";
+
       if (mdefine.m_fixed)
       {
         os << "fix_";
       }
-      os << "pre_write(" << var_name << ",context);" << std::endl;
-      gen_trace_error_info(os, tab_indent, "context", mdefine.m_name, trace_error);
-      if (trace_error)os << std::endl;
+      // Nous Xiong: change pre_write to size_of
+      os << "size_of(" << var_name << ");" << std::endl;
+
+      // Nous Xiong: rmv trace error bcz no need for that
+      //gen_trace_error_info(os, tab_indent, "context", mdefine.m_name, trace_error);
+      //if (trace_error)os << std::endl;
     }
   }
 
-  void gen_adata_operator_pre_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
+  void gen_adata_operator_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
-    os << tabs(1) << gen_inline_code(tdefine) << "void pre_write(const " << full_type_name << "& value , stream_context& context)" << std::endl;
+    os << tabs(1) << gen_inline_code(tdefine) << "int32_t size_of(const " << full_type_name << "& value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
+    
+    // Nous Xiong: add size_of result var
+    os << tabs(2) << "int32_t size = 0;" << std::endl;
+
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 2);
     uint64_t tag_mask = 1;
     for (const auto& member : tdefine.m_members)
@@ -534,7 +551,7 @@ namespace cpp_gen
           os << tabs(2) << "if(tag&" << tag_mask << "ULL)" << std::endl;
         }
         os << tabs(2) << "{" << std::endl;
-        gen_member_pre_write_type_code(desc_define, tdefine, member, os, 3, var_name);
+        gen_member_size_of_type_code(desc_define, tdefine, member, os, 3, var_name);
         os << tabs(2) << "}" << std::endl;
       }
       else
@@ -543,8 +560,8 @@ namespace cpp_gen
       }
       tag_mask <<= 1;
     }
-    os << tabs(2) << "pre_write(tag,context);" << std::endl;
-    os << tabs(2) << "return;" << std::endl;
+    os << tabs(2) << "size += size_of(tag);" << std::endl;
+    os << tabs(2) << "return size;" << std::endl;
     os << tabs(1) << "}" << std::endl << std::endl;
   }
 
@@ -642,7 +659,7 @@ namespace cpp_gen
   {
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
-    gen_adata_operator_pre_write_type_code(desc_define, tdefine, os);
+    gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
   }
 

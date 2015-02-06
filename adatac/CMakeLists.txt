@@ -1,5 +1,5 @@
 #
-# This file is part of the CMake build system for adl
+# This file is part of the CMake build system for adatac
 #
 # CMake auto-generated configuration options.
 # Do not check in modified versions of this file.
@@ -12,11 +12,11 @@
 #
 
 cmake_minimum_required (VERSION 2.8.6 FATAL_ERROR)
-project (adl)
+project (adatac)
 
 # The version number.
-set (ADL_VERSION_MAJOR 1)
-set (ADL_VERSION_MINOR 0)
+set (ADATAC_VERSION_MAJOR 1)
+set (ADATAC_VERSION_MINOR 0)
 
 if (WIN32)
   set (WINVER "0x0501" CACHE STRING "Windows version maro. Default is 0x0501 - winxp, user can reset")
@@ -35,11 +35,6 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../cpp/)
 # Boost libraries search.
 set (Boost_USE_STATIC_LIBS ON)
 set (Boost_USE_MULTITHREADED ON)
-if (ADL_STATIC)
-  set (Boost_USE_STATIC_RUNTIME ON)
-else ()
-  set (Boost_USE_STATIC_RUNTIME OFF)
-endif ()
 if (BOOST_ROOT)
   set (Boost_NO_SYSTEM_PATHS ON)
 endif ()
@@ -57,9 +52,9 @@ link_directories (${Boost_LIBRARY_DIRS})
 set (CMAKE_VERBOSE_MAKEFILE true)
 
 if (NOT WIN32)
-  set (ADL_COMPILE_PROP "-std=c++11")
+  set (ADATAC_COMPILE_PROP "-std=c++11")
   if (APPLE)
-    set (ADL_COMPILE_PROP "${ADL_COMPILE_PROP} -stdlib=libc++")
+    set (ADATAC_COMPILE_PROP "${ADATAC_COMPILE_PROP} -stdlib=libc++")
   endif ()
 endif ()
 
@@ -70,19 +65,19 @@ if (WIN32)
 endif ()
 
 file(GLOB_RECURSE SOURCE_FILES  "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-add_executable(adl ${SOURCE_FILES})
+add_executable(adatac ${SOURCE_FILES})
 
-if (ADL_COMPILE_PROP)
-  set_target_properties (adl PROPERTIES COMPILE_FLAGS "${ADL_COMPILE_PROP}")
+if (ADATAC_COMPILE_PROP)
+  set_target_properties (adatac PROPERTIES COMPILE_FLAGS "${ADATAC_COMPILE_PROP}")
 endif ()
-target_link_libraries (adl ${Boost_LIBRARIES})
+target_link_libraries (adatac ${Boost_LIBRARIES})
 
-install (TARGETS adl RUNTIME DESTINATION bin)
+install (TARGETS adatac RUNTIME DESTINATION bin)
 
 # Build a CPack driven installer package.
 include (InstallRequiredSystemLibraries)
 set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
-set (CPACK_PACKAGE_VERSION_MAJOR "${ADL_VERSION_MAJOR}")
-set (CPACK_PACKAGE_VERSION_MINOR "${ADL_VERSION_MINOR}")
+set (CPACK_PACKAGE_VERSION_MAJOR "${ADATAC_VERSION_MAJOR}")
+set (CPACK_PACKAGE_VERSION_MINOR "${ADATAC_VERSION_MINOR}")
 set (CPACK_PACKAGE_CONTACT "QQ:99643412 lordoffox: lordoffox@gmail.com")
 include (CPack)

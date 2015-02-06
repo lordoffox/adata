@@ -145,7 +145,6 @@ typedef struct adata_stream_buffer
 	size_t  m_len;
   adata_trace_info  m_trace_infos[adata_const_max_trace_info_level];
   size_t  m_trace_info_count;
-  size_t  m_write_bytes;
   int     m_error_code;
 }adata_stream_buffer;
 
@@ -156,7 +155,6 @@ static ADATA_INLINE void adata_stream_buffer_init(adata_stream_buffer * sbuf)
   sbuf->m_data = NULL;
   sbuf->m_len = 0;
   sbuf->m_trace_info_count = 0;
-  sbuf->m_write_bytes = 0;
   sbuf->m_error_code = adata_ec_success;
 }
 
@@ -318,7 +316,6 @@ static ADATA_INLINE void adata_stream_buffer_set(adata_stream_buffer * sbuf, cha
   sbuf->m_write_len = 0;
   sbuf->m_len = len;
   sbuf->m_trace_info_count = 0;
-  sbuf->m_write_bytes = 0;
   sbuf->m_error_code = adata_ec_success;
 }
 
@@ -414,51 +411,51 @@ static ADATA_INLINE unsigned char * adata_stream_buffer_append_write(adata_strea
   return append_ptr;
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_uint8(adata_stream_buffer * sbuf, uint8_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_uint8(uint8_t value)
 {
   if (value & adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 2;
+    return 2;
   }
   else
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_int8(adata_stream_buffer * sbuf, int8_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_int8(int8_t value)
 {
   if (value & adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 2;
+    return 2;
   }
   else
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_uint16(adata_stream_buffer * sbuf, uint16_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_uint16(uint16_t value)
 {
   if (value < adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
   else if (value < 0x100)
   {
-    sbuf->m_write_bytes += 2;
+    return 2;
   }
   else
   {
-    sbuf->m_write_bytes += 3;
+    return 3;
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_int16(adata_stream_buffer * sbuf, int16_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_int16(int16_t value)
 {
   if (0 <= value && value < adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
   else
   {
@@ -469,44 +466,44 @@ static ADATA_INLINE void adata_stream_buffer_pre_write_int16(adata_stream_buffer
     }
     if (temp < 0x100)
     {
-      sbuf->m_write_bytes += 2;
+      return 2;
     }
     else
     {
-      sbuf->m_write_bytes += 3;
+      return 3;
     }
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_uint32(adata_stream_buffer * sbuf, uint32_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_uint32(uint32_t value)
 {
   if (value < adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
   else if (value < 0x100)
   {
-    sbuf->m_write_bytes += 2;
+    return 2;
   }
   else if (value < 0x10000)
   {
-    sbuf->m_write_bytes += 3;
+    return 3;
   }
   else if (value < 0x1000000)
   {
-    sbuf->m_write_bytes += 4;
+    return 4;
   }
   else
   {
-    sbuf->m_write_bytes += 5;
+    return 5;
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_int32(adata_stream_buffer * sbuf, int32_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_int32(int32_t value)
 {
   if (0 <= value && value < adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
   else
   {
@@ -517,68 +514,68 @@ static ADATA_INLINE void adata_stream_buffer_pre_write_int32(adata_stream_buffer
     }
     if (temp < 0x100)
     {
-      sbuf->m_write_bytes += 2;
+      return 2;
     }
     else if (temp < 0x10000)
     {
-      sbuf->m_write_bytes += 3;
+      return 3;
     }
     else if (temp < 0x1000000)
     {
-      sbuf->m_write_bytes += 4;
+      return 4;
     }
     else
     {
-      sbuf->m_write_bytes += 5;
+      return 5;
     }
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_uint64(adata_stream_buffer * sbuf, uint64_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_uint64(uint64_t value)
 {
   if (value < adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
   else if (value < 0x100)
   {
-    sbuf->m_write_bytes += 2;
+    return 2;
   }
   else if (value < 0x10000)
   {
-    sbuf->m_write_bytes += 3;
+    return 3;
   }
   else if (value < 0x1000000)
   {
-    sbuf->m_write_bytes += 4;
+    return 4;
   }
   else if (value < 0x100000000)
   {
-    sbuf->m_write_bytes += 5;
+    return 5;
   }
   else if (value < 0x10000000000LL)
   {
-    sbuf->m_write_bytes += 6;
+    return 6;
   }
   else if (value < 0x1000000000000LL)
   {
-    sbuf->m_write_bytes += 7;
+    return 7;
   }
   else if (value < 0x100000000000000LL)
   {
-    sbuf->m_write_bytes += 8;
+    return 8;
   }
   else
   {
-    sbuf->m_write_bytes += 9;
+    return 9;
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_pre_write_int64(adata_stream_buffer * sbuf, int64_t value)
+static ADATA_INLINE int32_t adata_stream_buffer_size_of_int64(int64_t value)
 {
   if (0 <= value && value < adata_const_tag_as_type)
   {
-    sbuf->m_write_bytes += 1;
+    return 1;
   }
   else
   {
@@ -589,40 +586,40 @@ static ADATA_INLINE void adata_stream_buffer_pre_write_int64(adata_stream_buffer
     }
     if (temp < 0x100)
     {
-      sbuf->m_write_bytes += 2;
+      return 2;
     }
     else if (temp < 0x10000)
     {
-      sbuf->m_write_bytes += 3;
+      return 3;
     }
     else if (temp < 0x1000000)
     {
-      sbuf->m_write_bytes += 4;
+      return 4;
     }
     else if (temp < 0x100000000)
     {
-      sbuf->m_write_bytes += 5;
+      return 5;
     }
     else if (temp < 0x10000000000LL)
     {
-      sbuf->m_write_bytes += 6;
+      return 6;
     }
     else if (temp < 0x1000000000000LL)
     {
-      sbuf->m_write_bytes += 7;
+      return 7;
     }
     else if (temp < 0x100000000000000LL)
     {
-      sbuf->m_write_bytes += 8;
+      return 8;
     }
     else
     {
-      sbuf->m_write_bytes += 9;
+      return 9;
     }
   }
 }
 
-static ADATA_INLINE void adata_stream_buffer_fix_read_int8(adata_stream_buffer * sbuf, void* value)
+static ADATA_INLINE int32_t adata_stream_buffer_fix_read_int8(adata_stream_buffer * sbuf, void* value)
 {
   adata_stream_buffer_read(sbuf, (char*)value, 1);
 }

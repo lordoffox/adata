@@ -485,134 +485,101 @@ extern "C" {
 		return buf->m_error_code;
 	}
 
-	ADATA_API int adata_pre_write_fix_int8(adata::zero_copy_buffer * buf, int8_t v)
+	ADATA_API int adata_size_of_fix_int8(int8_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+		return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_uint8(adata::zero_copy_buffer * buf, uint8_t v)
+	ADATA_API int adata_size_of_fix_uint8(uint8_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_int16(adata::zero_copy_buffer * buf, int16_t v)
+	ADATA_API int adata_size_of_fix_int16(int16_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_uint16(adata::zero_copy_buffer * buf, uint16_t v)
+	ADATA_API int adata_size_of_fix_uint16(uint16_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_int32(adata::zero_copy_buffer * buf, int32_t v)
+	ADATA_API int adata_size_of_fix_int32(int32_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_uint32(adata::zero_copy_buffer * buf, uint32_t v)
+	ADATA_API int adata_size_of_fix_uint32(uint32_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_int64(adata::zero_copy_buffer * buf, int64_t v)
+	ADATA_API int adata_size_of_fix_int64(int64_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_fix_uint64(adata::zero_copy_buffer * buf, uint64_t v)
+	ADATA_API int adata_size_of_fix_uint64(uint64_t v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::fix_size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_int8(adata::zero_copy_buffer * buf, int8_t v)
+	ADATA_API int adata_size_of_int8(int8_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_uint8(adata::zero_copy_buffer * buf, uint8_t v)
+	ADATA_API int adata_size_of_uint8(uint8_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_int16(adata::zero_copy_buffer * buf, int16_t v)
+	ADATA_API int adata_size_of_int16(int16_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_uint16(adata::zero_copy_buffer * buf, uint16_t v)
+	ADATA_API int adata_size_of_uint16(uint16_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_int32(adata::zero_copy_buffer * buf, int32_t v)
+	ADATA_API int adata_size_of_int32(int32_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_uint32(adata::zero_copy_buffer * buf, uint32_t v)
+	ADATA_API int adata_size_of_uint32(uint32_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_int64(adata::zero_copy_buffer * buf, int64_t v)
+	ADATA_API int adata_size_of_int64(int64_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_uint64(adata::zero_copy_buffer * buf, uint64_t v)
+	ADATA_API int adata_size_of_uint64(uint64_t v)
 	{
-		adata::pre_write(v, *buf);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_float32(adata::zero_copy_buffer * buf, float v)
+	ADATA_API int adata_size_of_float32(float v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_float64(adata::zero_copy_buffer * buf, double v)
+	ADATA_API int adata_size_of_float64(double v)
 	{
-		(v);
-		buf->m_write_bytes += sizeof(v);
-		return buf->m_error_code;
+    return (int)adata::size_of(v);
 	}
 
-	ADATA_API int adata_pre_write_str(adata::zero_copy_buffer * buf, uint32_t slen, size_t len)
+	ADATA_API int adata_size_of_str(size_t len)
 	{
-		if (len > 0 && len < slen)
-		{
-			buf->set_error_code(adata::sequence_length_overflow);
-			return buf->m_error_code;
-		}
-		adata::pre_write(slen, *buf);
-		buf->m_write_bytes += (uint32_t)slen;
-		return buf->m_error_code;
+    int32_t s = adata::size_of((int32_t)len);
+    s += (int32_t)len;
+		return (int)s;
 	}
 
 	ADATA_API int adata_get_functions(lua_State * L)
@@ -688,25 +655,25 @@ extern "C" {
 			(intptr_t)adata_write_uint64,
 			(intptr_t)adata_write_float32,
 			(intptr_t)adata_write_float64,
-			(intptr_t)adata_pre_write_fix_int8,
-			(intptr_t)adata_pre_write_fix_uint8,
-			(intptr_t)adata_pre_write_fix_int16,
-			(intptr_t)adata_pre_write_fix_uint16,
-			(intptr_t)adata_pre_write_fix_int32,
-			(intptr_t)adata_pre_write_fix_uint32,
-			(intptr_t)adata_pre_write_fix_int64,
-			(intptr_t)adata_pre_write_fix_uint64,
-			(intptr_t)adata_pre_write_int8,
-			(intptr_t)adata_pre_write_uint8,
-			(intptr_t)adata_pre_write_int16,
-			(intptr_t)adata_pre_write_uint16,
-			(intptr_t)adata_pre_write_int32,
-			(intptr_t)adata_pre_write_uint32,
-			(intptr_t)adata_pre_write_int64,
-			(intptr_t)adata_pre_write_uint64,
-			(intptr_t)adata_pre_write_float32,
-			(intptr_t)adata_pre_write_float64,
-			(intptr_t)adata_pre_write_str,
+			(intptr_t)adata_size_of_fix_int8,
+			(intptr_t)adata_size_of_fix_uint8,
+			(intptr_t)adata_size_of_fix_int16,
+			(intptr_t)adata_size_of_fix_uint16,
+			(intptr_t)adata_size_of_fix_int32,
+			(intptr_t)adata_size_of_fix_uint32,
+			(intptr_t)adata_size_of_fix_int64,
+			(intptr_t)adata_size_of_fix_uint64,
+			(intptr_t)adata_size_of_int8,
+			(intptr_t)adata_size_of_uint8,
+			(intptr_t)adata_size_of_int16,
+			(intptr_t)adata_size_of_uint16,
+			(intptr_t)adata_size_of_int32,
+			(intptr_t)adata_size_of_uint32,
+			(intptr_t)adata_size_of_int64,
+			(intptr_t)adata_size_of_uint64,
+			(intptr_t)adata_size_of_float32,
+			(intptr_t)adata_size_of_float64,
+			(intptr_t)adata_size_of_str,
 		};
 		int count = sizeof(function_addres) / sizeof(function_addres[0]);
 		for (int i = 0; i < count; ++i)

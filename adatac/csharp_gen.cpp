@@ -487,56 +487,79 @@ namespace csharp_gen
     }
   }
 
-  void gen_member_pre_write_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
+  void gen_member_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
   {
     if (mdefine.is_multi())
     {
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Length;" << std::endl;
-        if (mdefine.m_size.length())
+
+        // Nous Xiong: remove check size bcz no need already
+        /*if (mdefine.m_size.length())
         {
           gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
-        }
-        os << tabs(tab_indent) << "adata.stream.pre_write(stream,len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent) << "stream.write_bytes += (int)len" << tab_indent << ";";
+        }*/
+
+        os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += (Int32)len" << tab_indent << ";";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Count;" << std::endl;
-        if (mdefine.m_size.length())
+
+        // Nous Xiong: remove check size bcz no need already
+        /*if (mdefine.m_size.length())
         {
           gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
-        }
-        os << tabs(tab_indent) << "adata.stream.pre_write(stream,len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent) << "Int32 count = 0;" << std::endl;
+        }*/
+
+        os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
+
+        // Nous Xiong: remove count need already
+        //os << tabs(tab_indent) << "Int32 count = 0;" << std::endl;
+
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent) << "foreach (" << decl_type << " i in " << var_name << ")" << std::endl;
         os << tabs(tab_indent) << "{" << std::endl;
-        gen_member_pre_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i", false);
-        gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, true, "count");
-        os << std::endl;
-        os << tabs(tab_indent + 1) << "++count;" << std::endl;
+        gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i", false);
+        
+        // Nous Xiong: rmv trace error bcz no need for that
+        //gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, true, "count");
+        //os << std::endl;
+
+        //os << tabs(tab_indent + 1) << "++count;" << std::endl;
+
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::map)
       {
         os << tabs(tab_indent) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Count;" << std::endl;
-        if (mdefine.m_size.length())
+
+        // Nous Xiong: remove check size bcz no need already
+        /*if (mdefine.m_size.length())
         {
           gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
-        }
-        os << tabs(tab_indent) << "adata.stream.pre_write(stream,len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent) << "Int32 count = 0;" << std::endl;
+        }*/
+
+        os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
+
+        // Nous Xiong: remove count need already
+        //os << tabs(tab_indent) << "Int32 count = 0;" << std::endl;
+
         os << tabs(tab_indent) << "foreach (var i in " << var_name << ")" << std::endl;
         os << tabs(tab_indent) << "{" << std::endl;
-        gen_member_pre_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i.Key", false);
-        gen_member_pre_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "i.Value", false);
-        gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, true, "count");
-        os << std::endl;
-        os << tabs(tab_indent + 1) << "++count;" << std::endl;
+        gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i.Key", false);
+        gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "i.Value", false);
+        
+        // Nous Xiong: rmv trace error bcz no need for that
+        //gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, true, "count");
+        //os << std::endl;
+
+        //os << tabs(tab_indent + 1) << "++count;" << std::endl;
+
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
@@ -544,6 +567,10 @@ namespace csharp_gen
     else
     {
       os << tabs(tab_indent);
+      
+      // Nous Xiong: add size += 
+      os << "size += ";
+
 			if (mdefine.m_type != e_base_type::type)
 			{
 				os << "adata.stream.";
@@ -558,17 +585,23 @@ namespace csharp_gen
       {
         os << "fix_";
       }
-      os << "pre_write(stream," << var_name << ");" << std::endl;
-      gen_trace_error_info(os, tab_indent, "stream", mdefine.m_name, trace_error);
-      if (trace_error)os << std::endl;
+      os << "size_of(" << var_name << ");" << std::endl;
+
+      // Nous Xiong: rmv trace error bcz no need for that
+      //gen_trace_error_info(os, tab_indent, "stream", mdefine.m_name, trace_error);
+      //if (trace_error)os << std::endl;
     }
   }
 
-  void gen_adata_operator_pre_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
+  void gen_adata_operator_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void pre_write(adata.zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static Int32 size_of(" << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
+
+    // Nous Xiong: add size_of result var
+    os << tabs(3) << "Int32 size = 0;" << std::endl;
+
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     uint64_t tag_mask = 1;
     for (const auto& member : tdefine.m_members)
@@ -582,7 +615,7 @@ namespace csharp_gen
           os << tabs(3) << "if((tag&" << tag_mask << ")>0)" << std::endl;
         }
         os << tabs(3) << "{" << std::endl;
-        gen_member_pre_write_type_code(desc_define, tdefine, member, os, 4, var_name);
+        gen_member_size_of_type_code(desc_define, tdefine, member, os, 4, var_name);
         os << tabs(3) << "}" << std::endl;
       }
       else
@@ -591,8 +624,8 @@ namespace csharp_gen
       }
       tag_mask <<= 1;
     }
-    os << tabs(3) << "adata.stream.pre_write(stream,tag);" << std::endl;
-    os << tabs(3) << "return;" << std::endl;
+    os << tabs(3) << "size += adata.stream.size_of(tag);" << std::endl;
+    os << tabs(3) << "return size;" << std::endl;
     os << tabs(2) << "}" << std::endl << std::endl;
   }
 
@@ -706,7 +739,7 @@ namespace csharp_gen
   {
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
-    gen_adata_operator_pre_write_type_code(desc_define, tdefine, os);
+    gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
   }
 

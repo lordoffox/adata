@@ -243,10 +243,17 @@ namespace lua_gen
 			if (tn.length())
 				os << "local wt_" << tn << " = adata_m.wt_" << tn << std::endl;
 		}
+    // Nous Xiong: add szof
+    for (auto& ti : set)
+    {
+      std::string tn = type_name(ti, false);
+      if (tn.length())
+        os << "local szof_" << tn << " = adata_m.szof_" << tn << std::endl;
+    }
 		os << std::endl;
 	}
 
-	inline void gem_meta_member_skip_read_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
+	inline void gen_meta_member_skip_read_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
 	{
 		switch (m_define.m_type)
 		{
@@ -281,7 +288,7 @@ namespace lua_gen
 		}
 	}
 
-	inline void gem_meta_member_skip_read(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
+	inline void gen_meta_member_skip_read(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
 	{
 		switch (m_define.m_type)
 		{
@@ -298,7 +305,7 @@ namespace lua_gen
 		case e_base_type::string:
 		{
 			os << tabs(tab);
-			gem_meta_member_skip_read_value(os, m_define, "o." + m_define.m_name);
+			gen_meta_member_skip_read_value(os, m_define, "o." + m_define.m_name);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
 			os << " return ec; end;";
@@ -319,7 +326,7 @@ namespace lua_gen
 				os << " return end;" << std::endl;
 			}
 			os << tabs(tab) << "for i = 1 , len do ";
-			gem_meta_member_skip_read_value(os, m_define.m_template_parameters[0], "v");
+			gen_meta_member_skip_read_value(os, m_define.m_template_parameters[0], "v");
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -340,8 +347,8 @@ namespace lua_gen
 				os << " return end;" << std::endl;
 			}
 			os << tabs(tab) << "for i = 1 , len do ";
-			gem_meta_member_skip_read_value(os, m_define.m_template_parameters[0], "k");
-			gem_meta_member_skip_read_value(os, m_define.m_template_parameters[1], "v");
+			gen_meta_member_skip_read_value(os, m_define.m_template_parameters[0], "k");
+			gen_meta_member_skip_read_value(os, m_define.m_template_parameters[1], "v");
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -351,7 +358,7 @@ namespace lua_gen
 		case e_base_type::type:
 		{
 			os << tabs(tab);
-			gem_meta_member_skip_read_value(os, m_define, "o." + m_define.m_name);
+			gen_meta_member_skip_read_value(os, m_define, "o." + m_define.m_name);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
 			os << " return ec; end;";
@@ -362,7 +369,7 @@ namespace lua_gen
 		}
 	}
 
-	inline void gem_meta_member_read_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
+	inline void gen_meta_member_read_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
 	{
 		switch (m_define.m_type)
 		{
@@ -395,7 +402,7 @@ namespace lua_gen
 		}
 	}
 
-	inline void gem_meta_member_read(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
+	inline void gen_meta_member_read(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
 	{
 		switch (m_define.m_type)
 		{
@@ -412,7 +419,7 @@ namespace lua_gen
 		case e_base_type::string:
 		{
 			os << tabs(tab);
-			gem_meta_member_read_value(os, m_define, "o." + m_define.m_name);
+			gen_meta_member_read_value(os, m_define, "o." + m_define.m_name);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
 			os << " return ec; end;";
@@ -434,7 +441,7 @@ namespace lua_gen
 			}
 			os << tabs(tab) << "local v;" << std::endl;
 			os << tabs(tab) << "for i = 1 , len do ";
-			gem_meta_member_read_value(os, m_define.m_template_parameters[0], "v");
+			gen_meta_member_read_value(os, m_define.m_template_parameters[0], "v");
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -458,8 +465,8 @@ namespace lua_gen
 			os << tabs(tab) << "local k,v;" << std::endl;
 			os << tabs(tab) << "for i = 1 , len do" << std::endl;
 			os << tabs(tab + 1);
-			gem_meta_member_read_value(os, m_define.m_template_parameters[0], "k");
-			gem_meta_member_read_value(os, m_define.m_template_parameters[1], "v");
+			gen_meta_member_read_value(os, m_define.m_template_parameters[0], "k");
+			gen_meta_member_read_value(os, m_define.m_template_parameters[1], "v");
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -470,7 +477,7 @@ namespace lua_gen
 		case e_base_type::type:
 		{
 			os << tabs(tab);
-			gem_meta_member_read_value(os, m_define, "o." + m_define.m_name);
+			gen_meta_member_read_value(os, m_define, "o." + m_define.m_name);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
 			os << " return ec; end;";
@@ -481,7 +488,7 @@ namespace lua_gen
 		}
 	}
 
-	inline void gem_meta_member_write_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
+	inline void gen_meta_member_write_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
 	{
 		switch (m_define.m_type)
 		{
@@ -514,7 +521,41 @@ namespace lua_gen
 		}
 	}
 
-	inline void gem_meta_member_write(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
+  // Nous Xiong: add gen_meta_member_size_of_value
+  inline void gen_meta_member_size_of_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
+  {
+    switch (m_define.m_type)
+    {
+    case e_base_type::uint8:
+    case e_base_type::int8:
+    case e_base_type::uint16:
+    case e_base_type::int16:
+    case e_base_type::uint32:
+    case e_base_type::int32:
+    case e_base_type::uint64:
+    case e_base_type::int64:
+    case e_base_type::float32:
+    case e_base_type::float64:
+    {
+      os << "size = size + szof_" << type_name(m_define.m_type, m_define.m_fixed) << "(" << var_name << ");";
+      break;
+    }
+    case e_base_type::string:
+    {
+      os << "size = size + szof_str(" << var_name << ");";
+      break;
+    }
+    case e_base_type::type:
+    {
+      os << "size = size + " << var_name << ":size_of();";
+      break;
+    }
+    default:
+    {}
+    }
+  }
+
+	inline void gen_meta_member_write(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
 	{
 		switch (m_define.m_type)
 		{
@@ -531,7 +572,7 @@ namespace lua_gen
 		case e_base_type::string:
 		{
 			os << tabs(tab);
-			gem_meta_member_write_value(os, m_define, "o." + m_define.m_name);
+			gen_meta_member_write_value(os, m_define, "o." + m_define.m_name);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
 			os << " return ec; end;";
@@ -552,7 +593,7 @@ namespace lua_gen
 			os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
 			os << tabs(tab) << "local v;" << std::endl;
 			os << tabs(tab) << "for i = 1,len do v = o." << m_define.m_name << "[i]; ";
-			gem_meta_member_write_value(os, m_define.m_template_parameters[0], "v");
+			gen_meta_member_write_value(os, m_define.m_template_parameters[0], "v");
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -572,8 +613,8 @@ namespace lua_gen
 			os << tabs(tab) << "local ec  = wt_u32(buf,len);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
 			os << tabs(tab) << "for k,v in ipairs( o." << m_define.m_name << ") do ";
-			gem_meta_member_write_value(os, m_define.m_template_parameters[0], "k");
-			gem_meta_member_write_value(os, m_define.m_template_parameters[1], "v");
+			gen_meta_member_write_value(os, m_define.m_template_parameters[0], "k");
+			gen_meta_member_write_value(os, m_define.m_template_parameters[1], "v");
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -583,7 +624,7 @@ namespace lua_gen
 		case e_base_type::type:
 		{
 			os << tabs(tab);
-			gem_meta_member_write_value(os, m_define, "o." + m_define.m_name);
+			gen_meta_member_write_value(os, m_define, "o." + m_define.m_name);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
 			os << " return ec; end;";
@@ -593,6 +634,59 @@ namespace lua_gen
 		{}
 		}
 	}
+
+  // Nous Xiong: add gen_meta_member_size_of
+  inline void gen_meta_member_size_of(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
+  {
+    switch (m_define.m_type)
+    {
+    case e_base_type::uint8:
+    case e_base_type::int8:
+    case e_base_type::uint16:
+    case e_base_type::int16:
+    case e_base_type::uint32:
+    case e_base_type::int32:
+    case e_base_type::uint64:
+    case e_base_type::int64:
+    case e_base_type::float32:
+    case e_base_type::float64:
+    case e_base_type::string:
+    {
+      os << tabs(tab);
+      gen_meta_member_size_of_value(os, m_define, "o." + m_define.m_name);
+      os << std::endl;
+      break;
+    }
+    case e_base_type::list:
+    {
+      os << tabs(tab) << "local len = #o." << m_define.m_name << ";" << std::endl;
+      os << tabs(tab) << "size = size + szof_u32(len);" << std::endl;
+      os << tabs(tab) << "local v;" << std::endl;
+      os << tabs(tab) << "for i = 1,len do v = o." << m_define.m_name << "[i]; ";
+      gen_meta_member_size_of_value(os, m_define.m_template_parameters[0], "v");
+      os << " end;" << std::endl;
+      break;
+    }
+    case e_base_type::map:
+    {
+      os << tabs(tab) << "local len = #o." << m_define.m_name << ";" << std::endl;
+      os << tabs(tab) << "size = size + szof_u32(len);" << std::endl;
+      os << tabs(tab) << "for k,v in ipairs( o." << m_define.m_name << ") do ";
+      gen_meta_member_size_of_value(os, m_define.m_template_parameters[0], "k");
+      gen_meta_member_size_of_value(os, m_define.m_template_parameters[1], "v");
+      os << " end;" << std::endl;
+      break;
+    }
+    case e_base_type::type:
+    {
+      os << tabs(tab);
+      gen_meta_member_size_of_value(os, m_define, "o." + m_define.m_name);
+      os << std::endl;
+    }
+    default:
+    {}
+    }
+  }
 
 	namespace lua_5_2
 	{
@@ -704,7 +798,7 @@ local wt_tag = adata_m.wt_tag;
 					os << tabs(tab + 1) << "if (read_tag % " << int64_mask(count+1) << ") >= " << int64_mask(count) << " then" << std::endl;
 				}
 				os << tabs(tab + 2) << "read_tag = read_tag - " << int64_mask(count) << ";" << std::endl;
-				gem_meta_member_skip_read(os, m_define, tab + 2, ctx);
+				gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -736,12 +830,12 @@ local wt_tag = adata_m.wt_tag;
 				os << tabs(tab + 2) << "read_tag = read_tag - " << int64_mask(count) << ";" << std::endl;
 				if (!m_define.m_deleted)
 				{
-					gem_meta_member_read(os, m_define, tab + 2, ctx);
+					gen_meta_member_read(os, m_define, tab + 2, ctx);
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
 					//os << tabs(tab + 1) << "else" << std::endl;
 				}
         // Nous Xiong: comment skip read bcz read_tag already marked which member exist
-				//gem_meta_member_skip_read(os, m_define, tab + 2, ctx);
+				//gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -791,7 +885,7 @@ local wt_tag = adata_m.wt_tag;
 					{
 						os << tabs(tab + 1) << "if (write_tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
 					}
-					gem_meta_member_write(os, m_define, tab + 2, ctx);
+					gen_meta_member_write(os, m_define, tab + 2, ctx);
 					os << tabs(tab + 1) << "end" << std::endl;
 				}
 				write_mask <<= 1;
@@ -801,11 +895,62 @@ local wt_tag = adata_m.wt_tag;
 			os << tabs(tab) << "end," << std::endl;
 		}
 
+    // Nous Xiong: add gen_meta_size_of
+    void gen_meta_size_of(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    {
+      os << tabs(tab) << "size_of = function(o)" << std::endl;
+      os << tabs(tab + 1) << "local size = 0" << std::endl;
+      os << tabs(tab + 1) << "local tag = 0" << std::endl;
+      int64_t write_mask = 1;
+      int count = 1;
+      for (auto& m_define : t_define.m_members)
+      {
+        if (!m_define.m_deleted)
+        {
+          if (m_define.is_multi())
+          {
+            os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << int64_mask(count) << "; end;" << std::endl;
+          }
+          else
+          {
+            os << tabs(tab + 1) << "tag = tag + " << int64_mask(count) << ";" << std::endl;
+          }
+        }
+        write_mask <<= 1;
+        ++count;
+      }
+
+      count = 1;
+      write_mask = 1;
+      for (auto& m_define : t_define.m_members)
+      {
+        if (!m_define.m_deleted)
+        {
+          if (count == 63)
+          {
+            os << tabs(tab + 1) << "if tag >= " << write_mask << " then" << std::endl;
+          }
+          else
+          {
+            os << tabs(tab + 1) << "if (tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
+          }
+          gen_meta_member_size_of(os, m_define, tab + 2, ctx);
+          os << tabs(tab + 1) << "end" << std::endl;
+        }
+        write_mask <<= 1;
+        ++count;
+      }
+      os << tabs(tab + 1) << "size = size + szof_i64(tag);" << std::endl;
+      os << tabs(tab + 1) << "return size;" << std::endl;
+      os << tabs(tab) << "end," << std::endl;
+    }
+
 		inline void gen_meta_imp(std::ostream& os, const type_define& t_define, int idx, gen_contex& ctx)
 		{
 			os << "mc = {" << std::endl;
 			os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
-			gen_meta_skip_read(os, t_define, 1, ctx);
+      gen_meta_skip_read(os, t_define, 1, ctx);
+      gen_meta_size_of(os, t_define, 1, ctx);
 			gen_meta_read(os, t_define, 1, ctx);
 			gen_meta_write(os, t_define, 1, ctx);
 			os << "};" << std::endl;
@@ -997,7 +1142,7 @@ local wt_tag = adata_m.wt_tag;
 					os << tabs(tab + 1) << "if (read_tag % " << (read_mask << 1) << ") >= " << read_mask << " then" << std::endl;
 				}
 				os << tabs(tab + 2) << "read_tag = read_tag - " << read_mask << ";" << std::endl;
-				gem_meta_member_skip_read(os, m_define, tab + 2,ctx);
+				gen_meta_member_skip_read(os, m_define, tab + 2,ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1029,12 +1174,12 @@ local wt_tag = adata_m.wt_tag;
 				os << tabs(tab + 2) << "read_tag = read_tag - " << read_mask << ";" << std::endl;
 				if (!m_define.m_deleted)
 				{
-					gem_meta_member_read(os, m_define, tab + 2,ctx);
+					gen_meta_member_read(os, m_define, tab + 2,ctx);
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
 					//os << tabs(tab + 1) << "else" << std::endl;
 				}
         // Nous Xiong: comment skip read bcz read_tag already marked which member exist
-				// gem_meta_member_skip_read(os, m_define, tab + 2,ctx);
+				// gen_meta_member_skip_read(os, m_define, tab + 2,ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1082,7 +1227,7 @@ local wt_tag = adata_m.wt_tag;
 					{
 						os << tabs(tab + 1) << "if (write_tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
 					}
-					gem_meta_member_write(os, m_define, tab + 2,ctx);
+					gen_meta_member_write(os, m_define, tab + 2,ctx);
 					os << tabs(tab + 1) << "end" << std::endl;
 				}
 				write_mask <<= 1;
@@ -1092,11 +1237,60 @@ local wt_tag = adata_m.wt_tag;
 			os << tabs(tab) << "end," << std::endl;
 		}
 
+    // Nous Xiong: add gen_meta_size_of
+    void gen_meta_size_of(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    {
+      os << tabs(tab) << "size_of = function(o)" << std::endl;
+      os << tabs(tab + 1) << "local size = 0" << std::endl;
+      os << tabs(tab + 1) << "local tag = 0" << std::endl;
+      int64_t write_mask = 1;
+      int count = 1;
+      for (auto& m_define : t_define.m_members)
+      {
+        if (!m_define.m_deleted)
+        {
+          if (m_define.is_multi())
+          {
+            os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+          }
+          else
+          {
+            os << tabs(tab + 1) << "tag = tag + " << write_mask << ";" << std::endl;
+          }
+        }
+        write_mask <<= 1;
+      }
+
+      write_mask = 1;
+      for (auto& m_define : t_define.m_members)
+      {
+        if (!m_define.m_deleted)
+        {
+          if (count == 63)
+          {
+            os << tabs(tab + 1) << "if tag >= " << write_mask << " then" << std::endl;
+          }
+          else
+          {
+            os << tabs(tab + 1) << "if (tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
+          }
+          gen_meta_member_size_of(os, m_define, tab + 2, ctx);
+          os << tabs(tab + 1) << "end" << std::endl;
+        }
+        write_mask <<= 1;
+        ++count;
+      }
+      os << tabs(tab + 1) << "size = size + szof_i64(tag);" << std::endl;
+      os << tabs(tab + 1) << "return size;" << std::endl;
+      os << tabs(tab) << "end," << std::endl;
+    }
+
 		inline void gen_meta_imp(std::ostream& os, const type_define& t_define, int idx, gen_contex& ctx)
 		{
 			os << "mc = {" << std::endl;
 			os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
-			gen_meta_skip_read(os, t_define, 1, ctx);
+      gen_meta_skip_read(os, t_define, 1, ctx);
+      gen_meta_size_of(os, t_define, 1, ctx);
 			gen_meta_read(os, t_define, 1, ctx);
 			gen_meta_write(os, t_define, 1, ctx);
 			os << "};" << std::endl;
@@ -1251,7 +1445,7 @@ local set_read_data = adata_m.set_read_data;
 			{
 				os << tabs(tab + 1) << "if (read_tag % " << (read_mask << 1) << ") >= " << read_mask << " then" << std::endl;
 				os << tabs(tab + 2) << "read_tag = read_tag - " << read_mask << ";" << std::endl;
-				gem_meta_member_skip_read(os, m_define, tab + 2, ctx);
+				gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1276,12 +1470,12 @@ local set_read_data = adata_m.set_read_data;
 				os << tabs(tab + 2) << "read_tag = read_tag - " << read_mask << ";" << std::endl;
 				if (!m_define.m_deleted)
 				{
-					gem_meta_member_read(os, m_define, tab + 2, ctx);
+					gen_meta_member_read(os, m_define, tab + 2, ctx);
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
 					//os << tabs(tab + 1) << "else" << std::endl;
 				}
         // Nous Xiong: comment skip read bcz read_tag already marked which member exist
-				//gem_meta_member_skip_read(os, m_define, tab + 2, ctx);
+				//gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1322,7 +1516,7 @@ local set_read_data = adata_m.set_read_data;
 				if (!m_define.m_deleted)
 				{
 					os << tabs(tab + 1) << "if (write_tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
-					gem_meta_member_write(os, m_define, tab + 2, ctx);
+					gen_meta_member_write(os, m_define, tab + 2, ctx);
 					os << tabs(tab + 1) << "end" << std::endl;
 				}
 				write_mask <<= 1;
@@ -1332,11 +1526,60 @@ local set_read_data = adata_m.set_read_data;
 			os << tabs(tab) << "end," << std::endl;
 		}
 
+    // Nous Xiong: add gen_meta_size_of
+    void gen_meta_size_of(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    {
+      os << tabs(tab) << "size_of = function(o)" << std::endl;
+      os << tabs(tab + 1) << "local size = 0" << std::endl;
+      os << tabs(tab + 1) << "local tag = 0" << std::endl;
+      int64_t write_mask = 1;
+      int count = 1;
+      for (auto& m_define : t_define.m_members)
+      {
+        if (!m_define.m_deleted)
+        {
+          if (m_define.is_multi())
+          {
+            os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+          }
+          else
+          {
+            os << tabs(tab + 1) << "tag = tag + " << write_mask << ";" << std::endl;
+          }
+        }
+        write_mask <<= 1;
+      }
+
+      write_mask = 1;
+      for (auto& m_define : t_define.m_members)
+      {
+        if (!m_define.m_deleted)
+        {
+          if (count == 63)
+          {
+            os << tabs(tab + 1) << "if tag >= " << write_mask << " then" << std::endl;
+          }
+          else
+          {
+            os << tabs(tab + 1) << "if (tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
+          }
+          gen_meta_member_size_of(os, m_define, tab + 2, ctx);
+          os << tabs(tab + 1) << "end" << std::endl;
+        }
+        write_mask <<= 1;
+        ++count;
+      }
+      os << tabs(tab + 1) << "size = size + szof_u64(tag);" << std::endl;
+      os << tabs(tab + 1) << "return size;" << std::endl;
+      os << tabs(tab) << "end," << std::endl;
+    }
+
 		inline void gen_meta_imp(std::ostream& os, const type_define& t_define, int idx, gen_contex& ctx)
 		{
 			os << "mc = {" << std::endl;
 			os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
-			gen_meta_skip_read(os, t_define, 1, ctx);
+      gen_meta_skip_read(os, t_define, 1, ctx);
+      gen_meta_size_of(os, t_define, 1, ctx);
 			gen_meta_read(os, t_define, 1, ctx);
 			gen_meta_write(os, t_define, 1, ctx);
 			os << "};" << std::endl;

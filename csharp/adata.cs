@@ -75,7 +75,6 @@ namespace adata
     private trace_info[] trace_infos;
     private int trace_info_count;
     private StringBuilder trace_build;
-    public int write_bytes;
     public error_code_t error_code;
 
     static private String[] err_msgs = {"",
@@ -97,7 +96,6 @@ namespace adata
       this.trace_info_count = 64;
       trace_infos = new trace_info[64];
       trace_build = new StringBuilder();
-      write_bytes = 0;
       error_code = error_code_t.success;
     }
 
@@ -110,7 +108,6 @@ namespace adata
       value = new UType();
       this.trace_info_count = 64;
       trace_infos = new trace_info[64];
-      write_bytes = 0;
       error_code = error_code_t.success;
     }
     public void set(byte[] the_buffer)
@@ -126,7 +123,6 @@ namespace adata
       this.read_len = 0;
       this.write_len = 0;
       trace_info_count = 0;
-      write_bytes = 0;
       error_code = error_code_t.success;
     }
 
@@ -172,8 +168,6 @@ namespace adata
     public void set_error_code(error_code_t ec) { error_code = ec; }
 
     public bool error() { return error_code != error_code_t.success; }
-
-    public void add_write_byte(int count) { write_bytes += count; }
 
     public void skip_read(UInt32 len)
     {
@@ -278,44 +272,44 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,sbyte value)
+    public static Int32 fix_size_of(sbyte value)
     {
-      stream.write_bytes += 1;
+      return 1;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,byte value)
+    public static Int32 fix_size_of(byte value)
     {
-      stream.write_bytes += 1;
+      return 1;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,Int16 value)
+    public static Int32 fix_size_of(Int16 value)
     {
-      stream.write_bytes += 2;
+      return 2;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,UInt16 value)
+    public static Int32 fix_size_of(UInt16 value)
     {
-      stream.write_bytes += 2;
+      return 2;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,Int32 value)
+    public static Int32 fix_size_of(Int32 value)
     {
-      stream.write_bytes += 4;
+      return 4;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,UInt32 value)
+    public static Int32 fix_size_of(UInt32 value)
     {
-      stream.write_bytes += 4;
+      return 4;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,Int64 value)
+    public static Int32 fix_size_of(Int64 value)
     {
-      stream.write_bytes += 8;
+      return 8;
     }
 
-    public static void fix_pre_write(zero_copy_buffer stream,UInt64 value)
+    public static Int32 fix_size_of(UInt64 value)
     {
-      stream.write_bytes += 8;
+      return 8;
     }
 
     public static void skip_read(zero_copy_buffer stream, ref sbyte value)
@@ -546,51 +540,51 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static void pre_write(zero_copy_buffer stream, sbyte value)
+    public static Int32 size_of(sbyte value)
     {
       if ((value & const_tag_as_type) > 0)
       {
-        stream.write_bytes += 2;
+        return 2;
       }
       else
       {
-        stream.write_bytes += 1;
+        return 1;
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, byte value)
+    public static Int32 size_of(byte value)
     {
       if (value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else
       {
-        stream.write_bytes += 2;
+        return 2;
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, UInt16 value)
+    public static Int32 size_of(UInt16 value)
     {
       if (value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else if (value < 0x100)
       {
-        stream.write_bytes += 2;
+        return 2;
       }
       else
       {
-        stream.write_bytes += 3;
+        return 3;
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, Int16 value)
+    public static Int32 size_of(Int16 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else
       {
@@ -600,44 +594,44 @@ namespace adata
         }
         if (value < 0x100)
         {
-          stream.write_bytes += 2;
+          return 2;
         }
         else
         {
-          stream.write_bytes += 3;
+          return 3;
         }
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, UInt32 value)
+    public static Int32 size_of(UInt32 value)
     {
       if (value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else if (value < 0x100)
       {
-        stream.write_bytes += 2;
+        return 2;
       }
       else if (value < 0x10000)
       {
-        stream.write_bytes += 3;
+        return 3;
       }
       else if (value < 0x1000000)
       {
-        stream.write_bytes += 4;
+        return 4;
       }
       else
       {
-        stream.write_bytes += 5;
+        return 5;
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, Int32 value)
+    public static Int32 size_of(Int32 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else
       {
@@ -647,68 +641,68 @@ namespace adata
         }
         if (value < 0x100)
         {
-          stream.write_bytes += 2;
+          return 2;
         }
         if (value < 0x10000)
         {
-          stream.write_bytes += 3;
+          return 3;
         }
         if (value < 0x1000000)
         {
-          stream.write_bytes += 4;
+          return 4;
         }
         else
         {
-          stream.write_bytes += 5;
+          return 5;
         }
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, UInt64 value)
+    public static Int32 size_of(UInt64 value)
     {
       if (value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else if (value < 0x100)
       {
-        stream.write_bytes += 2;
+        return 2;
       }
       else if (value < 0x10000)
       {
-        stream.write_bytes += 3;
+        return 3;
       }
       else if (value < 0x1000000)
       {
-        stream.write_bytes += 4;
+        return 4;
       }
       else if (value < 0x100000000)
       {
-        stream.write_bytes += 5;
+        return 5;
       }
       else if (value < 0x10000000000)
       {
-        stream.write_bytes += 6;
+        return 6;
       }
       else if (value < 0x1000000000000)
       {
-        stream.write_bytes += 7;
+        return 7;
       }
       else if (value < 0x100000000000000)
       {
-        stream.write_bytes += 8;
+        return 8;
       }
       else
       {
-        stream.write_bytes += 9;
+        return 9;
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, Int64 value)
+    public static Int32 size_of(Int64 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
-        stream.write_bytes += 1;
+        return 1;
       }
       else
       {
@@ -718,47 +712,47 @@ namespace adata
         }
         if (value < 0x100)
         {
-          stream.write_bytes += 2;
+          return 2;
         }
         if (value < 0x10000)
         {
-          stream.write_bytes += 3;
+          return 3;
         }
         if (value < 0x1000000)
         {
-          stream.write_bytes += 4;
+          return 4;
         }
         if (value < 0x100000000)
         {
-          stream.write_bytes += 5;
+          return 5;
         }
         if (value < 0x10000000000)
         {
-          stream.write_bytes += 6;
+          return 6;
         }
         if (value < 0x1000000000000)
         {
-          stream.write_bytes += 7;
+          return 7;
         }
         if (value < 0x100000000000000)
         {
-          stream.write_bytes += 8;
+          return 8;
         }
         else
         {
-          stream.write_bytes += 9;
+          return 9;
         }
       }
     }
 
-    public static void pre_write(zero_copy_buffer stream, float value)
+    public static Int32 size_of(float value)
     {
-      stream.write_bytes += 4;
+      return 4;
     }
 
-    public static void pre_write(zero_copy_buffer stream, double value)
+    public static Int32 size_of(double value)
     {
-      stream.write_bytes += 8;
+      return 8;
     }
 
     public static void fix_stream_read(zero_copy_buffer stream, ref sbyte value)

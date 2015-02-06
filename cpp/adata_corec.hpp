@@ -714,148 +714,137 @@ namespace adata { namespace lua{
 	}
 
 	template <typename T>
-	ADATA_INLINE int pre_write_fix_value(lua_State * L)
+	ADATA_INLINE int size_of_fix_value(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		zbuf->m_write_bytes+= sizeof(T);
+    lua_pushinteger(L, adata::fix_size_of(T()));
 		return 1;
 	}
 
 	template <typename T>
-	ADATA_INLINE int pre_write_value(lua_State * L)
+	ADATA_INLINE int size_of_value(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		T v = (T)lua_tointeger(L, 2);
-		adata::pre_write(v,*zbuf);
-		lua_pushinteger(L, zbuf->error_code());
+		T v = (T)lua_tointeger(L, 1);
+		int32_t s = adata::size_of(v);
+    lua_pushinteger(L, s);
 		return 1;
 	}
 
-	static int pre_write_fix_int8(lua_State * L)
+	static int size_of_fix_int8(lua_State * L)
 	{
-		return pre_write_fix_value<int8_t>(L);
+		return size_of_fix_value<int8_t>(L);
 	}
 
-	static int pre_write_fix_uint8(lua_State * L)
+	static int size_of_fix_uint8(lua_State * L)
 	{
-		return pre_write_fix_value<uint8_t>(L);
+		return size_of_fix_value<uint8_t>(L);
 	}
 
-	static int pre_write_fix_int16(lua_State * L)
+	static int size_of_fix_int16(lua_State * L)
 	{
-		return pre_write_fix_value<int16_t>(L);
+		return size_of_fix_value<int16_t>(L);
 	}
 
-	static int pre_write_fix_uint16(lua_State * L)
+	static int size_of_fix_uint16(lua_State * L)
 	{
-		return pre_write_fix_value<uint16_t>(L);
+		return size_of_fix_value<uint16_t>(L);
 	}
 
-	static int pre_write_fix_int32(lua_State * L)
+	static int size_of_fix_int32(lua_State * L)
 	{
-		return pre_write_fix_value<int32_t>(L);
+		return size_of_fix_value<int32_t>(L);
 	}
 
-	static int pre_write_fix_uint32(lua_State * L)
+	static int size_of_fix_uint32(lua_State * L)
 	{
-		return pre_write_fix_value<uint32_t>(L);
+		return size_of_fix_value<uint32_t>(L);
 	}
 
-	static int pre_write_fix_int64(lua_State * L)
+	static int size_of_fix_int64(lua_State * L)
 	{
-		return pre_write_fix_value<int64_t>(L);
+		return size_of_fix_value<int64_t>(L);
 	}
 
-	static int pre_write_fix_uint64(lua_State * L)
+	static int size_of_fix_uint64(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		uint64_t v;
-		get_lua_number64(L, 2, v);
-		adata::pre_write(v,*zbuf);
-		return 1;
+    return size_of_fix_value<uint64_t>(L);
 	}
 
-	static int pre_write_int8(lua_State * L)
+	static int size_of_int8(lua_State * L)
 	{
-		return pre_write_value<int8_t>(L);
+		return size_of_value<int8_t>(L);
 	}
 
-	static int pre_write_uint8(lua_State * L)
+	static int size_of_uint8(lua_State * L)
 	{
-		return pre_write_value<uint8_t>(L);
+		return size_of_value<uint8_t>(L);
 	}
 
-	static int pre_write_int16(lua_State * L)
+	static int size_of_int16(lua_State * L)
 	{
-		return pre_write_value<int16_t>(L);
+		return size_of_value<int16_t>(L);
 	}
 
-	static int pre_write_uint16(lua_State * L)
+	static int size_of_uint16(lua_State * L)
 	{
-		return pre_write_value<uint16_t>(L);
+		return size_of_value<uint16_t>(L);
 	}
 
-	static int pre_write_int32(lua_State * L)
+	static int size_of_int32(lua_State * L)
 	{
-		return pre_write_value<int32_t>(L);
+		return size_of_value<int32_t>(L);
 	}
 
-	static int pre_write_uint32(lua_State * L)
+	static int size_of_uint32(lua_State * L)
 	{
-		return pre_write_value<uint32_t>(L);
+		return size_of_value<uint32_t>(L);
 	}
 
 #if LUA_VERSION_NUM < 503
-	static int pre_write_int64(lua_State * L)
+	static int size_of_int64(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v;
-		get_lua_number64(L, 2, v);
-		adata::pre_write(v, *zbuf);
+		get_lua_number64(L, 1, v);
+		int32_t s = adata::size_of(v);
+    lua_pushinteger(L, s);
 		return 1;
 	}
 #else
-	static int pre_write_int64(lua_State * L)
+	static int size_of_int64(lua_State * L)
 	{
-		return pre_write_value<int64_t>(L);
+		return size_of_value<int64_t>(L);
 	}
 #endif
 
-	static int pre_write_uint64(lua_State * L)
+	static int size_of_uint64(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint64_t v;
-		get_lua_number64(L, 2, v);
-		adata::pre_write(v,*zbuf);
+		get_lua_number64(L, 1, v);
+		int32_t s = adata::size_of(v);
+    lua_pushinteger(L, s);
 		return 1;
 	}
 
-	static int pre_write_float32(lua_State * L)
+	static int size_of_float32(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		zbuf->m_write_bytes += sizeof(float);
+    int32_t s = adata::size_of(float());
+    lua_pushinteger(L, s);
 		return 1;
 	}
 
-	static int pre_write_float64(lua_State * L)
+	static int size_of_float64(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		zbuf->m_write_bytes += sizeof(float);
+    int32_t s = adata::size_of(double());
+    lua_pushinteger(L, s);
 		return 1;
 	}
 
-	static int pre_write_str(lua_State * L)
+	static int size_of_str(lua_State * L)
 	{
-		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		size_t slen = 0;
-		lua_Integer len = lua_tointeger(L, 3);
-		if (len > 0 && len < (lua_Integer)slen)
-		{
-			zbuf->set_error_code(sequence_length_overflow);
-			slen = 0;
-		}
-		adata::pre_write(slen, *zbuf);
-		zbuf->m_write_bytes += (int32_t)slen;
+    size_t len;
+    char const* str = lua_tolstring(L, 1, &len);
+    int32_t s = adata::size_of((int32_t)len);
+    s += (int32_t)len;
+    lua_pushinteger(L, s);
 		return 1;
 	}
 
@@ -946,25 +935,25 @@ namespace adata { namespace lua{
 			{ "wt_f32", write_float32 },
 			{ "wt_f64", write_float64 },
 			{ "wt_str", write_str },
-			{ "pre_wt_fixi8", pre_write_fix_int8 },
-			{ "pre_wt_fixu8", pre_write_fix_uint8 },
-			{ "pre_wt_fixi16", pre_write_fix_int16 },
-			{ "pre_wt_fixu16", pre_write_fix_uint16 },
-			{ "pre_wt_fixi32", pre_write_fix_int32 },
-			{ "pre_wt_fixu32", pre_write_fix_uint32 },
-			{ "pre_wt_fixi64", pre_write_fix_int64 },
-			{ "pre_wt_fixu64", pre_write_fix_uint64 },
-			{ "pre_wt_i8", pre_write_int8 },
-			{ "pre_wt_u8", pre_write_uint8 },
-			{ "pre_wt_i16", pre_write_int16 },
-			{ "pre_wt_u16", pre_write_uint16 },
-			{ "pre_wt_i32", pre_write_int32 },
-			{ "pre_wt_u32", pre_write_uint32 },
-			{ "pre_wt_i64", pre_write_int64 },
-			{ "pre_wt_u64", pre_write_uint64 },
-			{ "pre_wt_f32", pre_write_float32 },
-			{ "pre_wt_f64", pre_write_float64 },
-			{ "pre_wt_str", pre_write_str },
+			{ "szof_fixi8", size_of_fix_int8 },
+			{ "szof_fixu8", size_of_fix_uint8 },
+			{ "szof_fixi16", size_of_fix_int16 },
+			{ "szof_fixu16", size_of_fix_uint16 },
+			{ "szof_fixi32", size_of_fix_int32 },
+			{ "szof_fixu32", size_of_fix_uint32 },
+			{ "szof_fixi64", size_of_fix_int64 },
+			{ "szof_fixu64", size_of_fix_uint64 },
+			{ "szof_i8", size_of_int8 },
+			{ "szof_u8", size_of_uint8 },
+			{ "szof_i16", size_of_int16 },
+			{ "szof_u16", size_of_uint16 },
+			{ "szof_i32", size_of_int32 },
+			{ "szof_u32", size_of_uint32 },
+			{ "szof_i64", size_of_int64 },
+			{ "szof_u64", size_of_uint64 },
+			{ "szof_f32", size_of_float32 },
+			{ "szof_f64", size_of_float64 },
+			{ "szof_str", size_of_str },
 
 			{ NULL, NULL }
 		};
@@ -1060,25 +1049,25 @@ namespace adata { namespace lua{
 			{ "wt_f32"				, write_float32 },
 			{ "wt_f64"				, write_float64 },
 			{ "wt_str"				, write_str },
-			{ "pre_wt_fixi8"	, pre_write_fix_int8 },
-			{ "pre_wt_fixu8"	, pre_write_fix_uint8 },
-			{ "pre_wt_fixi16"	, pre_write_fix_int16 },
-			{ "pre_wt_fixu16"	, pre_write_fix_uint16 },
-			{ "pre_wt_fixi32"	, pre_write_fix_int32 },
-			{ "pre_wt_fixu32"	, pre_write_fix_uint32 },
-			{ "pre_wt_fixi64"	, pre_write_fix_int64 },
-			{ "pre_wt_fixu64"	, pre_write_fix_uint64 },
-			{ "pre_wt_i8"			, pre_write_int8 },
-			{ "pre_wt_u8"			, pre_write_uint8 },
-			{ "pre_wt_i16"		, pre_write_int16 },
-			{ "pre_wt_u16"		, pre_write_uint16 },
-			{ "pre_wt_i32"		, pre_write_int32 },
-			{ "pre_wt_u32"		, pre_write_uint32 },
-			{ "pre_wt_i64"		, pre_write_int64 },
-			{ "pre_wt_u64"		, pre_write_uint64 },
-			{ "pre_wt_f32"		, pre_write_float32 },
-			{ "pre_wt_f64"		, pre_write_float64 },
-			{ "pre_wt_str"		, pre_write_str },
+			{ "szof_fixi8"	, size_of_fix_int8 },
+			{ "szof_fixu8"	, size_of_fix_uint8 },
+			{ "szof_fixi16"	, size_of_fix_int16 },
+			{ "szof_fixu16"	, size_of_fix_uint16 },
+			{ "szof_fixi32"	, size_of_fix_int32 },
+			{ "szof_fixu32"	, size_of_fix_uint32 },
+			{ "szof_fixi64"	, size_of_fix_int64 },
+			{ "szof_fixu64"	, size_of_fix_uint64 },
+			{ "szof_i8"			, size_of_int8 },
+			{ "szof_u8"			, size_of_uint8 },
+			{ "szof_i16"		, size_of_int16 },
+			{ "szof_u16"		, size_of_uint16 },
+			{ "szof_i32"		, size_of_int32 },
+			{ "szof_u32"		, size_of_uint32 },
+			{ "szof_i64"		, size_of_int64 },
+			{ "szof_u64"		, size_of_uint64 },
+			{ "szof_f32"		, size_of_float32 },
+			{ "szof_f64"		, size_of_float64 },
+			{ "szof_str"		, size_of_str },
 
 			{ NULL, NULL }
 		};

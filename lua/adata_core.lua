@@ -48,17 +48,17 @@ ffi.cdef[[
   typedef int (__stdcall *adata_write_uint64_ft)(void * buf, uint64_t v);
   typedef int (__stdcall *adata_write_float32_ft)(void * buf, float v);
   typedef int (__stdcall *adata_write_float64_ft)(void * buf, double v);
-  typedef int (__stdcall *adata_pre_write_int8_ft)(void * buf, int8_t v);
-  typedef int (__stdcall *adata_pre_write_uint8_ft)(void * buf, uint8_t v);
-  typedef int (__stdcall *adata_pre_write_int16_ft)(void * buf, int16_t v);
-  typedef int (__stdcall *adata_pre_write_uint16_ft)(void * buf, uint16_t v);
-  typedef int (__stdcall *adata_pre_write_int32_ft)(void * buf, int32_t v);
-  typedef int (__stdcall *adata_pre_write_uint32_ft)(void * buf, uint32_t v);
-  typedef int (__stdcall *adata_pre_write_int64_ft)(void * buf, int64_t v);
-  typedef int (__stdcall *adata_pre_write_uint64_ft)(void * buf, uint64_t v);
-  typedef int (__stdcall *adata_pre_write_float32_ft)(void * buf, float v);
-  typedef int (__stdcall *adata_pre_write_float64_ft)(void * buf, double v);
-  typedef int (__stdcall *adata_pre_write_str_ft)(void * buf, uint32_t slen, size_t len);
+  typedef int (__stdcall *adata_size_of_int8_ft)(int8_t v);
+  typedef int (__stdcall *adata_size_of_uint8_ft)(uint8_t v);
+  typedef int (__stdcall *adata_size_of_int16_ft)(int16_t v);
+  typedef int (__stdcall *adata_size_of_uint16_ft)(uint16_t v);
+  typedef int (__stdcall *adata_size_of_int32_ft)(int32_t v);
+  typedef int (__stdcall *adata_size_of_uint32_ft)(uint32_t v);
+  typedef int (__stdcall *adata_size_of_int64_ft)(int64_t v);
+  typedef int (__stdcall *adata_size_of_uint64_ft)(uint64_t v);
+  typedef int (__stdcall *adata_size_of_float32_ft)(float v);
+  typedef int (__stdcall *adata_size_of_float64_ft)(double v);
+  typedef int (__stdcall *adata_size_of_str_ft)(size_t len);
 ]]
 
 local adata_new_buf,
@@ -131,25 +131,25 @@ local adata_new_buf,
   adata_write_uint64,
   adata_write_float32,
   adata_write_float64,
-  adata_pre_write_fix_int8,
-  adata_pre_write_fix_uint8,
-  adata_pre_write_fix_int16,
-  adata_pre_write_fix_uint16,
-  adata_pre_write_fix_int32,
-  adata_pre_write_fix_uint32,
-  adata_pre_write_fix_int64,
-  adata_pre_write_fix_uint64,
-  adata_pre_write_int8,
-  adata_pre_write_uint8,
-  adata_pre_write_int16,
-  adata_pre_write_uint16,
-  adata_pre_write_int32,
-  adata_pre_write_uint32,
-  adata_pre_write_int64,
-  adata_pre_write_uint64,
-  adata_pre_write_float32,
-  adata_pre_write_float64,
-  adata_pre_write_str= jcore.get_functions();
+  adata_size_of_fix_int8,
+  adata_size_of_fix_uint8,
+  adata_size_of_fix_int16,
+  adata_size_of_fix_uint16,
+  adata_size_of_fix_int32,
+  adata_size_of_fix_uint32,
+  adata_size_of_fix_int64,
+  adata_size_of_fix_uint64,
+  adata_size_of_int8,
+  adata_size_of_uint8,
+  adata_size_of_int16,
+  adata_size_of_uint16,
+  adata_size_of_int32,
+  adata_size_of_uint32,
+  adata_size_of_int64,
+  adata_size_of_uint64,
+  adata_size_of_float32,
+  adata_size_of_float64,
+  adata_size_of_str= jcore.get_functions();
 
   adata_new_buf = ffi.cast("adata_new_buf_ft",adata_new_buf);
   adata_del_buf = ffi.cast("adata_buf_opt_ft",adata_del_buf);
@@ -221,25 +221,25 @@ local adata_new_buf,
   adata_write_uint64 = ffi.cast("adata_write_uint64_ft",adata_write_uint64);
   adata_write_float32 = ffi.cast("adata_write_float32_ft",adata_write_float32);
   adata_write_float64 = ffi.cast("adata_write_float64_ft",adata_write_float64);
-  adata_pre_write_fix_int8 = ffi.cast("adata_pre_write_int8_ft",adata_pre_write_fix_int8);
-  adata_pre_write_fix_uint8 = ffi.cast("adata_pre_write_uint8_ft",adata_pre_write_fix_uint8);
-  adata_pre_write_fix_int16 = ffi.cast("adata_pre_write_int16_ft",adata_pre_write_fix_int16);
-  adata_pre_write_fix_uint16 = ffi.cast("adata_pre_write_uint16_ft",adata_pre_write_fix_uint16);
-  adata_pre_write_fix_int32 = ffi.cast("adata_pre_write_int32_ft",adata_pre_write_fix_int32);
-  adata_pre_write_fix_uint32 = ffi.cast("adata_pre_write_uint32_ft",adata_pre_write_fix_uint32);
-  adata_pre_write_fix_int64 = ffi.cast("adata_pre_write_int64_ft",adata_pre_write_fix_int64);
-  adata_pre_write_fix_uint64 = ffi.cast("adata_pre_write_uint64_ft",adata_pre_write_fix_uint64);
-  adata_pre_write_int8 = ffi.cast("adata_pre_write_int8_ft",adata_pre_write_int8);
-  adata_pre_write_uint8 = ffi.cast("adata_pre_write_uint8_ft",adata_pre_write_uint8);
-  adata_pre_write_int16 = ffi.cast("adata_pre_write_int16_ft",adata_pre_write_int16);
-  adata_pre_write_uint16 = ffi.cast("adata_pre_write_uint16_ft",adata_pre_write_uint16);
-  adata_pre_write_int32 = ffi.cast("adata_pre_write_int32_ft",adata_pre_write_int32);
-  adata_pre_write_uint32 = ffi.cast("adata_pre_write_uint32_ft",adata_pre_write_uint32);
-  adata_pre_write_int64 = ffi.cast("adata_pre_write_int64_ft",adata_pre_write_int64);
-  adata_pre_write_uint64 = ffi.cast("adata_pre_write_uint64_ft",adata_pre_write_uint64);
-  adata_pre_write_float32 = ffi.cast("adata_pre_write_float32_ft",adata_pre_write_float32);
-  adata_pre_write_float64 = ffi.cast("adata_pre_write_float64_ft",adata_pre_write_float64);
-  adata_pre_write_str = ffi.cast("adata_pre_write_str_ft",adata_pre_write_str);
+  adata_size_of_fix_int8 = ffi.cast("adata_size_of_int8_ft",adata_size_of_fix_int8);
+  adata_size_of_fix_uint8 = ffi.cast("adata_size_of_uint8_ft",adata_size_of_fix_uint8);
+  adata_size_of_fix_int16 = ffi.cast("adata_size_of_int16_ft",adata_size_of_fix_int16);
+  adata_size_of_fix_uint16 = ffi.cast("adata_size_of_uint16_ft",adata_size_of_fix_uint16);
+  adata_size_of_fix_int32 = ffi.cast("adata_size_of_int32_ft",adata_size_of_fix_int32);
+  adata_size_of_fix_uint32 = ffi.cast("adata_size_of_uint32_ft",adata_size_of_fix_uint32);
+  adata_size_of_fix_int64 = ffi.cast("adata_size_of_int64_ft",adata_size_of_fix_int64);
+  adata_size_of_fix_uint64 = ffi.cast("adata_size_of_uint64_ft",adata_size_of_fix_uint64);
+  adata_size_of_int8 = ffi.cast("adata_size_of_int8_ft",adata_size_of_int8);
+  adata_size_of_uint8 = ffi.cast("adata_size_of_uint8_ft",adata_size_of_uint8);
+  adata_size_of_int16 = ffi.cast("adata_size_of_int16_ft",adata_size_of_int16);
+  adata_size_of_uint16 = ffi.cast("adata_size_of_uint16_ft",adata_size_of_uint16);
+  adata_size_of_int32 = ffi.cast("adata_size_of_int32_ft",adata_size_of_int32);
+  adata_size_of_uint32 = ffi.cast("adata_size_of_uint32_ft",adata_size_of_uint32);
+  adata_size_of_int64 = ffi.cast("adata_size_of_int64_ft",adata_size_of_int64);
+  adata_size_of_uint64 = ffi.cast("adata_size_of_uint64_ft",adata_size_of_uint64);
+  adata_size_of_float32 = ffi.cast("adata_size_of_float32_ft",adata_size_of_float32);
+  adata_size_of_float64 = ffi.cast("adata_size_of_float64_ft",adata_size_of_float64);
+  adata_size_of_str = ffi.cast("adata_size_of_str_ft",adata_size_of_str);
 
 m = {
   new_buf = function(s)
@@ -534,62 +534,62 @@ m = {
     ffi.copy(wptr,s,slen);
     return 0;
   end,
-  pre_wt_fixi8 = function(buf,v)
-    return adata_pre_write_fix_int8(buf,v);
+  szof_fixi8 = function(v)
+    return adata_size_of_fix_int8(v);
   end,
-  pre_wt_fixu8 = function(buf,v)
-    return adata_pre_write_fix_uint8(buf,v);
+  szof_fixu8 = function(v)
+    return adata_size_of_fix_uint8(v);
   end,
-  pre_wt_fixi16 = function(buf,v)
-    return adata_pre_write_fix_int16(buf,v);
+  szof_fixi16 = function(v)
+    return adata_size_of_fix_int16(v);
   end,
-  pre_wt_fixu16 = function(buf,v)
-    return adata_pre_write_fix_uint16(buf,v);
+  szof_fixu16 = function(v)
+    return adata_size_of_fix_uint16(v);
   end,
-  pre_wt_fixi32 = function(buf,v)
-    return adata_pre_write_fix_int32(buf,v);
+  szof_fixi32 = function(v)
+    return adata_size_of_fix_int32(v);
   end,
-  pre_wt_fixu32 = function(buf,v)
-    return adata_pre_write_fix_uint32(buf,v);
+  szof_fixu32 = function(v)
+    return adata_size_of_fix_uint32(v);
   end,
-  pre_wt_fixi64 = function(buf,v)
-    return adata_pre_write_fix_int64(buf,v);
+  szof_fixi64 = function(v)
+    return adata_size_of_fix_int64(v);
   end,
-  pre_wt_fixu64 = function(buf,v)
-    return adata_pre_write_fix_uint64(buf,v);
+  szof_fixu64 = function(v)
+    return adata_size_of_fix_uint64(v);
   end,
-  pre_wt_i8 = function(buf,v)
-    return adata_pre_write_int8(buf,v);
+  szof_i8 = function(v)
+    return adata_size_of_int8(v);
   end,
-  pre_wt_u8 = function(buf,v)
-    return adata_pre_write_uint8(buf,v);
+  szof_u8 = function(v)
+    return adata_size_of_uint8(v);
   end,
-  pre_wt_i16 = function(buf,v)
-    return adata_pre_write_int16(buf,v);
+  szof_i16 = function(v)
+    return adata_size_of_int16(v);
   end,
-  pre_wt_u16 = function(buf,v)
-    return adata_pre_write_uint16(buf,v);
+  szof_u16 = function(v)
+    return adata_size_of_uint16(v);
   end,
-  pre_wt_i32 = function(buf,v)
-    return adata_pre_write_int32(buf,v);
+  szof_i32 = function(v)
+    return adata_size_of_int32(v);
   end,
-  pre_wt_u32 = function(buf,v)
-    return adata_pre_write_uint32(buf,v);
+  szof_u32 = function(v)
+    return adata_size_of_uint32(v);
   end,
-  pre_wt_i64 = function(buf,v)
-    return adata_pre_write_int64(buf,v);
+  szof_i64 = function(v)
+    return adata_size_of_int64(v);
   end,
-  pre_wt_u64 = function(buf,v)
-    return adata_pre_write_uint64(buf,v);
+  szof_u64 = function(v)
+    return adata_size_of_uint64(v);
   end,
-  pre_wt_f32 = function(buf,v)
-    return adata_pre_write_float32(buf,v);
+  szof_f32 = function(v)
+    return adata_size_of_float32(v);
   end,
-  pre_wt_f64 = function(buf,v)
-    return adata_pre_write_float64(buf,v);
+  szof_f64 = function(v)
+    return adata_size_of_float64(v);
   end,
-  pre_wt_str = function(buf,s,l)
-    return adata_pre_write_str(buf,#s,l);
+  szof_str = function(s)
+    return adata_size_of_str(#s);
   end,
  
 }
