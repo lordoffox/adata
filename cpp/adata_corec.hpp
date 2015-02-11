@@ -44,7 +44,7 @@ namespace adata { namespace lua{
 		{
 			size = 65535;
 		}
-		const unsigned char * buffer = new unsigned char[size];
+	  unsigned char * buffer = new unsigned char[size];
 		void * obj = lua_newuserdata(L, sizeof(adata::zero_copy_buffer));
 		adata::zero_copy_buffer * zbuf = new (obj)adata::zero_copy_buffer;
 		zbuf->set_write(buffer, size);
@@ -59,10 +59,10 @@ namespace adata { namespace lua{
 
 	ADATA_INLINE void _reset_buf(adata::zero_copy_buffer& zbuf)
 	{
-		if (zbuf.write_data() && zbuf.write_capacity() > 0)
+		if (zbuf.write_data() != 0)
 		{
 			delete[] zbuf.write_data();
-			zbuf.set_write((const uint8_t *)NULL, 0);
+			zbuf.set_write((uint8_t *)NULL, 0);
 		}
 	}
 
@@ -82,7 +82,7 @@ namespace adata { namespace lua{
 			luaL_error(L , "error buffer size %d", size);
 		}
 		_reset_buf(*zbuf);
-		const unsigned char * buffer = new unsigned char[size];
+		unsigned char * buffer = new unsigned char[size];
 		zbuf->set_write(buffer, size);
 		return 1;
 	}
@@ -140,6 +140,28 @@ namespace adata { namespace lua{
 		lua_pushlstring(L, info.data(), info.length());
 		return 1;
 	}
+
+  static int get_read_length(lua_State * L)
+  {
+    adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
+    if (NULL == zbuf)
+    {
+      luaL_error(L, "arg 1 must be zbuf!");
+    }
+    lua_pushinteger(L, zbuf->read_length());
+    return 1;
+  }
+
+  static int get_write_length(lua_State * L)
+  {
+    adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
+    if (NULL == zbuf)
+    {
+      luaL_error(L, "arg 1 must be zbuf!");
+    }
+    lua_pushinteger(L, zbuf->write_length());
+    return 1;
+  }
 
 	static int get_write_buf_zuf(lua_State * L)
 	{
@@ -385,8 +407,8 @@ namespace adata { namespace lua{
 	ADATA_INLINE int skip_read_value(lua_State * L)
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
-		T v;
-		adata::skip_read(*zbuf, &v);
+		T* v = 0;
+		adata::skip_read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -873,7 +895,9 @@ namespace adata { namespace lua{
 			{ "clear_buf", clear_zuf },
 			{ "set_error", set_error_zuf },
 			{ "trace_error", trace_error_zuf },
-			{ "trace_info", trace_info_zuf },
+      { "trace_info", trace_info_zuf },
+      { "get_rd_len", get_read_length },
+      { "get_wt_len", get_write_length },
 			{ "get_write_data", get_write_buf_zuf },
 			{ "set_read_data", set_read_buf_zuf },
 			{ "rd_tag", read_tag },
@@ -987,7 +1011,9 @@ namespace adata { namespace lua{
 			{ "clear_buf"			, clear_zuf },
 			{ "set_error"			, set_error_zuf },
 			{ "trace_error"		,	trace_error_zuf} ,
-			{ "trace_info"		, trace_info_zuf },
+      { "trace_info", trace_info_zuf },
+      { "get_rd_len", get_read_length },
+      { "get_wt_len", get_write_length },
 			{ "get_write_data", get_write_buf_zuf },
 			{ "set_read_data"	, set_read_buf_zuf },
 			{ "rd_tag"				, read_tag },

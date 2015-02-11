@@ -26,7 +26,7 @@ extern "C" {
 		{
 			size = 65535;
 		}
-		const unsigned char * buffer = new unsigned char[size];
+	  unsigned char * buffer = new unsigned char[size];
 		adata::zero_copy_buffer * zbuf = new adata::zero_copy_buffer;
 		zbuf->set_write(buffer, size);
 		return zbuf;
@@ -34,10 +34,10 @@ extern "C" {
 
 	ADATA_INLINE void _adata_reset_write_buf(adata::zero_copy_buffer& zbuf)
 	{
-		if (zbuf.write_data() && zbuf.write_capacity() > 0)
+		if (zbuf.write_data() != 0)
 		{
 			delete[] zbuf.write_data();
-			zbuf.set_write((const uint8_t *)NULL, 0);
+			zbuf.set_write((uint8_t *)NULL, 0);
 		}
 	}
 
@@ -55,7 +55,7 @@ extern "C" {
 			return -1;
 		}
 		_adata_reset_write_buf(*zbuf);
-		const unsigned char * buffer = new unsigned char[size];
+		unsigned char * buffer = new unsigned char[size];
 		zbuf->set_write(buffer, size);
 		return 1;
 	}
@@ -77,7 +77,7 @@ extern "C" {
 		return zbuf->m_error_code;
 	}
 
-	ADATA_API int adata_trace_error(adata::zero_copy_buffer* zbuf, char * info, int idx)
+	ADATA_API int adata_trace_error(adata::zero_copy_buffer* zbuf, char const* info, int idx)
 	{
 		zbuf->trace_error(info, idx);
 		return 1;
@@ -118,12 +118,17 @@ extern "C" {
 		return (void*)buf->write_data();
 	}
 
-	ADATA_API size_t adata_get_write_len(adata::zero_copy_buffer * buf)
+  ADATA_API size_t adata_get_read_length(adata::zero_copy_buffer * buf)
+  {
+    return buf->read_length();
+  }
+
+	ADATA_API size_t adata_get_write_length(adata::zero_copy_buffer * buf)
 	{
 		return buf->write_length();
 	}
 
-	ADATA_API int adata_set_read_buf(adata::zero_copy_buffer* zbuf, char * data, size_t len)
+	ADATA_API int adata_set_read_buf(adata::zero_copy_buffer* zbuf, char const* data, size_t len)
 	{
 		zbuf->set_read(data, len);
 		return 1;
@@ -597,8 +602,9 @@ extern "C" {
 			(intptr_t)adata_get_write_ptr,
 			(intptr_t)adata_append_write,
 			(intptr_t)adata_get_trace_info,
-			(intptr_t)adata_get_write_data,
-			(intptr_t)adata_get_write_len,
+      (intptr_t)adata_get_write_data,
+      (intptr_t)adata_get_read_length,
+			(intptr_t)adata_get_write_length,
 			(intptr_t)adata_set_read_buf,
 			(intptr_t)adata_read_fix_int8,
 			(intptr_t)adata_read_fix_uint8,

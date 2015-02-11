@@ -317,13 +317,13 @@ namespace lua_gen
 			os << tabs(tab) << "local ec,len = rd_u32(buf);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
-			os << " return end;" << std::endl;
+			os << " return ec; end;" << std::endl;
 			if (m_define.m_size.length())
 			{
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
 				set_error(os, adata::error_code_t::sequence_length_overflow);
 				make_trace_info(os, m_define.m_name, "-1", ctx);
-				os << " return end;" << std::endl;
+				os << " return ec; end;" << std::endl;
 			}
 			os << tabs(tab) << "for i = 1 , len do ";
 			gen_meta_member_skip_read_value(os, m_define.m_template_parameters[0], "v");
@@ -338,13 +338,13 @@ namespace lua_gen
 			os << tabs(tab) << "local ec,len = rd_u32(buf);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
-			os << " return end;" << std::endl;
+			os << " return ec; end;" << std::endl;
 			if (m_define.m_size.length())
 			{
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
 				set_error(os, adata::error_code_t::sequence_length_overflow);
 				make_trace_info(os, m_define.m_name, "-1", ctx);
-				os << " return end;" << std::endl;
+				os << " return ec; end;" << std::endl;
 			}
 			os << tabs(tab) << "for i = 1 , len do ";
 			gen_meta_member_skip_read_value(os, m_define.m_template_parameters[0], "k");
@@ -431,13 +431,13 @@ namespace lua_gen
 			os << tabs(tab) << "local ec,len = rd_u32(buf);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
-			os << " return end;" << std::endl;
+			os << " return ec; end;" << std::endl;
 			if (m_define.m_size.length())
 			{
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
 				set_error(os, adata::error_code_t::sequence_length_overflow);
 				make_trace_info(os, m_define.m_name, "-1", ctx);
-				os << " return end;" << std::endl;
+				os << " return ec; end;" << std::endl;
 			}
 			os << tabs(tab) << "local v;" << std::endl;
 			os << tabs(tab) << "for i = 1 , len do ";
@@ -454,13 +454,13 @@ namespace lua_gen
 			os << tabs(tab) << "local ec,len = rd_u32(buf);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "-1", ctx);
-			os << " return end;" << std::endl;
+			os << " return ec; end;" << std::endl;
 			if (m_define.m_size.length())
 			{
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
 				set_error(os, adata::error_code_t::sequence_length_overflow);
 				make_trace_info(os, m_define.m_name, "-1", ctx);
-				os << " return end;" << std::endl;
+				os << " return ec; end;" << std::endl;
 			}
 			os << tabs(tab) << "local k,v;" << std::endl;
 			os << tabs(tab) << "for i = 1 , len do" << std::endl;
@@ -587,7 +587,7 @@ namespace lua_gen
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
 				set_error(os, adata::error_code_t::sequence_length_overflow);
 				make_trace_info(os, m_define.m_name, "-1", ctx);
-				os << " return end;" << std::endl;
+				os << " return ec; end;" << std::endl;
 			}
 			os << tabs(tab) << "local ec  = wt_u32(buf,len);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
@@ -608,7 +608,7 @@ namespace lua_gen
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
 				set_error(os, adata::error_code_t::sequence_length_overflow);
 				make_trace_info(os, m_define.m_name, "-1", ctx);
-				os << " return end;" << std::endl;
+				os << " return ec; end;" << std::endl;
 			}
 			os << tabs(tab) << "local ec  = wt_u32(buf,len);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;

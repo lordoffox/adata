@@ -10,13 +10,14 @@ ffi.cdef[[
   typedef int (__stdcall *adata_clear_buf_ft)(void * zbuf);
   typedef int (__stdcall *adata_set_error_ft)(void * zbuf , int ec);
   typedef int (__stdcall *adata_error_ft)(void * zbuf);
-  typedef int (__stdcall *adata_trace_error_ft)(void * zbuf, char * info, int idx);
+  typedef int (__stdcall *adata_trace_error_ft)(void * zbuf, const char * info, int idx);
   typedef char * (__stdcall *adata_get_trace_info_ft)(void * buf);
-  typedef int (__stdcall *adata_set_read_buf_ft)(void * zbuf, char * data, size_t len);
+  typedef int (__stdcall *adata_set_read_buf_ft)(void * zbuf, const char * data, size_t len);
   typedef void * (__stdcall *adata_get_ptr_ft)(void * buf);
   typedef void * (__stdcall *adata_seek_ptr_ft)(void * buf , size_t len);
   typedef void * (__stdcall *adata_get_write_data_ft)(void * buf);
-  typedef size_t (__stdcall *adata_get_write_len_ft)(void * buf);
+  typedef size_t (__stdcall *adata_get_read_length_ft)(void * buf);
+  typedef size_t (__stdcall *adata_get_write_length_ft)(void * buf);
   typedef int8_t (__stdcall *adata_read_int8_ft)(void * buf);
   typedef uint8_t (__stdcall *adata_read_uint8_ft)(void * buf);
   typedef int16_t (__stdcall *adata_read_int16_ft)(void * buf);
@@ -74,7 +75,8 @@ local adata_new_buf,
   adata_append_write,
   adata_get_trace_info,
   adata_get_write_data,
-  adata_get_write_len,
+  adata_get_read_length,
+  adata_get_write_length,
   adata_set_read_buf,
   adata_read_fix_int8,
   adata_read_fix_uint8,
@@ -164,7 +166,8 @@ local adata_new_buf,
   adata_append_write = ffi.cast("adata_seek_ptr_ft",adata_append_write);
   adata_get_trace_info = ffi.cast("adata_get_trace_info_ft",adata_get_trace_info);
   adata_get_write_data = ffi.cast("adata_get_write_data_ft",adata_get_write_data);
-  adata_get_write_len = ffi.cast("adata_get_write_len_ft",adata_get_write_len);
+  adata_get_read_length = ffi.cast("adata_get_read_length_ft",adata_get_read_length);
+  adata_get_write_length = ffi.cast("adata_get_write_length_ft",adata_get_write_length);
   adata_set_read_buf = ffi.cast("adata_set_read_buf_ft",adata_set_read_buf);
   adata_read_fix_int8 = ffi.cast("adata_read_int8_ft",adata_read_fix_int8);
   adata_read_fix_uint8 = ffi.cast("adata_read_uint8_ft",adata_read_fix_uint8);
@@ -267,12 +270,18 @@ m = {
   end,
   get_write_data = function(buf)
     local ptr = adata_get_write_data(buf);
-    local len = adata_get_write_len(buf);
+    local len = adata_get_write_length(buf);
     return ffi.string(ptr,len);
+  end,
+  get_rd_len = function(buf)
+    return adata_get_read_length(buf);
+  end,
+  get_wt_len = function(buf)
+    return adata_get_write_length(buf);
   end,
   set_read_data = function(buf,data,len)
     if len == nil then len = #data; end;
-    local cdata = ffi.cast("uint8_t*",data,len);
+    local cdata = ffi.cast("const char*",data,len);
     adata_set_read_buf(buf,cdata,len);
   end,
   rd_fixi8 = function(buf)

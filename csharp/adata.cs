@@ -110,7 +110,7 @@ namespace adata
       trace_infos = new trace_info[64];
       error_code = error_code_t.success;
     }
-    public void set(byte[] the_buffer)
+    public void reset(byte[] the_buffer)
     {
       this.buffer = the_buffer;
       this.data_len = the_buffer.Length;
@@ -180,6 +180,15 @@ namespace adata
       return;
     }
 
+    public int read_length()
+    {
+      return read_len;
+    }
+
+    public int write_length()
+    {
+      return read_len;
+    }
   }
 
   public class stream
@@ -192,7 +201,7 @@ namespace adata
 
     private static bool IsLittleEndian = BitConverter.IsLittleEndian;
 
-    public static void fix_skip_read(zero_copy_buffer stream, sbyte value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref sbyte value)
     {
       if (stream.read_len + 1 > stream.data_len)
       {
@@ -202,7 +211,7 @@ namespace adata
       stream.read_len += 1;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, byte value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref byte value)
     {
       if (stream.read_len + 1 > stream.data_len)
       {
@@ -212,7 +221,7 @@ namespace adata
       stream.read_len += 1;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, Int16 value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref Int16 value)
     {
       if (stream.read_len + 2 > stream.data_len)
       {
@@ -222,7 +231,7 @@ namespace adata
       stream.read_len += 2;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, UInt16 value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref UInt16 value)
     {
       if (stream.read_len + 2 > stream.data_len)
       {
@@ -232,7 +241,7 @@ namespace adata
       stream.read_len += 2;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, Int32 value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref Int32 value)
     {
       if (stream.read_len + 4 > stream.data_len)
       {
@@ -242,7 +251,7 @@ namespace adata
       stream.read_len += 4;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, UInt32 value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref UInt32 value)
     {
       if (stream.read_len + 4 > stream.data_len)
       {
@@ -252,7 +261,7 @@ namespace adata
       stream.read_len += 4;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, Int64 value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref Int64 value)
     {
       if (stream.read_len + 8 > stream.data_len)
       {
@@ -262,7 +271,7 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, UInt64 value)
+    public static void fix_skip_read(zero_copy_buffer stream, ref UInt64 value)
     {
       if (stream.read_len + 8 > stream.data_len)
       {
@@ -320,11 +329,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 1)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -338,7 +347,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, byte value)
+    public static void skip_read(zero_copy_buffer stream, ref byte value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -346,11 +355,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 1)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -364,7 +373,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, Int16 value)
+    public static void skip_read(zero_copy_buffer stream, ref Int16 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -372,11 +381,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -390,7 +399,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, UInt16 value)
+    public static void skip_read(zero_copy_buffer stream, ref UInt16 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -398,11 +407,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -416,7 +425,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, Int32 value)
+    public static void skip_read(zero_copy_buffer stream, ref Int32 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -424,11 +433,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -442,7 +451,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, UInt32 value)
+    public static void skip_read(zero_copy_buffer stream, ref UInt32 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -450,11 +459,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -468,7 +477,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, Int64 value)
+    public static void skip_read(zero_copy_buffer stream, ref Int64 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -476,11 +485,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -494,7 +503,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, UInt64 value)
+    public static void skip_read(zero_copy_buffer stream, ref UInt64 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -502,11 +511,11 @@ namespace adata
         return;
       }
       byte tag = stream.buffer[stream.read_len++];
-      if (value <= const_tag_as_value)
+      if (tag <= const_tag_as_value)
       {
         return;
       }
-      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
@@ -520,7 +529,7 @@ namespace adata
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, float value)
+    public static void skip_read(zero_copy_buffer stream, ref float value)
     {
       if (stream.read_len + 4 >= stream.data_len)
       {
@@ -530,7 +539,7 @@ namespace adata
       stream.read_len += 4;
     }
 
-    public static void skip_read(zero_copy_buffer stream, double value)
+    public static void skip_read(zero_copy_buffer stream, ref double value)
     {
       if (stream.read_len + 8 >= stream.data_len)
       {
@@ -2787,7 +2796,7 @@ namespace adata
       return;
     }
 
-    public static void skip_read(zero_copy_buffer stream, string value, UInt32 len)
+    public static void skip_read(zero_copy_buffer stream, ref string value, UInt32 len)
     {
       if (stream.read_len + len > stream.data_len)
       {

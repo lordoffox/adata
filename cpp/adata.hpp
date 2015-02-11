@@ -216,7 +216,7 @@ namespace adata
 	};
 
 	template<typename stream_ty, typename ty>
-  ADATA_INLINE void fix_skip_read(stream_ty& stream, ty * , stream_context& context)
+  ADATA_INLINE void fix_skip_read(stream_ty& stream, ty *)
 	{
 		stream.skip_read(sizeof(ty));
 		if(stream.bad())
@@ -1961,14 +1961,13 @@ namespace adata
 	struct zero_copy_buffer : stream_context
 	{
 	private:
-		unsigned char * m_read_header_ptr;
-		unsigned char * m_write_header_ptr;
-		unsigned char * m_read_ptr;
-		unsigned char * m_write_ptr;
-		unsigned char * m_read_tail_ptr;
-		unsigned char * m_write_tail_ptr;
+    unsigned char const* m_read_header_ptr;
+    unsigned char* m_write_header_ptr;
+    unsigned char const* m_read_ptr;
+    unsigned char* m_write_ptr;
+    unsigned char const* m_read_tail_ptr;
+    unsigned char const* m_write_tail_ptr;
 		int							m_status;
-		std::size_t			m_length;
 
 	public:
 
@@ -1981,8 +1980,7 @@ namespace adata
 			m_write_ptr(0),
 			m_read_tail_ptr(0),
 			m_write_tail_ptr(0),
-			m_status(good),
-			m_length(0)
+			m_status(good)
 		{
 		}
 
@@ -1990,46 +1988,30 @@ namespace adata
 		{
 		}
 
-		ADATA_INLINE void set_read(const unsigned char * buffer, ::std::size_t length)
+		ADATA_INLINE void set_read(unsigned char const* buffer, ::std::size_t length)
 		{
-			this->m_read_header_ptr = (unsigned char*)buffer;
-			this->m_read_ptr = this->m_read_header_ptr;
-			this->m_read_tail_ptr = this->m_read_header_ptr + length;
-			this->m_status = good;
+      this->m_read_header_ptr = buffer;
+      this->m_read_ptr = this->m_read_header_ptr;
+      this->m_read_tail_ptr = this->m_read_header_ptr + length;
+      this->m_status = good;
 		}
 
-		ADATA_INLINE void set_read(const char * buffer, ::std::size_t length)
+		ADATA_INLINE void set_read(char const* buffer, ::std::size_t length)
 		{
-			this->m_read_header_ptr = (unsigned char*)buffer;
-			this->m_read_ptr = this->m_read_header_ptr;
-			this->m_read_tail_ptr = this->m_read_header_ptr + length;
-			this->m_status = good;
+      set_read((unsigned char const*)buffer, length);
 		}
 
-		ADATA_INLINE void set_write(const unsigned char * buffer, ::std::size_t length)
-		{
-			this->m_write_header_ptr = (unsigned char*)buffer;
-			this->m_write_ptr = this->m_write_header_ptr;
-			this->m_write_tail_ptr = this->m_write_header_ptr + length;
-			this->m_status = good;
-		}
+    ADATA_INLINE void set_write(unsigned char* buffer, ::std::size_t length)
+    {
+      this->m_write_header_ptr = buffer;
+      this->m_write_ptr = this->m_write_header_ptr;
+      this->m_write_tail_ptr = this->m_write_header_ptr + length;
+      this->m_status = good;
+    }
 
-    ADATA_INLINE void set_write(const char * buffer, ::std::size_t length)
+    ADATA_INLINE void set_write(char* buffer, ::std::size_t length)
 		{
-			this->m_write_header_ptr = (unsigned char*)buffer;
-			this->m_write_ptr = this->m_write_header_ptr;
-			this->m_write_tail_ptr = this->m_write_header_ptr + length;
-			this->m_status = good;
-		}
-
-		ADATA_INLINE::std::size_t read_capacity() const
-		{
-			return this->m_read_tail_ptr - this->m_read_header_ptr;
-		}
-
-		ADATA_INLINE::std::size_t write_capacity() const
-		{
-			return this->m_write_tail_ptr - this->m_write_header_ptr;
+      set_write((unsigned char*)buffer, length);
 		}
 
 		ADATA_INLINE ::std::size_t read(char * buffer, std::size_t len)
@@ -2039,7 +2021,7 @@ namespace adata
 				this->m_status = read_overflow;
 				return 0;
 			}
-			memcpy(buffer, this->m_read_ptr, len);
+			std::memcpy(buffer, this->m_read_ptr, len);
 			this->m_read_ptr += len;
 			return len;
 		}
@@ -2061,7 +2043,7 @@ namespace adata
 				this->m_status = write_overflow;
 				return 0;
 			}
-			memcpy((void*)this->m_write_ptr, buffer, len);
+			std::memcpy((void*)this->m_write_ptr, buffer, len);
 			this->m_write_ptr += len;
 			return len;
 		}
@@ -2080,26 +2062,16 @@ namespace adata
 			return append_ptr;
 		}
 
-		ADATA_INLINE unsigned char * skip_read(::std::size_t len)
+		ADATA_INLINE unsigned char const* skip_read(::std::size_t len)
 		{
 			if (this->m_read_ptr + len > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;
 				return NULL;
 			}
-      unsigned char * ptr = this->m_read_ptr;
+      unsigned char const* ptr = this->m_read_ptr;
 			this->m_read_ptr += len;
 			return ptr;
-		}
-
-		ADATA_INLINE const unsigned char * read_ptr()	const
-		{
-			return this->m_read_ptr;
-		}
-
-		ADATA_INLINE unsigned char * write_ptr() const
-		{
-			return this->m_write_ptr;
 		}
 
 		ADATA_INLINE void clear_write()
@@ -2113,7 +2085,18 @@ namespace adata
 			this->m_read_ptr = this->m_read_header_ptr;
 			this->m_write_ptr = this->m_write_header_ptr;
 			stream_context::clear();
+      this->m_status = good;
 		}
+
+    ADATA_INLINE unsigned char const* read_ptr() const
+    {
+      return this->m_read_ptr;
+    }
+
+    ADATA_INLINE unsigned char* write_ptr() const
+    {
+      return this->m_write_ptr;
+    }
 
 		ADATA_INLINE const char * write_data() const
 		{
@@ -2152,7 +2135,7 @@ namespace adata
   ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int16_t& value)
   {
     typedef int16_t value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -2166,7 +2149,7 @@ namespace adata
   ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint16_t& value)
   {
     typedef uint16_t value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -2180,7 +2163,7 @@ namespace adata
   ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int32_t& value)
   {
     typedef int32_t value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -2196,7 +2179,7 @@ namespace adata
   ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint32_t& value)
   {
     typedef uint32_t value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -2212,7 +2195,7 @@ namespace adata
   ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int64_t& value)
   {
     typedef int64_t value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -2232,7 +2215,7 @@ namespace adata
   ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint64_t& value)
   {
     typedef uint64_t value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -2650,7 +2633,7 @@ namespace adata
         stream.m_error_code = value_too_large_to_integer_number;
         return;
       }
-      uint8_t * read_ptr = stream.skip_read(read_bytes);
+      uint8_t const* read_ptr = stream.skip_read(read_bytes);
       if (stream.bad())
       {
         stream.m_error_code = stream_buffer_overflow;
@@ -2695,7 +2678,7 @@ namespace adata
         stream.m_error_code = stream_buffer_overflow;
         return;
       }
-      uint8_t * read_ptr = stream.skip_read(read_bytes);
+      uint8_t const* read_ptr = stream.skip_read(read_bytes);
       if (stream.bad())
       {
         stream.m_error_code = stream_buffer_overflow;
@@ -2742,7 +2725,7 @@ namespace adata
         stream.m_error_code = value_too_large_to_integer_number;
         return;
       }
-      uint8_t * read_ptr = stream.skip_read(read_bytes);
+      uint8_t const* read_ptr = stream.skip_read(read_bytes);
       if (stream.bad())
       {
         stream.m_error_code = stream_buffer_overflow;
@@ -2784,7 +2767,7 @@ namespace adata
         return;
       }
       value = 0;
-      uint8_t * read_ptr = stream.skip_read(read_bytes);
+      uint8_t const* read_ptr = stream.skip_read(read_bytes);
       if (stream.bad())
       {
         stream.m_error_code = stream_buffer_overflow;
@@ -2833,7 +2816,7 @@ namespace adata
         stream.m_error_code = value_too_large_to_integer_number;
         return;
       }
-      uint8_t * read_ptr = stream.skip_read(read_bytes);
+      uint8_t const* read_ptr = stream.skip_read(read_bytes);
       if (stream.bad())
       {
         stream.m_error_code = stream_buffer_overflow;
@@ -2879,7 +2862,7 @@ namespace adata
         return;
       }
       value = 0;
-      uint8_t * read_ptr = stream.skip_read(read_bytes);
+      uint8_t const* read_ptr = stream.skip_read(read_bytes);
       if (stream.bad())
       {
         stream.m_error_code = stream_buffer_overflow;
@@ -3370,7 +3353,7 @@ namespace adata
   ADATA_INLINE void stream_read(zero_copy_buffer& stream, float& value)
   {
     typedef float value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {
@@ -3386,7 +3369,7 @@ namespace adata
   ADATA_INLINE void stream_read(zero_copy_buffer& stream, double& value)
   {
     typedef double value_type;
-    uint8_t * read_ptr = stream.skip_read(sizeof(value_type));
+    uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
     if (stream.bad())
     {

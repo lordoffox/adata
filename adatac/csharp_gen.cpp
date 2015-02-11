@@ -377,7 +377,7 @@ namespace csharp_gen
       {
         os << "fix_";
       }
-      os << "skip_read(stream,dummy_value);";
+      os << "skip_read(stream,ref dummy_value);";
       gen_trace_error_info(os, 0, "stream", mdefine.m_name, trace_error);
       os << "}" << std::endl;
     }
@@ -429,7 +429,7 @@ namespace csharp_gen
   void gen_adata_operator_skip_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void skip_read(adata.zero_copy_buffer stream, " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void skip_read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     os << tabs(3) << "UInt64 tag = 0;" << std::endl;
     os << tabs(3) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
