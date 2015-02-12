@@ -8,15 +8,15 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#ifndef ADL_PROGRAM_H
-#define ADL_PROGRAM_H
+#ifndef ADATAC_PROGRAM_H
+#define ADATAC_PROGRAM_H
 
 #include <string>
 #include <vector>
 
 struct options
 {
-	std::string input_file;
+  std::string input_file;
 	std::string output_path;
   std::vector<std::string> include_paths;
 	std::vector<std::string> gen;
@@ -24,4 +24,4 @@ struct options
 
 void run_program(const options& opt);
 
-#endif /// ADL_PROGRAM_H
+#endif /// ADATAC_PROGRAM_H

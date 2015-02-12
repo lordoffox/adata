@@ -380,15 +380,43 @@ namespace cpp_gen
     return "";
   }
 
+  // Nous Xiong: add len tag jump
+  void gen_adata_len_tag_jump(std::ofstream& os, int tab_indent)
+  {
+    os << tabs(tab_indent) << "if(len_tag >= 0)" << std::endl;
+    os << tabs(tab_indent) << "{" << std::endl;
+    os << tabs(tab_indent + 1) << "::std::size_t read_len = stream.read_length() - offset;" << std::endl;
+    os << tabs(tab_indent + 1) << "::std::size_t len = (::std::size_t)len_tag;" << std::endl;
+    os << tabs(tab_indent + 1) << "if(len > read_len) stream.skip_read(len - read_len);" << std::endl;
+    os << tabs(tab_indent) << "}" << std::endl;
+  }
+
+  // Nous Xiong: 
+  void gen_adata_read_tag(std::ofstream& os, int tab_indent)
+  {
+    // Nous Xiong: get read offset
+    os << tabs(tab_indent) << "::std::size_t offset = stream.read_length();" << std::endl;
+
+    os << tabs(tab_indent) << "uint64_t tag = 0;" << std::endl;
+    os << tabs(tab_indent) << "stream_read(stream,tag);" << std::endl;
+    os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
+
+    // Nous Xiong: add len tag
+    os << tabs(tab_indent) << "int32_t len_tag = 0;" << std::endl;
+    os << tabs(tab_indent) << "stream_read(stream,len_tag);" << std::endl;
+    os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
+    os << std::endl;
+  }
+
   void gen_adata_operator_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
     os << tabs(1) << "template<typename stream_ty>" << std::endl;
     os << tabs(1) << gen_inline_code(tdefine) << "void stream_read( stream_ty& stream, " << full_type_name << "& value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
-    os << tabs(2) << "uint64_t tag = 0;" << std::endl;
-    os << tabs(2) << "stream_read(stream,tag);" << std::endl;
-    os << tabs(2) << "if(stream.error()){return;}" << std::endl;
+
+    gen_adata_read_tag(os, 2);
+
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
@@ -398,7 +426,13 @@ namespace cpp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-    os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
+
+    // Nous Xiong: remove max mask check, for backward compat
+    //os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
+    
+    // Nous Xiong: add len tag jump
+    gen_adata_len_tag_jump(os, 2);
+
     os << tabs(1) << "}" << std::endl << std::endl;
   }
 
@@ -415,9 +449,9 @@ namespace cpp_gen
     os << tabs(1) << "template <typename stream_ty>" << std::endl;
     os << tabs(1) << gen_inline_code(tdefine) << "void skip_read(stream_ty& stream, " << full_type_name << "* value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
-    os << tabs(2) << "uint64_t tag = 0;" << std::endl;
-    os << tabs(2) << "stream_read(stream,tag);" << std::endl;
-    os << tabs(2) << "if(stream.error()){ return; }" << std::endl;
+
+    gen_adata_read_tag(os, 2);
+
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
@@ -427,7 +461,13 @@ namespace cpp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-    os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
+
+    // Nous Xiong: remove max mask check, for backward compat
+    //os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
+    
+    // Nous Xiong: add len tag jump
+    gen_adata_len_tag_jump(os, 2);
+
     os << tabs(1) << "}" << std::endl << std::endl;
   }
 
@@ -561,6 +601,10 @@ namespace cpp_gen
       tag_mask <<= 1;
     }
     os << tabs(2) << "size += size_of(tag);" << std::endl;
+
+    // Nous Xiong: add len tag
+    os << tabs(2) << "size += size_of(size + size_of(size));" << std::endl;
+
     os << tabs(2) << "return size;" << std::endl;
     os << tabs(1) << "}" << std::endl << std::endl;
   }
@@ -628,6 +672,10 @@ namespace cpp_gen
     os << tabs(1) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 2);
     os << tabs(2) << "stream_write(stream,tag);" << std::endl;
+
+    // Nous Xiong: add len tag
+    os << tabs(2) << "stream_write(stream,size_of(value));" << std::endl;
+
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)

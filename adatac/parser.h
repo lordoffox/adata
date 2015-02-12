@@ -8,8 +8,8 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#ifndef ADL_PARSER_H
-#define ADL_PARSER_H
+#ifndef ADATAC_PARSER_H
+#define ADATAC_PARSER_H
 
 #include "descrip.h"
 #include <string>
@@ -21,4 +21,4 @@ bool parse_adl_file(
   std::string& error_message
   );
 
-#endif /// ADL_PARSER_H
+#endif /// ADATAC_PARSER_H

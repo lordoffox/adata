@@ -2016,6 +2016,10 @@ namespace adata
 
 		ADATA_INLINE ::std::size_t read(char * buffer, std::size_t len)
 		{
+      if (bad())
+      {
+        return 0;
+      }
 			if (this->m_read_ptr + len > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;
@@ -2028,6 +2032,10 @@ namespace adata
 
 		ADATA_INLINE unsigned char get_char()
 		{
+      if (bad())
+      {
+        return '\0';
+      }
 			if (this->m_read_ptr + 1 > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;
@@ -2038,6 +2046,10 @@ namespace adata
 
 		ADATA_INLINE ::std::size_t write(const char * buffer, std::size_t len)
 		{
+      if (bad())
+      {
+        return 0;
+      }
 			if (this->m_write_ptr + len > this->m_write_tail_ptr)
 			{
 				this->m_status = write_overflow;
@@ -2048,10 +2060,14 @@ namespace adata
 			return len;
 		}
 
-		ADATA_INLINE bool bad() const { return this->m_status != good; }
+		ADATA_INLINE bool bad() const { return this->m_status != good || stream_context::error(); }
 
 		ADATA_INLINE unsigned char * append_write(std::size_t len)
 		{
+      if (bad())
+      {
+        return 0;
+      }
 			if (this->m_write_ptr + len > this->m_write_tail_ptr)
 			{
 				this->m_status = write_overflow;
@@ -2063,11 +2079,15 @@ namespace adata
 		}
 
 		ADATA_INLINE unsigned char const* skip_read(::std::size_t len)
-		{
+    {
+      if (bad())
+      {
+        return 0;
+      }
 			if (this->m_read_ptr + len > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;
-				return NULL;
+				return 0;
 			}
       unsigned char const* ptr = this->m_read_ptr;
 			this->m_read_ptr += len;
@@ -2105,7 +2125,7 @@ namespace adata
 
 		ADATA_INLINE ::std::size_t read_length() const
 		{
-			return this->m_read_ptr - this->m_write_header_ptr;
+      return this->m_read_ptr - this->m_read_header_ptr;
 		}
 
 		ADATA_INLINE ::std::size_t write_length() const
@@ -3385,20 +3405,6 @@ namespace adata
     value_ptr[ADATA_LEPOS8_6] = read_ptr[6];
     value_ptr[ADATA_LEPOS8_7] = read_ptr[7];
   }
-
-	template<typename stream_ty, typename ty>
-	ADATA_INLINE bool adata_stream_read(stream_ty& stream, ty& value)
-	{
-		stream_read(stream, value);
-		return !stream.bad();
-	}
-
-	template<typename stream_ty, typename ty>
-	ADATA_INLINE bool adata_stream_write(stream_ty& stream, const ty& value)
-	{
-		stream_write(stream, value);
-		return !stream.bad();
-	}
 
 	template<typename stream_ty>
 	ADATA_INLINE uint32_t check_read_size(stream_ty& stream, ::std::size_t size = 0)

@@ -8,8 +8,8 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#ifndef ADL_UTIL_H
-#define ADL_UTIL_H
+#ifndef ADATAC_UTIL_H
+#define ADATAC_UTIL_H
 
 #include "descrip.h"
 #include <boost/predef.h>
@@ -67,5 +67,5 @@ inline int fopen_s(FILE **f, const char *name, const char *mode)
 }
 #endif
 
-#endif /// ADL_UTIL_H
+#endif /// ADATAC_UTIL_H
 
