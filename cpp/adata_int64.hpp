@@ -7,7 +7,6 @@
 #define l_adata_int64_hpp
 
 #include <cstdint>
-#include "adata.h"
 
 extern "C" {
 #include "lua.h"

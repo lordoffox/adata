@@ -202,7 +202,8 @@ namespace lua_gen
 	void gen_filed_type_info(std::ostream& os, const descrip_define& define , gen_contex& ctx)
 	{
 		type_info_set_type set;
-		set.insert(e_base_type::uint32);
+    set.insert(e_base_type::uint32);
+    set.insert(e_base_type::int32);
 		if (ctx.use_luajit)
 		{
 			set.insert(e_base_type::uint64);
@@ -369,7 +370,12 @@ namespace lua_gen
 		}
 	}
 
-	inline void gen_meta_member_read_value(std::ostream& os, const member_define& m_define, const std::string& var_name)
+	inline void gen_meta_member_read_value(
+    std::ostream& os, 
+    const member_define& m_define, 
+    const std::string& var_name,
+    bool need_make = false
+    )
 	{
 		switch (m_define.m_type)
 		{
@@ -394,6 +400,10 @@ namespace lua_gen
 		}
 		case e_base_type::type:
 		{
+      if (need_make)
+      {
+        os << var_name << " = " << make_typename(m_define.m_typedef->m_name) << "(); ";
+      }
 			os << "ec = " << var_name << ":read(buf);";
 			break;
 		}
@@ -401,6 +411,15 @@ namespace lua_gen
 		{}
 		}
 	}
+
+  // Nous Xiong: add len tag jump
+  void gen_meta_len_tag_jump(std::ostream& os, int tab_indent)
+  {
+    os << tabs(tab_indent) << "if len_tag >= 0 then" << std::endl;
+    os << tabs(tab_indent + 1) << "local read_len = get_rd_len(buf) - offset;" << std::endl;
+    os << tabs(tab_indent + 1) << "if len_tag > read_len then skip_rd_i32(len_tag - read_len); end;" << std::endl;
+    os << tabs(tab_indent) << "end" << std::endl;
+  }
 
 	inline void gen_meta_member_read(std::ostream& os, const member_define& m_define, int tab, gen_contex& ctx)
 	{
@@ -441,7 +460,7 @@ namespace lua_gen
 			}
 			os << tabs(tab) << "local v;" << std::endl;
 			os << tabs(tab) << "for i = 1 , len do ";
-			gen_meta_member_read_value(os, m_define.m_template_parameters[0], "v");
+			gen_meta_member_read_value(os, m_define.m_template_parameters[0], "v", true);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -465,8 +484,8 @@ namespace lua_gen
 			os << tabs(tab) << "local k,v;" << std::endl;
 			os << tabs(tab) << "for i = 1 , len do" << std::endl;
 			os << tabs(tab + 1);
-			gen_meta_member_read_value(os, m_define.m_template_parameters[0], "k");
-			gen_meta_member_read_value(os, m_define.m_template_parameters[1], "v");
+      gen_meta_member_read_value(os, m_define.m_template_parameters[0], "k", true);
+      gen_meta_member_read_value(os, m_define.m_template_parameters[1], "v", true);
 			os << "if ec > 0 then ";
 			make_trace_info(os, m_define.m_name, "i", ctx);
 			os << " return ec; end;";
@@ -602,7 +621,7 @@ namespace lua_gen
 		}
 		case e_base_type::map:
 		{
-			os << tabs(tab) << "local len = #o." << m_define.m_name << ";" << std::endl;
+			os << tabs(tab) << "local len = tablen(o." << m_define.m_name << ");" << std::endl;
 			if (m_define.m_size.length())
 			{
 				os << tabs(tab) << "if len >" << m_define.m_size << " then ";
@@ -612,7 +631,7 @@ namespace lua_gen
 			}
 			os << tabs(tab) << "local ec  = wt_u32(buf,len);" << std::endl;
 			os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
-			os << tabs(tab) << "for k,v in ipairs( o." << m_define.m_name << ") do ";
+			os << tabs(tab) << "for k,v in pairs( o." << m_define.m_name << ") do ";
 			gen_meta_member_write_value(os, m_define.m_template_parameters[0], "k");
 			gen_meta_member_write_value(os, m_define.m_template_parameters[1], "v");
 			os << "if ec > 0 then ";
@@ -669,9 +688,9 @@ namespace lua_gen
     }
     case e_base_type::map:
     {
-      os << tabs(tab) << "local len = #o." << m_define.m_name << ";" << std::endl;
+      os << tabs(tab) << "local len = tablen(o." << m_define.m_name << ");" << std::endl;
       os << tabs(tab) << "size = size + szof_u32(len);" << std::endl;
-      os << tabs(tab) << "for k,v in ipairs( o." << m_define.m_name << ") do ";
+      os << tabs(tab) << "for k,v in pairs( o." << m_define.m_name << ") do ";
       gen_meta_member_size_of_value(os, m_define.m_template_parameters[0], "k");
       gen_meta_member_size_of_value(os, m_define.m_template_parameters[1], "v");
       os << " end;" << std::endl;
@@ -706,6 +725,9 @@ local get_write_data = adata_m.get_write_data;
 local set_read_data = adata_m.set_read_data;
 local rd_tag = adata_m.rd_tag;
 local wt_tag = adata_m.wt_tag;
+local get_rd_len = adata_m.get_rd_len;
+local get_wt_len = adata_m.get_wt_len;
+local tablen = ns.tablen;
 
 )";
 
@@ -780,11 +802,27 @@ local wt_tag = adata_m.wt_tag;
 			os << "," << std::endl;
 		}
 
+    void gen_meta_read_tag(std::ostream& os, int tab)
+    {
+      // Nous Xiong: add len tag
+      os << tabs(tab) << "local offset = get_rd_len(buf);" << std::endl;
+
+      os << tabs(tab) << "local ec,read_tag = rd_tag(buf);" << std::endl;
+      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab) << "local len_tag = 0;" << std::endl;
+      os << tabs(tab) << "ec,len_tag = rd_i32(buf);" << std::endl;
+      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
+    }
+
 		void gen_meta_skip_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
 		{
 			os << tabs(tab) << "skip_read = function(o,buf)" << std::endl;
-			os << tabs(tab + 1) << "local ec,read_tag = rd_tag(buf)" << std::endl;
-			os << tabs(tab + 1) << "if ec > 0 then return ec; end;" << std::endl;
+			
+      // Nous Xiong: add len tag
+      gen_meta_read_tag(os, tab + 1);
+
 			int64_t read_mask = 1;
 			int count = 1;
 			for (auto& m_define : t_define.m_members)
@@ -803,9 +841,14 @@ local wt_tag = adata_m.wt_tag;
 				read_mask <<= 1;
 				++count;
 			}
-			os << tabs(tab + 1) << "if read_tag > 0 then ";
+
+      // Nous Xiong: remove max mask check, for backward compat
+			/*os << tabs(tab + 1) << "if read_tag > 0 then ";
 			set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;
+			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
+
+      gen_meta_len_tag_jump(os, tab + 1);
+
 			os << tabs(tab + 1) << "return ec;" << std::endl;
 			os << tabs(tab) << "end," << std::endl;
 		}
@@ -813,8 +856,10 @@ local wt_tag = adata_m.wt_tag;
 		void gen_meta_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
 		{
 			os << tabs(tab) << "read = function(o,buf)" << std::endl;
-			os << tabs(tab + 1) << "local ec,read_tag = rd_tag(buf)" << std::endl;
-			os << tabs(tab + 1) << "if ec > 0 then return ec end;" << std::endl;
+			
+      // Nous Xiong: add len tag
+      gen_meta_read_tag(os, tab + 1);
+
 			int64_t read_mask = 1;
 			int count = 1;
 			for (auto& m_define : t_define.m_members)
@@ -840,9 +885,14 @@ local wt_tag = adata_m.wt_tag;
 				read_mask <<= 1;
 				++count;
 			}
-			os << tabs(tab + 1) << "if read_tag > 0 then ";
+
+      // Nous Xiong: remove max mask check, for backward compat
+			/*os << tabs(tab + 1) << "if read_tag > 0 then ";
 			set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;
+			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
+
+      gen_meta_len_tag_jump(os, tab + 1);
+
 			os << tabs(tab + 1) << "return ec;" << std::endl;
 			os << tabs(tab) << "end," << std::endl;
 		}
@@ -859,7 +909,14 @@ local wt_tag = adata_m.wt_tag;
 				{
 					if (m_define.is_multi())
 					{
-						os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << int64_mask(count) << "; end;" << std::endl;
+            if (m_define.m_type == e_base_type::map)
+            {
+						  os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then write_tag = write_tag + " << int64_mask(count) << "; end;" << std::endl;
+            }
+            else
+            {
+              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << int64_mask(count) << "; end;" << std::endl;
+            }
 					}
 					else
 					{
@@ -872,6 +929,11 @@ local wt_tag = adata_m.wt_tag;
 			count = 1;
 			os << tabs(tab + 1) << "ec = wt_tag(buf,write_tag);" << std::endl;
 			os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab + 1) << "ec = wt_i32(buf,o:size_of());" << std::endl;
+      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
+
 			write_mask = 1;
 			for (auto& m_define : t_define.m_members)
 			{
@@ -909,7 +971,14 @@ local wt_tag = adata_m.wt_tag;
         {
           if (m_define.is_multi())
           {
-            os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << int64_mask(count) << "; end;" << std::endl;
+            if (m_define.m_type == e_base_type::map)
+            {
+              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then tag = tag + " << int64_mask(count) << "; end;" << std::endl;
+            }
+            else
+            {
+              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << int64_mask(count) << "; end;" << std::endl;
+            }
           }
           else
           {
@@ -941,6 +1010,10 @@ local wt_tag = adata_m.wt_tag;
         ++count;
       }
       os << tabs(tab + 1) << "size = size + szof_i64(tag);" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab + 1) << "size = size + szof_i32(size + szof_i32(size));" << std::endl;
+
       os << tabs(tab + 1) << "return size;" << std::endl;
       os << tabs(tab) << "end," << std::endl;
     }
@@ -1063,6 +1136,9 @@ local get_write_data = adata_m.get_write_data;
 local set_read_data = adata_m.set_read_data;
 local rd_tag = adata_m.rd_tag;
 local wt_tag = adata_m.wt_tag;
+local get_rd_len = adata_m.get_rd_len;
+local get_wt_len = adata_m.get_wt_len;
+local tablen = ns.tablen;
 
 )";
 
@@ -1124,11 +1200,27 @@ local wt_tag = adata_m.wt_tag;
 			os << "," << std::endl;
 		}
 
+    void gen_meta_read_tag(std::ostream& os, int tab)
+    {
+      // Nous Xiong: add len tag
+      os << tabs(tab) << "local offset = get_rd_len(buf);" << std::endl;
+
+      os << tabs(tab) << "local ec,read_tag = rd_tag(buf);" << std::endl;
+      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab) << "local len_tag = 0;" << std::endl;
+      os << tabs(tab) << "ec,len_tag = rd_i32(buf);" << std::endl;
+      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
+    }
+
 		void gen_meta_skip_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
 		{
 			os << tabs(tab) << "skip_read = function(o,buf)" << std::endl;
-			os << tabs(tab + 1) << "local ec,read_tag = rd_tag(buf)" << std::endl;
-			os << tabs(tab + 1) << "if ec > 0 then return ec; end;" << std::endl;
+      
+      // Nous Xiong: add len tag
+      gen_meta_read_tag(os, tab + 1);
+
 			int64_t read_mask = 1;
 			int count = 1;
 			for (auto& m_define : t_define.m_members)
@@ -1147,9 +1239,14 @@ local wt_tag = adata_m.wt_tag;
 				read_mask <<= 1;
 				++count;
 			}
-			os << tabs(tab + 1) << "if read_tag > 0 then ";
+
+      // Nous Xiong: remove max mask check, for backward compat
+			/*os << tabs(tab + 1) << "if read_tag > 0 then ";
 			set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;
+			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
+
+      gen_meta_len_tag_jump(os, tab + 1);
+
 			os << tabs(tab+1) << "return ec;" << std::endl;
 			os << tabs(tab) << "end," << std::endl;
 		}
@@ -1157,8 +1254,10 @@ local wt_tag = adata_m.wt_tag;
 		void gen_meta_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
 		{
 			os << tabs(tab) << "read = function(o,buf)" << std::endl;
-			os << tabs(tab+1) << "local ec,read_tag = rd_tag(buf)" << std::endl;
-			os << tabs(tab + 1) << "if ec > 0 then return ec end;" << std::endl;
+			
+      // Nous Xiong: add len tag
+      gen_meta_read_tag(os, tab + 1);
+
 			int64_t read_mask = 1;
 			int count = 1;
 			for (auto& m_define : t_define.m_members)
@@ -1184,9 +1283,14 @@ local wt_tag = adata_m.wt_tag;
 				read_mask <<= 1;
 				++count;
 			}
-			os << tabs(tab + 1) << "if read_tag > 0 then ";
+
+      // Nous Xiong: remove max mask check, for backward compat
+			/*os << tabs(tab + 1) << "if read_tag > 0 then ";
 			set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible  << "; end; " << std::endl;
+			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible  << "; end; " << std::endl;*/
+
+      gen_meta_len_tag_jump(os, tab + 1);
+
 			os << tabs(tab+1) << "return ec;" << std::endl;
 			os << tabs(tab) << "end," << std::endl;
 		}
@@ -1203,7 +1307,14 @@ local wt_tag = adata_m.wt_tag;
 				{
 					if (m_define.is_multi())
 					{
-						os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
+            if (m_define.m_type == e_base_type::map)
+            {
+						  os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
+            }
+            else
+            {
+              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
+            }
 					}
 					else
 					{
@@ -1214,6 +1325,11 @@ local wt_tag = adata_m.wt_tag;
 			}
 			os << tabs(tab + 1) << "ec = wt_tag(buf,write_tag);" << std::endl;
 			os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab + 1) << "ec = wt_i32(buf,o:size_of());" << std::endl;
+      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
+
 			write_mask = 1;
 			for (auto& m_define : t_define.m_members)
 			{
@@ -1251,7 +1367,14 @@ local wt_tag = adata_m.wt_tag;
         {
           if (m_define.is_multi())
           {
-            os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+            if (m_define.m_type == e_base_type::map)
+            {
+              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+            }
+            else
+            {
+              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+            }
           }
           else
           {
@@ -1281,6 +1404,10 @@ local wt_tag = adata_m.wt_tag;
         ++count;
       }
       os << tabs(tab + 1) << "size = size + szof_i64(tag);" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab + 1) << "size = size + szof_i32(size + szof_i32(size));" << std::endl;
+
       os << tabs(tab + 1) << "return size;" << std::endl;
       os << tabs(tab) << "end," << std::endl;
     }
@@ -1366,7 +1493,7 @@ local wt_tag = adata_m.wt_tag;
 
 	namespace lua_jit
 	{
-		const char * lua_require_define = R"(local adata_m = require'adata_core'
+    const char * lua_require_define = R"(local adata_m = require'adata_core'
 local ffi = require'ffi'
 local ns = require'adata'
 local new_buf = adata_m.new_buf;
@@ -1377,6 +1504,9 @@ local trace_error = adata_m.trace_error;
 local trace_info = adata_m.trace_info;
 local get_write_data = adata_m.get_write_data;
 local set_read_data = adata_m.set_read_data;
+local get_rd_len = adata_m.get_rd_len;
+local get_wt_len = adata_m.get_wt_len;
+local tablen = ns.tablen;
 
 )";
 
@@ -1434,11 +1564,27 @@ local set_read_data = adata_m.set_read_data;
 			os << "," << std::endl;
 		}
 
+    void gen_meta_read_tag(std::ostream& os, int tab)
+    {
+      // Nous Xiong: add len tag
+      os << tabs(tab) << "local offset = get_rd_len(buf);" << std::endl;
+
+      os << tabs(tab) << "local ec,read_tag = rd_u64(buf);" << std::endl;
+      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab) << "local len_tag = 0;" << std::endl;
+      os << tabs(tab) << "ec,len_tag = rd_i32(buf);" << std::endl;
+      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
+    }
+
 		void gen_meta_skip_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
 		{
 			os << tabs(tab) << "skip_read = function(o,buf)" << std::endl;
-			os << tabs(tab + 1) << "local ec,read_tag = rd_u64(buf)" << std::endl;
-			os << tabs(tab + 1) << "if ec > 0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      gen_meta_read_tag(os, tab + 1);
+
 			int64_t read_mask = 1;
 			int count = 1;
 			for (auto& m_define : t_define.m_members)
@@ -1450,9 +1596,14 @@ local set_read_data = adata_m.set_read_data;
 				read_mask <<= 1;
 				++count;
 			}
-			os << tabs(tab + 1) << "if read_tag > 0 then ";
+
+      // Nous Xiong: remove max mask check, for backward compat
+			/*os << tabs(tab + 1) << "if read_tag > 0 then ";
 			set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;
+			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
+
+      gen_meta_len_tag_jump(os, tab + 1);
+
 			os << tabs(tab + 1) << "return ec;" << std::endl;
 			os << tabs(tab) << "end," << std::endl;
 		}
@@ -1460,8 +1611,10 @@ local set_read_data = adata_m.set_read_data;
 		void gen_meta_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
 		{
 			os << tabs(tab) << "read = function(o,buf)" << std::endl;
-			os << tabs(tab + 1) << "local ec,read_tag = rd_u64(buf)" << std::endl;
-			os << tabs(tab + 1) << "if ec > 0 then return ec end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      gen_meta_read_tag(os, tab + 1);
+
 			int64_t read_mask = 1;
 			int count = 1;
 			for (auto& m_define : t_define.m_members)
@@ -1480,9 +1633,14 @@ local set_read_data = adata_m.set_read_data;
 				read_mask <<= 1;
 				++count;
 			}
-			os << tabs(tab + 1) << "if read_tag > 0 then ";
+
+      // Nous Xiong: remove max mask check, for backward compat
+			/*os << tabs(tab + 1) << "if read_tag > 0 then ";
 			set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;
+			os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
+
+      gen_meta_len_tag_jump(os, tab + 1);
+
 			os << tabs(tab + 1) << "return ec;" << std::endl;
 			os << tabs(tab) << "end," << std::endl;
 		}
@@ -1499,7 +1657,14 @@ local set_read_data = adata_m.set_read_data;
 				{
 					if (m_define.is_multi())
 					{
-						os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
+            if (m_define.m_type == e_base_type::map)
+            {
+              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
+            }
+            else
+            {
+						  os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
+            }
 					}
 					else
 					{
@@ -1510,6 +1675,11 @@ local set_read_data = adata_m.set_read_data;
 			}
 			os << tabs(tab + 1) << "ec = wt_u64(buf,write_tag);" << std::endl;
 			os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab + 1) << "ec = wt_i32(buf,o:size_of());" << std::endl;
+      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
+
 			write_mask = 1;
 			for (auto& m_define : t_define.m_members)
 			{
@@ -1540,7 +1710,14 @@ local set_read_data = adata_m.set_read_data;
         {
           if (m_define.is_multi())
           {
-            os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+            if (m_define.m_type == e_base_type::map)
+            {
+              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+            }
+            else
+            {
+              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
+            }
           }
           else
           {
@@ -1570,6 +1747,10 @@ local set_read_data = adata_m.set_read_data;
         ++count;
       }
       os << tabs(tab + 1) << "size = size + szof_u64(tag);" << std::endl;
+
+      // Nous Xiong: add len tag
+      os << tabs(tab + 1) << "size = size + szof_i32(size + szof_i32(size));" << std::endl;
+
       os << tabs(tab + 1) << "return size;" << std::endl;
       os << tabs(tab) << "end," << std::endl;
     }

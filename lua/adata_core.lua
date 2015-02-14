@@ -254,7 +254,7 @@ m = {
     return adata_resize_buf(buf,s);
   end,
   clear_buf = function(buf)
-    return adata.clear_buf(buf);
+    return adata_clear_buf(buf);
   end,
   set_error = function(buf,e)
     return adata_set_error(buf,e);

@@ -672,9 +672,11 @@ namespace cpp_gen
     os << tabs(1) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 2);
     os << tabs(2) << "stream_write(stream,tag);" << std::endl;
+    os << tabs(2) << "if(stream.error()){return;}" << std::endl;
 
     // Nous Xiong: add len tag
     os << tabs(2) << "stream_write(stream,size_of(value));" << std::endl;
+    os << tabs(2) << "if(stream.error()){return;}" << std::endl;
 
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;

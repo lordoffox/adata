@@ -2016,10 +2016,6 @@ namespace adata
 
 		ADATA_INLINE ::std::size_t read(char * buffer, std::size_t len)
 		{
-      if (bad())
-      {
-        return 0;
-      }
 			if (this->m_read_ptr + len > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;
@@ -2032,10 +2028,6 @@ namespace adata
 
 		ADATA_INLINE unsigned char get_char()
 		{
-      if (bad())
-      {
-        return '\0';
-      }
 			if (this->m_read_ptr + 1 > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;
@@ -2046,10 +2038,6 @@ namespace adata
 
 		ADATA_INLINE ::std::size_t write(const char * buffer, std::size_t len)
 		{
-      if (bad())
-      {
-        return 0;
-      }
 			if (this->m_write_ptr + len > this->m_write_tail_ptr)
 			{
 				this->m_status = write_overflow;
@@ -2064,10 +2052,6 @@ namespace adata
 
 		ADATA_INLINE unsigned char * append_write(std::size_t len)
 		{
-      if (bad())
-      {
-        return 0;
-      }
 			if (this->m_write_ptr + len > this->m_write_tail_ptr)
 			{
 				this->m_status = write_overflow;
@@ -2080,10 +2064,6 @@ namespace adata
 
 		ADATA_INLINE unsigned char const* skip_read(::std::size_t len)
     {
-      if (bad())
-      {
-        return 0;
-      }
 			if (this->m_read_ptr + len > this->m_read_tail_ptr)
 			{
 				this->m_status = read_overflow;

@@ -94,7 +94,7 @@ namespace adata { namespace lua{
 		{
 			luaL_error(L, "arg 1 must be zbuf!");
 		}
-		zbuf->clear_write();
+    zbuf->clear();
 		return 1;
 	}
 

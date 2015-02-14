@@ -62,7 +62,7 @@ extern "C" {
 
 	ADATA_API int adata_clear_buf(adata::zero_copy_buffer* zbuf)
 	{
-		zbuf->clear_write();
+		zbuf->clear();
 		return 1;
 	}
 
