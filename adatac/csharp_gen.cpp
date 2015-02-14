@@ -398,14 +398,42 @@ namespace csharp_gen
     }
   }
 
+  // Nous Xiong: add len tag jump
+  void gen_adata_len_tag_jump(std::ofstream& os, int tab_indent)
+  {
+    os << tabs(tab_indent) << "if(len_tag >= 0)" << std::endl;
+    os << tabs(tab_indent) << "{" << std::endl;
+    os << tabs(tab_indent + 1) << "UInt32 read_len = (UInt32)(stream.read_length() - offset);" << std::endl;
+    os << tabs(tab_indent + 1) << "UInt32 len = (UInt32)len_tag;" << std::endl;
+    os << tabs(tab_indent + 1) << "if(len > read_len) stream.skip_read(len - read_len);" << std::endl;
+    os << tabs(tab_indent) << "}" << std::endl;
+  }
+
+  // Nous Xiong: 
+  void gen_adata_read_tag(std::ofstream& os, int tab_indent)
+  {
+    // Nous Xiong: get read offset
+    os << tabs(tab_indent) << "int offset = stream.read_length();" << std::endl;
+
+    os << tabs(tab_indent) << "UInt64 tag = 0;" << std::endl;
+    os << tabs(tab_indent) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
+    os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
+
+    // Nous Xiong: add len tag
+    os << tabs(tab_indent) << "Int32 len_tag = 0;" << std::endl;
+    os << tabs(tab_indent) << "adata.stream.stream_read(stream,ref len_tag);" << std::endl;
+    os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
+    os << std::endl;
+  }
+
   void gen_adata_operator_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
     os << tabs(2) << "public static void stream_read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
-    os << tabs(3) << "UInt64 tag = 0;" << std::endl;
-    os << tabs(3) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
-    os << tabs(3) << "if(stream.error()){return;}" << std::endl;
+    
+    gen_adata_read_tag(os, 3);
+
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
@@ -415,7 +443,13 @@ namespace csharp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-    os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (adata.error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
+
+    // Nous Xiong: remove max mask check, for backward compat
+    //os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (adata.error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
+
+    // Nous Xiong: add len tag jump
+    gen_adata_len_tag_jump(os, 3);
+
     os << tabs(2) << "}" << std::endl << std::endl;
   }
 
@@ -431,9 +465,9 @@ namespace csharp_gen
     std::string full_type_name = tdefine.m_name;
     os << tabs(2) << "public static void skip_read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
-    os << tabs(3) << "UInt64 tag = 0;" << std::endl;
-    os << tabs(3) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
-    os << tabs(3) << "if(stream.error()){ return; }" << std::endl;
+    
+    gen_adata_read_tag(os, 3);
+
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
@@ -443,7 +477,13 @@ namespace csharp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-    os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (adata.error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
+
+    // Nous Xiong: remove max mask check, for backward compat
+    //os << tabs(3) << "if((tag&(~(UInt64)" << total_mask << "))>0){stream.error_code = (adata.error_code_t.undefined_member_protocol_not_compatible);return;}" << std::endl;
+
+    // Nous Xiong: add len tag jump
+    gen_adata_len_tag_jump(os, 3);
+
     os << tabs(2) << "}" << std::endl << std::endl;
   }
 
@@ -625,6 +665,10 @@ namespace csharp_gen
       tag_mask <<= 1;
     }
     os << tabs(3) << "size += adata.stream.size_of(tag);" << std::endl;
+    
+    // Nous Xiong: add len tag
+    os << tabs(3) << "size += adata.stream.size_of(size + adata.stream.size_of(size));" << std::endl;
+
     os << tabs(3) << "return size;" << std::endl;
     os << tabs(2) << "}" << std::endl << std::endl;
   }
@@ -708,6 +752,12 @@ namespace csharp_gen
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     os << tabs(3) << "adata.stream.stream_write(stream,tag);" << std::endl;
+    os << tabs(3) << "if(stream.error()){ return; }" << std::endl;
+
+    // Nous Xiong: add len tag
+    os << tabs(3) << "adata.stream.stream_write(stream,size_of(value));" << std::endl;
+    os << tabs(3) << "if(stream.error()){return;}" << std::endl;
+
     uint64_t tag_mask = 1;
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
@@ -718,7 +768,7 @@ namespace csharp_gen
       {
         if (member.is_multi())
         {
-          os << tabs(2) << "if((tag&" << tag_mask << ")>0)";
+          os << tabs(3) << "if((tag&" << tag_mask << ")>0)";
         }
         gen_member_write_type_code(desc_define, tdefine, member, os, 3, var_name);
         os << std::endl;
