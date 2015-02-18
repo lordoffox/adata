@@ -26,7 +26,13 @@ extern "C" {
 		{
 			size = 65535;
 		}
-	  unsigned char * buffer = new unsigned char[size];
+    // Nous Xiong: change to malloc, for resize realloc
+    uint8_t* buffer = (uint8_t*)malloc(size);
+    if (buffer == 0)
+    {
+      return 0;
+    }
+
 		adata::zero_copy_buffer * zbuf = new adata::zero_copy_buffer;
 		zbuf->set_write(buffer, size);
 		return zbuf;
@@ -36,8 +42,9 @@ extern "C" {
 	{
 		if (zbuf.write_data() != 0)
 		{
-			delete[] zbuf.write_data();
-			zbuf.set_write((uint8_t *)NULL, 0);
+      // Nous Xiong: change to free, for resize realloc
+      free((void*)zbuf.write_data());
+      zbuf.set_write((uint8_t *)NULL, 0);
 		}
 	}
 
@@ -54,8 +61,15 @@ extern "C" {
 		{
 			return -1;
 		}
-		_adata_reset_write_buf(*zbuf);
-		unsigned char * buffer = new unsigned char[size];
+
+    // Nous Xiong: change to realloc to improvment
+    void* p = (void*)zbuf->write_data();
+    uint8_t* buffer = (uint8_t*)realloc(p, size);
+    if (buffer == 0)
+    {
+      return -1;
+    }
+
 		zbuf->set_write(buffer, size);
 		return 1;
 	}
@@ -137,126 +151,126 @@ extern "C" {
 	ADATA_API int8_t adata_read_fix_int8(adata::zero_copy_buffer * buf)
 	{
 		int8_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint8_t adata_read_fix_uint8(adata::zero_copy_buffer * buf)
 	{
 		uint8_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int16_t adata_read_fix_int16(adata::zero_copy_buffer * buf)
 	{
 		int16_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint16_t adata_read_fix_uint16(adata::zero_copy_buffer * buf)
 	{
 		uint16_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int32_t adata_read_fix_int32(adata::zero_copy_buffer * buf)
 	{
 		int32_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint32_t adata_read_fix_uint32(adata::zero_copy_buffer * buf)
 	{
 		uint32_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int64_t adata_read_fix_int64(adata::zero_copy_buffer * buf)
 	{
 		int64_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint64_t adata_read_fix_uint64(adata::zero_copy_buffer * buf)
 	{
 		uint64_t v;
-		adata::fix_stream_read(*buf, v);
+		adata::fix_read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int8_t adata_read_int8(adata::zero_copy_buffer * buf)
 	{
 		int8_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint8_t adata_read_uint8(adata::zero_copy_buffer * buf)
 	{
 		uint8_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int16_t adata_read_int16(adata::zero_copy_buffer * buf)
 	{
 		int16_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint16_t adata_read_uint16(adata::zero_copy_buffer * buf)
 	{
 		uint16_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int32_t adata_read_int32(adata::zero_copy_buffer * buf)
 	{
 		int32_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint32_t adata_read_uint32(adata::zero_copy_buffer * buf)
 	{
 		uint32_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API int64_t adata_read_int64(adata::zero_copy_buffer * buf)
 	{
 		int64_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API uint64_t adata_read_uint64(adata::zero_copy_buffer * buf)
 	{
 		uint64_t v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API float adata_read_float32(adata::zero_copy_buffer * buf)
 	{
 		float v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
 	ADATA_API double adata_read_float64(adata::zero_copy_buffer * buf)
 	{
 		double v;
-		adata::stream_read(*buf, v);
+		adata::read(*buf, v);
 		return v;
 	}
 
@@ -371,7 +385,7 @@ extern "C" {
 	ADATA_API int adata_skip_read_str(adata::zero_copy_buffer * buf, size_t len)
 	{
 		uint32_t slen = 0;
-		adata::stream_read(*buf, slen);
+		adata::read(*buf, slen);
 		if (len > 0 && len < slen)
 		{
 			buf->set_error_code(adata::sequence_length_overflow);
@@ -383,110 +397,110 @@ extern "C" {
 
 	ADATA_API int adata_write_fix_int8(adata::zero_copy_buffer * buf, int8_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return 0;
 	}
 
 	ADATA_API int adata_write_fix_uint8(adata::zero_copy_buffer * buf, uint8_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_fix_int16(adata::zero_copy_buffer * buf, int16_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_fix_uint16(adata::zero_copy_buffer * buf, uint16_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_fix_int32(adata::zero_copy_buffer * buf, int32_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_fix_uint32(adata::zero_copy_buffer * buf, uint32_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_fix_int64(adata::zero_copy_buffer * buf, int64_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_fix_uint64(adata::zero_copy_buffer * buf, uint64_t v)
 	{
-		adata::fix_stream_write(*buf, v);
+		adata::fix_write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_int8(adata::zero_copy_buffer * buf, int8_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_uint8(adata::zero_copy_buffer * buf, uint8_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_int16(adata::zero_copy_buffer * buf, int16_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_uint16(adata::zero_copy_buffer * buf, uint16_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_int32(adata::zero_copy_buffer * buf, int32_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_uint32(adata::zero_copy_buffer * buf, uint32_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_int64(adata::zero_copy_buffer * buf, int64_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_uint64(adata::zero_copy_buffer * buf, uint64_t v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 
 	ADATA_API int adata_write_float32(adata::zero_copy_buffer * buf, float v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 
 	ADATA_API int adata_write_float64(adata::zero_copy_buffer * buf, double v)
 	{
-		adata::stream_write(*buf, v);
+		adata::write(*buf, v);
 		return buf->m_error_code;
 	}
 

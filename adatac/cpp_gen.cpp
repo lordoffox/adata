@@ -294,7 +294,7 @@ namespace cpp_gen
       {
         os << "fix_";
       }
-      os << "stream_read(stream," << var_name << ");";
+      os << "read(stream," << var_name << ");";
       gen_trace_error_info(os, 0, "stream", mdefine.m_name, trace_error);
       os << "}" << std::endl;
     }
@@ -398,12 +398,12 @@ namespace cpp_gen
     os << tabs(tab_indent) << "::std::size_t offset = stream.read_length();" << std::endl;
 
     os << tabs(tab_indent) << "uint64_t tag = 0;" << std::endl;
-    os << tabs(tab_indent) << "stream_read(stream,tag);" << std::endl;
+    os << tabs(tab_indent) << "read(stream,tag);" << std::endl;
     os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
 
     // Nous Xiong: add len tag
     os << tabs(tab_indent) << "int32_t len_tag = 0;" << std::endl;
-    os << tabs(tab_indent) << "stream_read(stream,len_tag);" << std::endl;
+    os << tabs(tab_indent) << "read(stream,len_tag);" << std::endl;
     os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
     os << std::endl;
   }
@@ -412,7 +412,7 @@ namespace cpp_gen
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
     os << tabs(1) << "template<typename stream_ty>" << std::endl;
-    os << tabs(1) << gen_inline_code(tdefine) << "void stream_read( stream_ty& stream, " << full_type_name << "& value)" << std::endl;
+    os << tabs(1) << gen_inline_code(tdefine) << "void read( stream_ty& stream, " << full_type_name << "& value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
 
     gen_adata_read_tag(os, 2);
@@ -617,7 +617,7 @@ namespace cpp_gen
       os << tabs(tab_indent) << "{";
       os << std::endl;
       os << tabs(tab_indent + 1) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
-      os << tabs(tab_indent + 1) << "stream_write(stream,len);" << std::endl;
+      os << tabs(tab_indent + 1) << "write(stream,len);" << std::endl;
 
       if (mdefine.m_type == e_base_type::string)
       {
@@ -658,7 +658,7 @@ namespace cpp_gen
       {
         os << "fix_";
       }
-      os << "stream_write(stream," << var_name << ");";
+      os << "write(stream," << var_name << ");";
       gen_trace_error_info(os, 0, "stream", mdefine.m_name, trace_error);
       os << "}";
     }
@@ -668,14 +668,14 @@ namespace cpp_gen
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
     os << tabs(1) << "template<typename stream_ty>" << std::endl;
-    os << tabs(1) << gen_inline_code(tdefine) << "void stream_write(stream_ty& stream , const " << full_type_name << "&value)" << std::endl;
+    os << tabs(1) << gen_inline_code(tdefine) << "void write(stream_ty& stream , const " << full_type_name << "&value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 2);
-    os << tabs(2) << "stream_write(stream,tag);" << std::endl;
+    os << tabs(2) << "write(stream,tag);" << std::endl;
     os << tabs(2) << "if(stream.error()){return;}" << std::endl;
 
     // Nous Xiong: add len tag
-    os << tabs(2) << "stream_write(stream,size_of(value));" << std::endl;
+    os << tabs(2) << "write(stream,size_of(value));" << std::endl;
     os << tabs(2) << "if(stream.error()){return;}" << std::endl;
 
     uint64_t tag_mask = 1;

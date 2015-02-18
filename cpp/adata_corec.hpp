@@ -26,7 +26,7 @@ namespace adata { namespace lua{
 		const char * str = lua_tolstring(L, 1, &len);
 		if (len <= 0)
 		{
-			luaL_error(L, "error info size %d", len);
+			return luaL_error(L, "error info size %d", len);
 		}
 		void * info = lua_newuserdata(L, len);
 		memcpy(info, str, len);
@@ -38,15 +38,22 @@ namespace adata { namespace lua{
 		lua_Integer size = lua_tointeger(L, 1);
 		if (size < 0)
 		{
-			luaL_error(L, "error buffer size %d" , size);
+      return luaL_error(L, "error buffer size %d", size);
 		}
 		if (size == 0)
 		{
 			size = 65535;
 		}
-	  unsigned char * buffer = new unsigned char[size];
+
+    // Nous Xiong: change to malloc, for resize realloc
+    uint8_t* buffer = (uint8_t*)std::malloc(size);
+    if (buffer == 0)
+    {
+      return luaL_error(L, "buffer alloc failed");
+    }
+
 		void * obj = lua_newuserdata(L, sizeof(adata::zero_copy_buffer));
-		adata::zero_copy_buffer * zbuf = new (obj)adata::zero_copy_buffer;
+		adata::zero_copy_buffer * zbuf = new (obj) adata::zero_copy_buffer;
 		zbuf->set_write(buffer, size);
 #if LUA_VERSION_NUM == 501
 		luaL_newmetatable(L, zbuffer_metatable);
@@ -61,7 +68,8 @@ namespace adata { namespace lua{
 	{
 		if (zbuf.write_data() != 0)
 		{
-			delete[] zbuf.write_data();
+      // Nous Xiong: change to free, for resize realloc
+			std::free((void*)zbuf.write_data());
 			zbuf.set_write((uint8_t *)NULL, 0);
 		}
 	}
@@ -79,10 +87,17 @@ namespace adata { namespace lua{
 		lua_Integer size = lua_tointeger(L, 2);
 		if (size <= 0)
 		{
-			luaL_error(L , "error buffer size %d", size);
+      return luaL_error(L, "error buffer size %d", size);
 		}
-		_reset_buf(*zbuf);
-		unsigned char * buffer = new unsigned char[size];
+		
+    // Nous Xiong: change to realloc to improvment
+    void* p = (void*)zbuf->write_data();
+    uint8_t* buffer = (uint8_t*)std::realloc(p, size);
+    if (buffer == 0)
+    {
+      return luaL_error(L, "buffer alloc failed");
+    }
+
 		zbuf->set_write(buffer, size);
 		return 1;
 	}
@@ -92,7 +107,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
 		}
     zbuf->clear();
 		return 1;
@@ -103,7 +118,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
 		}
 		lua_Integer ec = lua_tointeger(L, 2);
 		zbuf->set_error_code((adata::error_code_t)ec);
@@ -115,7 +130,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
 		}
 		const char * info = (const char *)lua_touserdata(L, 2);
 		lua_Integer offset = lua_tointeger(L, 3);
@@ -133,7 +148,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
 		}
 		std::string info;
 		zbuf->get_trace_error_info(info);
@@ -146,7 +161,7 @@ namespace adata { namespace lua{
     adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
     if (NULL == zbuf)
     {
-      luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
     }
     lua_pushinteger(L, zbuf->read_length());
     return 1;
@@ -157,7 +172,7 @@ namespace adata { namespace lua{
     adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
     if (NULL == zbuf)
     {
-      luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
     }
     lua_pushinteger(L, zbuf->write_length());
     return 1;
@@ -168,7 +183,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
 		}
 		lua_pushlstring(L, zbuf->write_data(), zbuf->write_length());
 		lua_Integer dont_clear = lua_tointeger(L, 2);
@@ -184,7 +199,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      return luaL_error(L, "arg 1 must be zbuf!");
 		}
 		size_t len;
 		const char * str = lua_tolstring(L, 2, &len);
@@ -202,7 +217,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, idx);
 		if (NULL == zbuf)
 		{
-			luaL_error(L, "arg 1 must be zbuf!");
+      luaL_error(L, "arg 1 must be zbuf!");
 		}
 		return zbuf;
 	}
@@ -212,7 +227,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		T v;
-		adata::fix_stream_read(*zbuf, v);
+		adata::fix_read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushinteger(L, v);
 		return 2;
@@ -223,7 +238,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		T v;
-		adata::stream_read(*zbuf, v);
+		adata::read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushinteger(L, v);
 		return 2;
@@ -264,7 +279,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v;
-		adata::fix_stream_read(*zbuf, v);
+		adata::fix_read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushint64(L, v);
 		return 2;
@@ -280,7 +295,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint64_t v;
-		adata::fix_stream_read(*zbuf, v);
+		adata::fix_read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushuint64(L, v);
 		return 2;
@@ -321,7 +336,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v;
-		adata::stream_read(*zbuf, v);
+		adata::read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushint64(L, v);
 		return 2;
@@ -337,7 +352,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint64_t v;
-		adata::stream_read(*zbuf, v);
+		adata::read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushuint64(L, v);
 		return 2;
@@ -347,7 +362,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint64_t v;
-		adata::stream_read(*zbuf, v);
+		adata::read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushint64(L, (int64_t)v);
 		return 2;
@@ -357,7 +372,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		float v;
-		adata::stream_read(*zbuf, v);
+		adata::read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushnumber(L, v);
 		return 2;
@@ -367,7 +382,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		double v;
-		adata::stream_read(*zbuf, v);
+		adata::read(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		lua_pushnumber(L, v);
 		return 2;
@@ -377,7 +392,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint32_t slen = 0;
-		adata::stream_read(*zbuf, slen);
+		adata::read(*zbuf, slen);
 		lua_Integer len = lua_tointeger(L, 2);
 		if (len > 0 && len < (lua_Integer)slen)
 		{
@@ -507,7 +522,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint32_t slen = 0;
-		adata::stream_read(*zbuf, slen);
+		adata::read(*zbuf, slen);
 		lua_Integer len = lua_tointeger(L, 2);
 		if (len > 0 && len < (lua_Integer)slen)
 		{
@@ -550,7 +565,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		T v = (T)lua_tointeger(L, 2);
-		adata::fix_stream_write(*zbuf, v);
+		adata::fix_write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -560,7 +575,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		T v = (T)lua_tointeger(L, 2);
-		adata::stream_write(*zbuf, v);
+		adata::write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -601,7 +616,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v;
 		get_lua_number64(L, 2, v);
-		adata::fix_stream_write(*zbuf, v);
+		adata::fix_write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -617,7 +632,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint64_t v;
 		get_lua_number64(L, 2, v);
-		adata::fix_stream_write(*zbuf, v);
+		adata::fix_write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -658,7 +673,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v;
 		get_lua_number64(L, 2, v);
-		adata::stream_write(*zbuf, v);
+		adata::write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -675,7 +690,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v;
 		get_lua_number64(L, 2, v);
-		adata::stream_write(*zbuf, (uint64_t)v);
+		adata::write(*zbuf, (uint64_t)v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -684,7 +699,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		int64_t v = lua_tointeger(L,2);
-		adata::stream_write(*zbuf, (uint64_t)v);
+		adata::write(*zbuf, (uint64_t)v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -695,7 +710,7 @@ namespace adata { namespace lua{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		uint64_t v;
 		get_lua_number64(L, 2, v);
-		adata::stream_write(*zbuf, v);
+		adata::write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -704,7 +719,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		float v = (float)lua_tonumber(L, 2);
-		adata::stream_write(*zbuf, v);
+		adata::write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -713,7 +728,7 @@ namespace adata { namespace lua{
 	{
 		adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
 		double v = lua_tonumber(L, 2);
-		adata::stream_write(*zbuf, v);
+		adata::write(*zbuf, v);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;
 	}
@@ -729,7 +744,7 @@ namespace adata { namespace lua{
 			zbuf->set_error_code(sequence_length_overflow);
 			slen = 0;
 		}
-		adata::stream_write(*zbuf, (uint32_t)slen);
+		adata::write(*zbuf, (uint32_t)slen);
 		zbuf->write(str, slen);
 		lua_pushinteger(L, zbuf->error_code());
 		return 1;

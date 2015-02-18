@@ -764,7 +764,7 @@ namespace adata
       return 8;
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref sbyte value)
+    public static void fix_read(zero_copy_buffer stream, ref sbyte value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -774,7 +774,7 @@ namespace adata
       value = (sbyte)stream.buffer[stream.read_len++];
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref byte value)
+    public static void fix_read(zero_copy_buffer stream, ref byte value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -784,7 +784,7 @@ namespace adata
       value = stream.buffer[stream.read_len++];
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref Int16 value)
+    public static void fix_read(zero_copy_buffer stream, ref Int16 value)
     {
       if (stream.read_len + 2 >= stream.data_len)
       {
@@ -805,7 +805,7 @@ namespace adata
       value = stream.value.VI16;
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref UInt16 value)
+    public static void fix_read(zero_copy_buffer stream, ref UInt16 value)
     {
       if (stream.read_len + 2 >= stream.data_len)
       {
@@ -826,7 +826,7 @@ namespace adata
       value = stream.value.VU16;
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref Int32 value)
+    public static void fix_read(zero_copy_buffer stream, ref Int32 value)
     {
       if (stream.read_len + 4 >= stream.data_len)
       {
@@ -851,7 +851,7 @@ namespace adata
       value = stream.value.VI32;
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref UInt32 value)
+    public static void fix_read(zero_copy_buffer stream, ref UInt32 value)
     {
       if (stream.read_len + 4 >= stream.data_len)
       {
@@ -876,7 +876,7 @@ namespace adata
       value = stream.value.VU32;
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref Int64 value)
+    public static void fix_read(zero_copy_buffer stream, ref Int64 value)
     {
       if (stream.read_len + 8 >= stream.data_len)
       {
@@ -909,7 +909,7 @@ namespace adata
       value = stream.value.VI64;
     }
 
-    public static void fix_stream_read(zero_copy_buffer stream, ref UInt64 value)
+    public static void fix_read(zero_copy_buffer stream, ref UInt64 value)
     {
       if (stream.read_len + 8 >= stream.data_len)
       {
@@ -942,7 +942,7 @@ namespace adata
       value = stream.value.VU64;
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref float value)
+    public static void read(zero_copy_buffer stream, ref float value)
     {
       if (stream.read_len + 4 >= stream.data_len)
       {
@@ -967,7 +967,7 @@ namespace adata
       value = stream.value.VF32;
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref double value)
+    public static void read(zero_copy_buffer stream, ref double value)
     {
       if (stream.read_len + 8 >= stream.data_len)
       {
@@ -1000,7 +1000,7 @@ namespace adata
       value = stream.value.VF64;
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, sbyte value)
+    public static void fix_write(zero_copy_buffer stream, sbyte value)
     {
       if (stream.write_len + 1 >= stream.data_len)
       {
@@ -1010,7 +1010,7 @@ namespace adata
       stream.buffer[stream.write_len++] = (byte)value;
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, byte value)
+    public static void fix_write(zero_copy_buffer stream, byte value)
     {
       if (stream.write_len + 1 >= stream.data_len)
       {
@@ -1020,7 +1020,7 @@ namespace adata
       stream.buffer[stream.write_len++] = (byte)value;
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, Int16 value)
+    public static void fix_write(zero_copy_buffer stream, Int16 value)
     {
       if (stream.write_len + 2 >= stream.data_len)
       {
@@ -1041,7 +1041,7 @@ namespace adata
       }
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, UInt16 value)
+    public static void fix_write(zero_copy_buffer stream, UInt16 value)
     {
       if (stream.write_len + 2 >= stream.data_len)
       {
@@ -1062,7 +1062,7 @@ namespace adata
       }
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, Int32 value)
+    public static void fix_write(zero_copy_buffer stream, Int32 value)
     {
       if (stream.write_len + 4 >= stream.data_len)
       {
@@ -1087,7 +1087,7 @@ namespace adata
       }
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, UInt32 value)
+    public static void fix_write(zero_copy_buffer stream, UInt32 value)
     {
       if (stream.write_len + 4 >= stream.data_len)
       {
@@ -1112,7 +1112,7 @@ namespace adata
       }
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, Int64 value)
+    public static void fix_write(zero_copy_buffer stream, Int64 value)
     {
       if (stream.write_len + 8 >= stream.data_len)
       {
@@ -1145,7 +1145,7 @@ namespace adata
       }
     }
 
-    public static void fix_stream_write(zero_copy_buffer stream, UInt64 value)
+    public static void fix_write(zero_copy_buffer stream, UInt64 value)
     {
       if (stream.write_len + 8 >= stream.data_len)
       {
@@ -1178,7 +1178,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, float value)
+    public static void write(zero_copy_buffer stream, float value)
     {
       if (stream.write_len + 4 >= stream.data_len)
       {
@@ -1203,7 +1203,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, double value)
+    public static void write(zero_copy_buffer stream, double value)
     {
       if (stream.write_len + 8 >= stream.data_len)
       {
@@ -1236,7 +1236,7 @@ namespace adata
       }
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref sbyte value)
+    public static void read(zero_copy_buffer stream, ref sbyte value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1267,7 +1267,7 @@ namespace adata
       }
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref byte value)
+    public static void read(zero_copy_buffer stream, ref byte value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1293,7 +1293,7 @@ namespace adata
       value = stream.buffer[stream.read_len++];
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref Int16 value)
+    public static void read(zero_copy_buffer stream, ref Int16 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1362,7 +1362,7 @@ namespace adata
       }
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref UInt16 value)
+    public static void read(zero_copy_buffer stream, ref UInt16 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1423,7 +1423,7 @@ namespace adata
       value = stream.value.VU16;
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref Int32 value)
+    public static void read(zero_copy_buffer stream, ref Int32 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1522,7 +1522,7 @@ namespace adata
       }
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref UInt32 value)
+    public static void read(zero_copy_buffer stream, ref UInt32 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1613,7 +1613,7 @@ namespace adata
       value = stream.value.VU32;
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref Int64 value)
+    public static void read(zero_copy_buffer stream, ref Int64 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1796,7 +1796,7 @@ namespace adata
       }
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref UInt64 value)
+    public static void read(zero_copy_buffer stream, ref UInt64 value)
     {
       if (stream.read_len + 1 >= stream.data_len)
       {
@@ -1971,7 +1971,7 @@ namespace adata
       value = stream.value.VU32;
     }
 
-    public static void stream_write(zero_copy_buffer stream, sbyte value)
+    public static void write(zero_copy_buffer stream, sbyte value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
@@ -2000,7 +2000,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, byte value)
+    public static void write(zero_copy_buffer stream, byte value)
     {
       if (value <= const_tag_as_value)
       {
@@ -2024,7 +2024,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, Int16 value)
+    public static void write(zero_copy_buffer stream, Int16 value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
@@ -2077,7 +2077,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, UInt16 value)
+    public static void write(zero_copy_buffer stream, UInt16 value)
     {
       if (value <= const_tag_as_value)
       {
@@ -2123,7 +2123,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, Int32 value)
+    public static void write(zero_copy_buffer stream, Int32 value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
@@ -2224,7 +2224,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, UInt32 value)
+    public static void write(zero_copy_buffer stream, UInt32 value)
     {
       if (value <= const_tag_as_value)
       {
@@ -2316,7 +2316,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, Int64 value)
+    public static void write(zero_copy_buffer stream, Int64 value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
@@ -2537,7 +2537,7 @@ namespace adata
       }
     }
 
-    public static void stream_write(zero_copy_buffer stream, UInt64 value)
+    public static void write(zero_copy_buffer stream, UInt64 value)
     {
       if (value <= const_tag_as_value)
       {
@@ -2753,7 +2753,7 @@ namespace adata
     public static UInt32 check_read_size(zero_copy_buffer stream, int size)
     {
       UInt32 len = 0;
-      stream_read(stream, ref len);
+      read(stream, ref len);
       if (stream.error())
       {
         return 0;
@@ -2766,7 +2766,7 @@ namespace adata
       return len;
     }
 
-    public static void stream_read(zero_copy_buffer stream, ref string value, UInt32 len)
+    public static void read(zero_copy_buffer stream, ref string value, UInt32 len)
     {
       if (stream.read_len + len > stream.data_len)
       {
@@ -2782,7 +2782,7 @@ namespace adata
       return;
     }
 
-    public static void stream_write(zero_copy_buffer stream, string value, UInt32 len)
+    public static void write(zero_copy_buffer stream, string value, UInt32 len)
     {
       if (stream.write_len + len > stream.data_len)
       {

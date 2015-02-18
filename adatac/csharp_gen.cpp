@@ -233,7 +233,7 @@ namespace csharp_gen
       if (trace_error)os << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent + 1) << "adata.stream.stream_read(stream,ref " << var_name << ",len" << tab_indent << ");";
+        os << tabs(tab_indent + 1) << "adata.stream.read(stream,ref " << var_name << ",len" << tab_indent << ");";
         if (trace_error)os << std::endl;
         gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, trace_error);
       }
@@ -302,7 +302,7 @@ namespace csharp_gen
       {
         os << "fix_";
       }
-      os << "stream_read(stream,ref " << var_name << ");";
+      os << "read(stream,ref " << var_name << ");";
       gen_trace_error_info(os, 0, "stream", mdefine.m_name, trace_error);
       os << "}" << std::endl;
     }
@@ -416,12 +416,12 @@ namespace csharp_gen
     os << tabs(tab_indent) << "int offset = stream.read_length();" << std::endl;
 
     os << tabs(tab_indent) << "UInt64 tag = 0;" << std::endl;
-    os << tabs(tab_indent) << "adata.stream.stream_read(stream,ref tag);" << std::endl;
+    os << tabs(tab_indent) << "adata.stream.read(stream,ref tag);" << std::endl;
     os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
 
     // Nous Xiong: add len tag
     os << tabs(tab_indent) << "Int32 len_tag = 0;" << std::endl;
-    os << tabs(tab_indent) << "adata.stream.stream_read(stream,ref len_tag);" << std::endl;
+    os << tabs(tab_indent) << "adata.stream.read(stream,ref len_tag);" << std::endl;
     os << tabs(tab_indent) << "if(stream.error()){return;}" << std::endl;
     os << std::endl;
   }
@@ -429,7 +429,7 @@ namespace csharp_gen
   void gen_adata_operator_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void stream_read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     
     gen_adata_read_tag(os, 3);
@@ -684,15 +684,15 @@ namespace csharp_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent + 1) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Length;" << std::endl;
-        os << tabs(tab_indent + 1) << "adata.stream.stream_write(stream,len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent + 1) << "adata.stream.stream_write(stream," << var_name << ",len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "adata.stream.write(stream,len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "adata.stream.write(stream," << var_name << ",len" << tab_indent << ");" << std::endl;
         gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, trace_error);
         if (trace_error)os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent + 1) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Count;" << std::endl;
-        os << tabs(tab_indent + 1) << "adata.stream.stream_write(stream,len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "adata.stream.write(stream,len" << tab_indent << ");" << std::endl;
         os << tabs(tab_indent + 1) << "int count = 0;" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent + 1) << "foreach (" << decl_type << " i in " << var_name << ")" << std::endl;
@@ -707,7 +707,7 @@ namespace csharp_gen
       else if (mdefine.m_type == e_base_type::map)
       {
         os << tabs(tab_indent + 1) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Count;" << std::endl;
-        os << tabs(tab_indent + 1) << "adata.stream.stream_write(stream,len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "adata.stream.write(stream,len" << tab_indent << ");" << std::endl;
         os << tabs(tab_indent + 1) << "int count = 0;" << std::endl;
         os << tabs(tab_indent + 1) << "foreach (var i in " << var_name << ")" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
@@ -739,7 +739,7 @@ namespace csharp_gen
       {
         os << "fix_";
       }
-      os << "stream_write(stream," << var_name << ");";
+      os << "write(stream," << var_name << ");";
       gen_trace_error_info(os, 0, "stream", mdefine.m_name, trace_error);
       os << "}";
     }
@@ -748,14 +748,14 @@ namespace csharp_gen
   void gen_adata_operator_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static void stream_write(adata.zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static void write(adata.zero_copy_buffer stream , " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
-    os << tabs(3) << "adata.stream.stream_write(stream,tag);" << std::endl;
+    os << tabs(3) << "adata.stream.write(stream,tag);" << std::endl;
     os << tabs(3) << "if(stream.error()){ return; }" << std::endl;
 
     // Nous Xiong: add len tag
-    os << tabs(3) << "adata.stream.stream_write(stream,size_of(value));" << std::endl;
+    os << tabs(3) << "adata.stream.write(stream,size_of(value));" << std::endl;
     os << tabs(3) << "if(stream.error()){return;}" << std::endl;
 
     uint64_t tag_mask = 1;

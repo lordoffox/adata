@@ -482,7 +482,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_read(stream_ty& stream, int8_t& value)
+	ADATA_INLINE void fix_read(stream_ty& stream, int8_t& value)
 	{
     typedef int8_t value_type;
 		stream.read((char*)&value, sizeof(value_type));
@@ -493,7 +493,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_read(stream_ty& stream, uint8_t& value)
+	ADATA_INLINE void fix_read(stream_ty& stream, uint8_t& value)
 	{
 		typedef uint8_t value_type;
 		stream.read((char*)&value, sizeof(value_type));
@@ -504,7 +504,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_read(stream_ty& stream, int16_t& value)
+	ADATA_INLINE void fix_read(stream_ty& stream, int16_t& value)
 	{
 		typedef int16_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -529,7 +529,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_read(stream_ty& stream, uint16_t& value)
+	ADATA_INLINE void fix_read(stream_ty& stream, uint16_t& value)
 	{
 		typedef uint16_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -554,7 +554,7 @@ namespace adata
 	}
 
   template<typename stream_ty>
-  ADATA_INLINE void fix_stream_read(stream_ty& stream, int32_t& value)
+  ADATA_INLINE void fix_read(stream_ty& stream, int32_t& value)
   {
     typedef int32_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -581,7 +581,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void fix_stream_read(stream_ty& stream, uint32_t& value)
+  ADATA_INLINE void fix_read(stream_ty& stream, uint32_t& value)
   {
     typedef uint32_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -608,7 +608,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void fix_stream_read(stream_ty& stream, int64_t& value)
+  ADATA_INLINE void fix_read(stream_ty& stream, int64_t& value)
   {
     typedef int64_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -639,7 +639,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void fix_stream_read(stream_ty& stream, uint64_t& value)
+  ADATA_INLINE void fix_read(stream_ty& stream, uint64_t& value)
   {
     typedef uint64_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -670,7 +670,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void fix_stream_write(stream_ty& stream, const int8_t& value)
+  ADATA_INLINE void fix_write(stream_ty& stream, const int8_t& value)
   {
     typedef int8_t value_type;
     stream.write((char*)&value, sizeof(value_type));
@@ -681,7 +681,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void fix_stream_write(stream_ty& stream, const uint8_t& value)
+  ADATA_INLINE void fix_write(stream_ty& stream, const uint8_t& value)
   {
     typedef uint8_t value_type;
     stream.write((char*)&value, sizeof(value_type));
@@ -692,7 +692,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-	ADATA_INLINE void fix_stream_write(stream_ty& stream,const int16_t& value)
+	ADATA_INLINE void fix_write(stream_ty& stream,const int16_t& value)
 	{
 		typedef int16_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -712,7 +712,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_write(stream_ty& stream,const uint16_t& value)
+	ADATA_INLINE void fix_write(stream_ty& stream,const uint16_t& value)
 	{
 		typedef uint16_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -732,7 +732,7 @@ namespace adata
   }
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_write(stream_ty& stream, const int32_t& value)
+	ADATA_INLINE void fix_write(stream_ty& stream, const int32_t& value)
 	{
 		typedef int32_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -754,7 +754,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_write(stream_ty& stream, const uint32_t& value)
+	ADATA_INLINE void fix_write(stream_ty& stream, const uint32_t& value)
 	{
 		typedef uint32_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -776,7 +776,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_write(stream_ty& stream, const int64_t& value)
+	ADATA_INLINE void fix_write(stream_ty& stream, const int64_t& value)
 	{
 		typedef int64_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -802,7 +802,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void fix_stream_write(stream_ty& stream, const uint64_t& value)
+	ADATA_INLINE void fix_write(stream_ty& stream, const uint64_t& value)
 	{
 		typedef uint64_t value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -1046,7 +1046,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_read(stream_ty& stream, uint8_t& value)
+	ADATA_INLINE void read(stream_ty& stream, uint8_t& value)
 	{
 		typedef uint8_t value_type;
 		const int bytes = sizeof(value_type);
@@ -1080,7 +1080,7 @@ namespace adata
 	}
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, int8_t& value)
+  ADATA_INLINE void read(stream_ty& stream, int8_t& value)
   {
     typedef int8_t value_type;
     const int bytes = sizeof(value_type);
@@ -1122,7 +1122,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, uint16_t& value)
+  ADATA_INLINE void read(stream_ty& stream, uint16_t& value)
   {
     typedef uint16_t value_type;
     const int bytes = sizeof(value_type);
@@ -1165,7 +1165,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, int16_t& value)
+  ADATA_INLINE void read(stream_ty& stream, int16_t& value)
   {
     typedef int16_t value_type;
     const int bytes = sizeof(value_type);
@@ -1212,7 +1212,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, uint32_t& value)
+  ADATA_INLINE void read(stream_ty& stream, uint32_t& value)
   {
     typedef uint32_t value_type;
     const int bytes = sizeof(value_type);
@@ -1260,7 +1260,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, int32_t& value)
+  ADATA_INLINE void read(stream_ty& stream, int32_t& value)
   {
     typedef int32_t value_type;
     const int bytes = sizeof(value_type);
@@ -1312,7 +1312,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, uint64_t& value)
+  ADATA_INLINE void read(stream_ty& stream, uint64_t& value)
   {
     typedef uint64_t value_type;
     const int bytes = sizeof(value_type);
@@ -1364,7 +1364,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, int64_t& value)
+  ADATA_INLINE void read(stream_ty& stream, int64_t& value)
   {
     typedef int64_t value_type;
     const int bytes = sizeof(value_type);
@@ -1420,7 +1420,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, float& value)
+  ADATA_INLINE void read(stream_ty& stream, float& value)
   {
     typedef float value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -1447,7 +1447,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_read(stream_ty& stream, double& value)
+  ADATA_INLINE void read(stream_ty& stream, double& value)
   {
     typedef double value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -1478,7 +1478,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, uint8_t& value)
+	ADATA_INLINE void write(stream_ty& stream, uint8_t& value)
 	{
 		typedef uint8_t value_type;
 		int write_bytes = 0;
@@ -1503,7 +1503,7 @@ namespace adata
 	}
 
 	template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, int8_t& value)
+	ADATA_INLINE void write(stream_ty& stream, int8_t& value)
 	{
 		typedef int8_t value_type;
 		int write_bytes = 0;
@@ -1536,7 +1536,7 @@ namespace adata
 	}
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, const uint16_t& value)
+	ADATA_INLINE void write(stream_ty& stream, const uint16_t& value)
 	{
 		typedef uint16_t value_type;
 		int write_bytes = 0;
@@ -1571,7 +1571,7 @@ namespace adata
 	}
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, const int16_t& value)
+	ADATA_INLINE void write(stream_ty& stream, const int16_t& value)
 	{
 		typedef int16_t value_type;
 		int write_bytes = 0;
@@ -1613,7 +1613,7 @@ namespace adata
 	}
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, const uint32_t& value)
+	ADATA_INLINE void write(stream_ty& stream, const uint32_t& value)
 	{
 		typedef uint32_t value_type;
     int write_bytes = 0;
@@ -1663,7 +1663,7 @@ namespace adata
 	}
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, const int32_t& value)
+	ADATA_INLINE void write(stream_ty& stream, const int32_t& value)
 	{
 		typedef int32_t value_type;
     int write_bytes = 0;
@@ -1720,7 +1720,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, const uint64_t& value)
+	ADATA_INLINE void write(stream_ty& stream, const uint64_t& value)
 	{
 		typedef uint64_t value_type;
     int write_bytes = 0;
@@ -1812,7 +1812,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-	ADATA_INLINE void stream_write(stream_ty& stream, const int64_t& value)
+	ADATA_INLINE void write(stream_ty& stream, const int64_t& value)
 	{
 		typedef int64_t value_type;
     int write_bytes = 0;
@@ -1911,7 +1911,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_write(stream_ty& stream, const float& value)
+  ADATA_INLINE void write(stream_ty& stream, const float& value)
   {
     typedef float value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -1933,7 +1933,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void stream_write(stream_ty& stream, const double& value)
+  ADATA_INLINE void write(stream_ty& stream, const double& value)
   {
     typedef double value_type;
 #ifdef __LITTLE_ENDIAN__
@@ -2114,7 +2114,7 @@ namespace adata
 		}
 	};
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int8_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, int8_t& value)
   {
     value = (int8_t)stream.get_char();
     if (stream.bad())
@@ -2123,7 +2123,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint8_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, uint8_t& value)
   {
     value = stream.get_char();
     if (stream.bad())
@@ -2132,7 +2132,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int16_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, int16_t& value)
   {
     typedef int16_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -2146,7 +2146,7 @@ namespace adata
     value_ptr[ADATA_LEPOS2_1] = read_ptr[1];
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint16_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, uint16_t& value)
   {
     typedef uint16_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -2160,7 +2160,7 @@ namespace adata
     value_ptr[ADATA_LEPOS2_1] = read_ptr[1];
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int32_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, int32_t& value)
   {
     typedef int32_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -2176,7 +2176,7 @@ namespace adata
     value_ptr[ADATA_LEPOS4_3] = read_ptr[3];
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint32_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, uint32_t& value)
   {
     typedef uint32_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -2192,7 +2192,7 @@ namespace adata
     value_ptr[ADATA_LEPOS4_3] = read_ptr[3];
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, int64_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, int64_t& value)
   {
     typedef int64_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -2212,7 +2212,7 @@ namespace adata
     value_ptr[ADATA_LEPOS8_7] = read_ptr[7];
   }
 
-  ADATA_INLINE void fix_stream_read(zero_copy_buffer& stream, uint64_t& value)
+  ADATA_INLINE void fix_read(zero_copy_buffer& stream, uint64_t& value)
   {
     typedef uint64_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -2232,7 +2232,7 @@ namespace adata
     value_ptr[ADATA_LEPOS8_7] = read_ptr[7];
   }
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const int8_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const int8_t& value)
   {
     uint8_t * ptr = stream.append_write(1);
     if (stream.bad())
@@ -2242,7 +2242,7 @@ namespace adata
     *ptr = (uint8_t)value;
   }
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const uint8_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const uint8_t& value)
   {
     uint8_t * ptr = stream.append_write(1);
     if (stream.bad())
@@ -2252,7 +2252,7 @@ namespace adata
     *ptr = value;
   }
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const int16_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const int16_t& value)
   {
     typedef int16_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -2266,7 +2266,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS2_1] = value_ptr[1];
   }
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const uint16_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const uint16_t& value)
   {
     typedef uint16_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -2280,7 +2280,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS2_1] = value_ptr[1];
 	}
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const int32_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const int32_t& value)
   {
     typedef int32_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -2296,7 +2296,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS4_3] = value_ptr[3];
 	}
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const uint32_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const uint32_t& value)
   {
     typedef uint32_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -2312,7 +2312,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS4_3] = value_ptr[3];
 	}
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const int64_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const int64_t& value)
   {
     typedef int64_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -2332,7 +2332,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS8_7] = value_ptr[7];
 	}
 
-  ADATA_INLINE void fix_stream_write(zero_copy_buffer& stream, const uint64_t& value)
+  ADATA_INLINE void fix_write(zero_copy_buffer& stream, const uint64_t& value)
   {
     typedef uint64_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -2538,7 +2538,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, uint8_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, uint8_t& value)
 	{
 		typedef uint8_t value_type;
 		const int bytes = sizeof(value_type);
@@ -2570,7 +2570,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, int8_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, int8_t& value)
   {
     typedef int8_t value_type;
     const int bytes = sizeof(value_type);
@@ -2610,7 +2610,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, uint16_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, uint16_t& value)
   {
     typedef uint16_t value_type;
     const int bytes = sizeof(value_type);
@@ -2649,7 +2649,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, int16_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, int16_t& value)
   {
     typedef int16_t value_type;
     const int bytes = sizeof(value_type);
@@ -2702,7 +2702,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, uint32_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, uint32_t& value)
   {
     typedef uint32_t value_type;
     const ::std::size_t bytes = sizeof(value_type);
@@ -2743,7 +2743,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, int32_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, int32_t& value)
   {
     typedef int32_t value_type;
     const int bytes = sizeof(value_type);
@@ -2793,7 +2793,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, uint64_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, uint64_t& value)
   {
     typedef uint64_t value_type;
     const int bytes = sizeof(value_type);
@@ -2838,7 +2838,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, int64_t& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, int64_t& value)
   {
     typedef int64_t value_type;
     const int bytes = sizeof(value_type);
@@ -2892,7 +2892,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const uint8_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const uint8_t& value)
 	{
 		typedef uint8_t value_type;
 		if (value < const_tag_as_type)
@@ -2913,7 +2913,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const int8_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const int8_t& value)
 	{
 		typedef int8_t value_type;
 		if (0 <= value && value < const_tag_as_type)
@@ -2941,7 +2941,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const uint16_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const uint16_t& value)
 	{
 		typedef uint16_t value_type;
 		if (value < const_tag_as_type)
@@ -2973,7 +2973,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const int16_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const int16_t& value)
 	{
 		typedef int16_t value_type;
 		if (0 <= value && value < const_tag_as_type)
@@ -3012,7 +3012,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const uint32_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const uint32_t& value)
 	{
 		typedef uint32_t value_type;
 		if (value < const_tag_as_type)
@@ -3061,7 +3061,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const int32_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const int32_t& value)
 	{
 		typedef int32_t value_type;
 		if (0 <= value && value < const_tag_as_type)
@@ -3117,7 +3117,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const uint64_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const uint64_t& value)
 	{
 		typedef uint64_t value_type;
 		if (value < const_tag_as_type)
@@ -3212,7 +3212,7 @@ namespace adata
 		}
 	}
 
-	ADATA_INLINE void stream_write(zero_copy_buffer& stream, const int64_t& value)
+	ADATA_INLINE void write(zero_copy_buffer& stream, const int64_t& value)
 	{
 		typedef int64_t value_type;
 		if (0 <= value && value < const_tag_as_type)
@@ -3314,7 +3314,7 @@ namespace adata
 		}
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const float& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const float& value)
   {
     typedef float value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -3330,7 +3330,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS4_3] = value_ptr[3];
 	}
 
-  ADATA_INLINE void stream_write(zero_copy_buffer& stream, const double& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, const double& value)
   {
     typedef double value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
@@ -3350,7 +3350,7 @@ namespace adata
 		write_ptr[ADATA_LEPOS8_7] = value_ptr[7];
 	}
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, float& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, float& value)
   {
     typedef float value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -3366,7 +3366,7 @@ namespace adata
     value_ptr[ADATA_LEPOS4_3] = read_ptr[3];
   }
 
-  ADATA_INLINE void stream_read(zero_copy_buffer& stream, double& value)
+  ADATA_INLINE void read(zero_copy_buffer& stream, double& value)
   {
     typedef double value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
@@ -3390,7 +3390,7 @@ namespace adata
 	ADATA_INLINE uint32_t check_read_size(stream_ty& stream, ::std::size_t size = 0)
 	{
 		uint32_t len;
-		stream_read(stream, len);
+		read(stream, len);
     if (stream.error())
     {
       stream.m_error_code = sequence_length_overflow;

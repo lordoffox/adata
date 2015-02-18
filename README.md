@@ -8,7 +8,7 @@ Features Overview
 ---------------
 
 * Lightweight, fast and efficient serialization implementations, specifically for game development and other performance-critical applications
-* Flexible, using keyword "delete" to mark discarded fields, that means forwards compatibility
+* Flexible, using keyword "delete" to mark discarded fields and a tag to record data length, that means forwards and backwards compatibility
 * Header only, no need to build library, just a fews hpp files
 * Strongly typed, errors happen at compile time
 * Cross platform C/C++(03,11)/C#/Lua/Java/JavaScript code with no dependencies
@@ -24,15 +24,18 @@ Build the compiler
 ------------
 
 To build adatac, we need:
+
 * CMake 2.8 and newer
 * Boost 1.55.0 and newer (Headers and Boost.Program Options)
 * GCC >= 4.9 or VC >= 12.0
 
 Build Boost.Program Options:
+
 * Please ref Boost's doc - http://www.boost.org/doc/libs/1_57_0/more/getting_started/ 
 * Note: please build boost using stage mode.
 
 Build adatac:
+
 * Suppose that adata already unzip to dir adata/
 * cd adata
 * Make a dir named build
@@ -45,6 +48,7 @@ Use the compiler
 -------------------
 
 adatac [-I PATH] [-O PATH] [-P PATH] [-G language] [--help]
+
 * -I PATH: the adl file to generate, e.g. -I/home/username/work/project/xxx.adl
 * -O PATH: the path that output generated files, e.g. -O/home/username/work/project/generated
 * -P PATH: include path for other adl, could set more than once, e.g. -P/home/username/work/project/adl -P/home/username/work/project/include
@@ -56,97 +60,406 @@ Writing a schema (.adl file)
 
 Let's look at an example first
 
-```cpp
+```
 
-namespace = my.country;
+include = util.vec3;
+include = my.game.quest;
 
-person
+namespace = my.game;
+
+item
 {
-  string name(30); //this is a comment
-  int32 age = 18;
-  bool married = false;
+  int64 id;
+  int32 type;
+  int32 level;
 }
 
-test
+player_v1
 {
-  fix_int16 i = 1;
-  float32 f = 3.0;
-  list<int32> lis;
-  map<int32,int64> ms;
-  sub_type sub;
+  int32 id; //player unique id
+  string name(30); //player name
+  int32 age;
+  util.vec3 pos;
+  list<item> inventory;
+  list<my.game.quest> quests; //player's quest list
+  float factor = 1.0;
+}
+
+player_v2
+{
+  int32 id; //player unique id
+  string name(30); //player name
+  int32 age [delete];
+  util.vec3 pos;
+  list<item> inventory;
+  list<my.game.quest> quests; //player's quest list
+  float factor = 1.0 [delete];
+  list<int32> friends; //friend id list
 }
 
 ```
 
-amsg::size_of
--------------------
+### Data struct
 
-Using amsg::size_of to get object's serialize size
+Don't like others, adata's data struct defining has no keyword, just name(here item, player_v1 and player_v2). This is only way of defining objects in adata. Data struct consist of a name (here item, player_v1 and player_v2) and a list of fields. Each field has a type, a name, and optionally a default value.
 
-```cpp
-struct person
-{
-  std::string  name;
-  int          age;
+Data struct is forward and backwards compatibility. User can use **[delete]** on a field to mark it as deprecated as in the example above(player_v2), which will prevent the generation of accessors in the generated code, as a way to enforce the field not being used any more. For compatibility, user can add new fields in the schema **only** at the end of a data struct definition. 
 
-  bool operator==(person const& rhs) const
-  {
-    return name == rhs.name && age == rhs.age;
-  }
-};
+In the example above, player_v1 is an old version and player_v2 is new version, between them, diff are:
 
-AMSG(person, (name)(age));
+* Fields age and factor deprecated.
+* New field friends.
 
-person obj;
-amsg::error_code_t ec = amsg::success;
-std::size_t size = amsg::size_of(obj, ec);
-assert(ec == amsg::success);
-std::cout << "person's serialize size: " << size << std::endl;
+User can:
+
+* use player_v2 read player_v1's serialzation data. (forward compatibility)
+* use player_v1 read player_v2's serialzation data. (backward compatibility)
+
+if and only if user 1) add new fields only at the end of a data struct definition. 2) remove old fields by mark them [delete] 3) don't change old fields.
+
+### Types
+
+Built-in scalar types are:
+
+* 8 bit: int8 uint8
+* 16 bit: int16 uint16
+* 32 bit: int32 uint32
+* 64 bit: int64 uint64
+
+Built-in non-scalar types:
+
+* string: it's encoding depend on language. 
+* list: list<type>, an array of data. Nesting lists is not supported, instead you can wrap the inner list in a data struct.
+* map: map<key, value>, an directory of data. Nesting maps is not supported, instead you can wrap the inner map in a data struct.
+
+User can optionally use "(num)" to limit max size of all non-scalar types. User can't change types of fields once they're used.
+
+### Namespaces
+
+These will generate the corresponding namespace in C++/C# for all helper code, and tables in Lua. You can use . to specify nested namespaces/tables.
+
+### Includes
+
+You can include other schemas files in your current one, e.g.:
+
+```
+include = file_path.file_name;
 ```
 
-smax
+Actually, include is an adl file, adatac using -P arg to find these adl files for include, e.g.:
+
+* User set -P to "C:\work".
+* Under C:\work, there are "code\common" directory, that have one adl file named "test.adl"
+* User can write "include = code.common.test" to include test.adl's defination data structs.
+
+### Comments
+
+Write "//" behind a field, don't support single one line.
+
+### Attributes
+
+Attributes may be attached to a declaration, behind a field. These may either have a value or not. Currently, just one: "[delete]".
+
+Use in C++
 -------------------
 
-Sometimes you want limit max size of an array of string:
+Assuming you have written a schema using the above language in say player.adl, you've generated a C++ header called player.adl.h(rule: [name].adl.h), you can now start using this in your program by including the header. As noted, this header relies on adata/cpp/adata.hpp, which should be in your include path.
+
+Note: generated C++ code support both C++98 and C++11.
+
+### Serialization
+
+First of all, adata::zero_copy_buffer must be created:
 
 ```cpp
-struct person
-{
-  std::string  name;
-  int          age;
 
-  bool operator==(person const& rhs) const
-  {
-    return name == rhs.name && age == rhs.age;
-  }
-};
+adata::zero_copy_buffer stream;
 
-AMSG(person, (name&smax(30))(age)); // smax(30) limit name string max size is 30 bytes
 ```
 
-sfix
+For serializing data, user need an byte array:
+
+```cpp
+
+#define ENOUGH_SIZE 4096
+uint8_t bytes[ENOUGH_SIZE];
+int32_t buf_len = ENOUGH_SIZE;
+
+```
+
+If user want know how length an object after serialization, using adata::size_of:
+
+```cpp
+
+// create a player_v1 object
+my::game::player_v1 pv1;
+
+// set pv1's value
+pv1.id = 152001;
+pv1.name = "alex";
+pv1.age = 22;
+
+// get the size of serialization(depend on its value, diff value may have diff size)
+buf_len = adata::size_of(pv1);
+
+```
+
+Optionally, user can use this length to dyn create byte array:
+
+```cpp
+
+uint8_t* bytes = new uint8_t[len];
+
+```
+
+Then set the bytes to stream:
+
+```cpp
+
+stream.set_write(bytes, buf_len);
+
+```
+
+The last step to serialize is:
+
+```cpp
+
+adata::stream_write(stream, pv1);
+if (stream.bad())
+{
+  // some error, print it
+  std::cerr << stream.message() << std::endl;
+  std::abort();
+}
+
+// serialize success, data already write into bytes
+
+```
+
+### Deserialization
+
+First set read data to stream:
+
+```cpp
+
+// User can copy bytes to other byte array or create other stream whatever.
+stream.set_read(bytes, buf_len);
+
+```
+
+Create another player_v1 object, will deserialize data to it
+
+```cpp
+
+my::game::player_v1 pv1_other;
+
+```
+
+Now deserialize:
+
+```cpp
+
+adata::stream_read(stream, pv1_other);
+if (stream.bad())
+{
+  // some error, print it
+  std::cerr << stream.message() << std::endl;
+  std::abort();
+}
+
+// deserialize success, pv1_other should equals with pv1
+// omit operator== for player_v1
+//namespace my{ namespace game{
+//bool operator==(player_v1 const& lhs, player_v1 const& rhs){
+//  ...
+//}}}
+
+assert(pv1 == pv1_other);
+
+``` 
+
+And size_of pv1_other should also equals with pv1:
+
+```cpp
+
+assert (adata::size_of(pv1) == adata::size_of(pv1_other));
+
+```
+
+### Threading
+
+Either read and write, adata::zero_copy_buffer is not threading-safe. Don't share stream between threads (recommended), or manually wrap it in synchronisation primites.
+
+Creating adata::zero_copy_buffer doesn't using any dyn memory, it is cheap, so feel free to create it. 
+
+Use in Lua
 -------------------
 
-Sometimes you want serialization size to be fixed:
+Assuming you have written a schema using the above language in say player.adl, you've generated a lua script file called player_adl.lua(rule: [name]_adl.lua), you can now start using this in your program by require it. As noted, this script file relies on adata/lua/adata_core.lua, which should be in your lua path.
 
-```cpp
-struct person
-{
-  std::string    name;
-  boost::int32_t age;
+Note: adatac support lua four version: lua51 lua52 lua53 luajit(v2.0.3). User need set adatac arg to generate it: adatac -Glua51/lua52/lua53/luajit .
 
-  bool operator==(person const& rhs) const
-  {
-    return name == rhs.name && age == rhs.age;
-  }
-};
+### Serialization
 
-AMSG(person, (name)(age&sfix)); // sfix enforce age (int32_t) to be 4bytes after serialization
+First user need require adata and player_adl.lua:
+
+```lua
+
+local adata = require("adata_core")
+local player_adl = require("player_adl")
+
 ```
 
-If no sfix, age will dependence its value:
-  -128 to 127                     --> 1byte
-  -32,768 to 32,767               --> 2byte
-  -2,147,483,648 to 2,147,483,647 --> 4byte
+And create stream:
 
-note: sfix only effect built-in types(int, short, long, char, float, double and so on).
+```lua
+
+local buf_len = 4096
+local stream = adata.new_buf(buf_len)
+
+```
+
+Don't like cpp, in lua, zero_copy_buffer already have a buffer to write when created.
+
+Now create player_v1 object and set its value to serialize:
+
+```lua
+
+-- create a player_v1 object
+local pv1 = player_adl.player_v1()
+
+-- set its value
+pv1.id = 152001
+pv1.name = "alex"
+pv1.age = 22
+
+-- get the size of serialization(depend on its value, diff value may have diff size)
+local len = pv1:size_of()
+
+```
+
+Then serialize:
+
+```lua
+
+local ec = pv1:write(stream)
+if ec > 0 then 
+  -- some error, print it
+  error(ec, adata.trace_info(buf))
+end
+
+-- serialize success, data already write into stream's write buffer
+
+```
+
+User can get write data:
+
+```lua
+
+-- data actually is a string
+local data = adata.get_write_data(buf)
+
+```
+
+### Deserialization
+
+First set read data to stream:
+
+```lua
+
+adata.set_read_data(data)
+
+```
+
+Create another player_v1 object, will deserialize data to it
+
+```lua
+
+local pv1_other = player_adl.player_v1()
+
+```
+
+Now deserialize:
+
+```lua
+
+local ec = pv1_other:read(buf)
+if ec > 0 then 
+  -- some error, print it
+  error(ec, adata.trace_info(buf))
+end
+
+-- deserialize success, pv1_other should equals with pv1
+
+```
+
+Use in CSharp
+-------------------
+
+Assuming you have written a schema using the above language in say player.adl, you've generated a C# file called player.adl.cs(rule: [name].adl.cs), you can now start using this in your program by adding the file. As noted, this file relies on adata/csharp/adata.cs, which should be added in your project.
+
+### Serialization
+
+First, create adata.zero_copy_buffer:
+
+```csharp
+
+var bytes = new bytes[4096];
+var stream = new adata.zero_copy_buffer(bytes);
+
+```
+
+Now create player_v1 object and set its value to serialize:
+
+```csharp
+
+// create a my.game.player_v1 object
+var pv1 = new my.game.player_v1();
+
+// set its value
+pv1.id = 152001
+pv1.name = "alex"
+pv1.age = 22
+
+```
+
+Serialize: 
+
+```csharp
+
+// rule: adata.[adl file name]_stream.stream_write
+adata.player_stream.stream_write(stream, pv1);
+if (stream.error())
+{
+  // some error, print
+  System.Console.WriteLine(stream.get_error_msg());
+  System.Diagnostics.Debug.Assert(false);
+}
+
+// serialize success
+
+```
+
+### Deserialization
+
+C#'s adata.zero_copy_buffer read and write shared same byte array, so this just use stream to read:
+
+```csharp
+
+// create other player_v1 to deserialize
+var pv1_other = new my.game.player_v1();
+
+// deserialize
+adata.player_stream.stream_read(stream, ref pv1_other);
+if (stream.error())
+{
+  // some error, print
+  System.Console.WriteLine(stream.get_error_msg());
+  System.Diagnostics.Debug.Assert(false);
+}
+
+// deserialize success
+
+```
+
+pv1's value should equals with pv1_other and size_of also as well.
