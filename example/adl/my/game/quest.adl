@@ -1,0 +1,8 @@
+namespace = my.game;
+
+quest
+{
+  int32 id;
+  string name;
+  string description;
+}

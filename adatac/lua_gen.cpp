@@ -417,7 +417,7 @@ namespace lua_gen
   {
     os << tabs(tab_indent) << "if len_tag >= 0 then" << std::endl;
     os << tabs(tab_indent + 1) << "local read_len = get_rd_len(buf) - offset;" << std::endl;
-    os << tabs(tab_indent + 1) << "if len_tag > read_len then skip_rd_i32(len_tag - read_len); end;" << std::endl;
+    os << tabs(tab_indent + 1) << "if len_tag > read_len then skip_rd_len(buf, len_tag - read_len); end;" << std::endl;
     os << tabs(tab_indent) << "end" << std::endl;
   }
 
@@ -711,7 +711,7 @@ namespace lua_gen
 	{
 		const char * lua_check_version = R"(require'check_lua_version'(5,)";
 
-		const char * lua_require_define = R"(local adata_m = require'adata_core'
+    const char * lua_require_define = R"(local adata_m = require'adata_core'
 local ns = require'adata'
 local regiest_field_info = adata_m.regiest_field_info;
 local new_buf = adata_m.new_buf;
@@ -727,6 +727,7 @@ local rd_tag = adata_m.rd_tag;
 local wt_tag = adata_m.wt_tag;
 local get_rd_len = adata_m.get_rd_len;
 local get_wt_len = adata_m.get_wt_len;
+local skip_rd_len = adata_m.skip_rd_len;
 local tablen = ns.tablen;
 
 )";
@@ -879,8 +880,10 @@ local tablen = ns.tablen;
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
 					//os << tabs(tab + 1) << "else" << std::endl;
 				}
-        // Nous Xiong: comment skip read bcz read_tag already marked which member exist
-				//gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
+        else
+        {
+				  gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
+        }
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1138,6 +1141,7 @@ local rd_tag = adata_m.rd_tag;
 local wt_tag = adata_m.wt_tag;
 local get_rd_len = adata_m.get_rd_len;
 local get_wt_len = adata_m.get_wt_len;
+local skip_rd_len = adata_m.skip_rd_len;
 local tablen = ns.tablen;
 
 )";
@@ -1277,8 +1281,10 @@ local tablen = ns.tablen;
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
 					//os << tabs(tab + 1) << "else" << std::endl;
 				}
-        // Nous Xiong: comment skip read bcz read_tag already marked which member exist
-				// gen_meta_member_skip_read(os, m_define, tab + 2,ctx);
+        else
+        {
+				  gen_meta_member_skip_read(os, m_define, tab + 2,ctx);
+        }
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;
@@ -1506,6 +1512,7 @@ local get_write_data = adata_m.get_write_data;
 local set_read_data = adata_m.set_read_data;
 local get_rd_len = adata_m.get_rd_len;
 local get_wt_len = adata_m.get_wt_len;
+local skip_rd_len = adata_m.skip_rd_len;
 local tablen = ns.tablen;
 
 )";
@@ -1627,8 +1634,10 @@ local tablen = ns.tablen;
 					os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
 					//os << tabs(tab + 1) << "else" << std::endl;
 				}
-        // Nous Xiong: comment skip read bcz read_tag already marked which member exist
-				//gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
+        else
+        {
+				  gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
+        }
 				os << tabs(tab + 1) << "end" << std::endl;
 				read_mask <<= 1;
 				++count;

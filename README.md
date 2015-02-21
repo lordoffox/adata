@@ -82,7 +82,7 @@ player_v1
   util.vec3 pos;
   list<item> inventory;
   list<my.game.quest> quests; //player's quest list
-  float factor = 1.0;
+  float32 factor = 1.0;
 }
 
 player_v2
@@ -93,7 +93,7 @@ player_v2
   util.vec3 pos;
   list<item> inventory;
   list<my.game.quest> quests; //player's quest list
-  float factor = 1.0 [delete];
+  float32 factor = 1.0 [delete];
   list<int32> friends; //friend id list
 }
 
@@ -299,14 +299,45 @@ Assuming you have written a schema using the above language in say player.adl, y
 
 Note: adatac support lua four version: lua51 lua52 lua53 luajit(v2.0.3). User need set adatac arg to generate it: adatac -Glua51/lua52/lua53/luajit .
 
+Note: right now adata only support embedde lua in to c/cpp.
+
 ### Serialization
 
-First user need require adata and player_adl.lua:
+First in c/cpp, user need include adata's header and call adata::lua::init_adata_corec: 
+
+```cpp
+
+#include <lua.hpp>
+
+#ifndef ADATA_USE_LUAJIT
+# ifdef LUAJIT_VERSION
+#   define ADATA_USE_LUAJIT
+# endif
+#endif
+
+#ifdef ADATA_USE_LUAJIT
+# include <adata_jit_corec.hpp>
+#else
+# include <adata_corec.hpp>
+#endif
+
+int main()
+{
+  lua_State *L = luaL_newstate();
+  luaL_openlibs(L);
+  adata::lua::init_adata_corec(L);
+  // run script ...
+}
+
+```
+
+Then in lua, require adata, player_adl.lua and quest_adl.lua:
 
 ```lua
 
 local adata = require("adata_core")
 local player_adl = require("player_adl")
+local quest_adl = require("quest_adl")
 
 ```
 
@@ -329,12 +360,25 @@ Now create player_v1 object and set its value to serialize:
 local pv1 = player_adl.player_v1()
 
 -- set its value
-pv1.id = 152001
-pv1.name = "alex"
+pv1.id = 1
 pv1.age = 22
+pv1.factor = 2.0
+pv1.name = "pv1"
 
--- get the size of serialization(depend on its value, diff value may have diff size)
-local len = pv1:size_of()
+local itm = player_adl.item()
+itm.id = 11
+itm.level = 321110
+itm.type = 3
+table.insert(pv1.inventory, itm)
+itm = player_adl.item()
+itm.id = 12
+table.insert(pv1.inventory, itm)
+
+local qst = quest_adl.quest()
+qst.id = 50
+qst.name = "quest1"
+qst.description = "There are something unusual..."
+table.insert(pv1.quests, qst)
 
 ```
 
@@ -345,7 +389,7 @@ Then serialize:
 local ec = pv1:write(stream)
 if ec > 0 then 
   -- some error, print it
-  error(ec, adata.trace_info(buf))
+  error(ec, adata.trace_info(stream))
 end
 
 -- serialize success, data already write into stream's write buffer
@@ -357,7 +401,7 @@ User can get write data:
 ```lua
 
 -- data actually is a string
-local data = adata.get_write_data(buf)
+local data = adata.get_write_data(stream)
 
 ```
 
@@ -367,7 +411,7 @@ First set read data to stream:
 
 ```lua
 
-adata.set_read_data(data)
+adata.set_read_data(stream, data)
 
 ```
 
@@ -383,10 +427,10 @@ Now deserialize:
 
 ```lua
 
-local ec = pv1_other:read(buf)
+local ec = pv1_other:read(stream)
 if ec > 0 then 
   -- some error, print it
-  error(ec, adata.trace_info(buf))
+  error(ec, adata.trace_info(stream))
 end
 
 -- deserialize success, pv1_other should equals with pv1
@@ -428,7 +472,7 @@ Serialize:
 ```csharp
 
 // rule: adata.[adl file name]_stream.stream_write
-adata.player_stream.stream_write(stream, pv1);
+my.game.player_stream.write(stream, pv1);
 if (stream.error())
 {
   // some error, print
@@ -450,7 +494,7 @@ C#'s adata.zero_copy_buffer read and write shared same byte array, so this just 
 var pv1_other = new my.game.player_v1();
 
 // deserialize
-adata.player_stream.stream_read(stream, ref pv1_other);
+my.game.player_stream.read(stream, ref pv1_other);
 if (stream.error())
 {
   // some error, print

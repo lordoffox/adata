@@ -1,0 +1,34 @@
+include = util.vec3;
+include = my.game.quest;
+
+namespace = my.game;
+
+item
+{
+  int64 id;
+  int32 type;
+  int32 level;
+}
+
+player_v1
+{
+  int32 id; //player unique id
+  string name(30); //player name
+  int32 age;
+  util.vec3 pos;
+  list<item> inventory;
+  list<my.game.quest> quests; //player's quest list
+  float32 factor = 1.0;
+}
+
+player_v2
+{
+  int32 id; //player unique id
+  string name(30); //player name
+  int32 age [delete];
+  util.vec3 pos;
+  list<item> inventory;
+  list<my.game.quest> quests; //player's quest list
+  float32 factor = 1.0 [delete];
+  list<int32> friends; //friend id list
+}

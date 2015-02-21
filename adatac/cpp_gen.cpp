@@ -208,13 +208,13 @@ namespace cpp_gen
 		}
     for (const auto& member : tdefine.m_members)
     {
-      ++pos;
       if (member.m_deleted)
       {
         continue;
       }
       if (member.is_initable())
       {
+        ++pos;
         os << tabs(2) << member.m_name;
         os << "(";
         os << make_type_default(desc_define, member);

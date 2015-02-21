@@ -384,6 +384,11 @@ m = {
     if ec > 0 then return ec , nil; end;
     return 0,ffi.string(rptr,slen);
   end,
+  skip_rd_len = function(buf,len)
+    adata_skip_read(buf,len);
+    local ec = adata_error(buf);
+    return ec;
+  end,
   skip_rd_fixi8 = function(buf)
     adata_skip_read_fix_int8(buf);
     local ec = adata_error(buf);

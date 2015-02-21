@@ -428,6 +428,15 @@ namespace adata { namespace lua{
 		return 1;
 	}
 
+  static int skip_read(lua_State * L)
+  {
+    adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
+    lua_Integer len = lua_tointeger(L, 2);
+    zbuf->skip_read((size_t)len);
+    lua_pushinteger(L, zbuf->error_code());
+    return 1;
+  }
+
 	static int skip_read_fix_int8(lua_State * L)
 	{
 		return skip_read_fix_value<int8_t>(L);
@@ -936,6 +945,7 @@ namespace adata { namespace lua{
 			{ "rd_f32", read_float32 },
 			{ "rd_f64", read_float64 },
 			{ "rd_str", read_str },
+      { "skip_rd_len", skip_read },
 			{ "skip_rd_fixi8", skip_read_fix_int8 },
 			{ "skip_rd_fixu8", skip_read_fix_uint8 },
 			{ "skip_rd_fixi16", skip_read_fix_int16 },
@@ -1051,7 +1061,8 @@ namespace adata { namespace lua{
 			{ "rd_u64"				, read_uint64 },
 			{ "rd_f32"				, read_float32 },
 			{ "rd_f64"				, read_float64 },
-			{ "rd_str"				, read_str },
+      { "rd_str"				, read_str },
+      { "skip_rd_len",    skip_read },
 			{ "skip_rd_fixi8"	, skip_read_fix_int8 },
 			{ "skip_rd_fixu8"	, skip_read_fix_uint8 },
 			{ "skip_rd_fixi16", skip_read_fix_int16 },
