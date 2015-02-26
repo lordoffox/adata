@@ -148,9 +148,9 @@ include = file_path.file_name;
 
 Actually, include is an adl file, adatac using -P arg to find these adl files for include, e.g.:
 
-* User set -P to "C:\work".
-* Under C:\work, there are "code\common" directory, that have one adl file named "test.adl"
-* User can write "include = code.common.test" to include test.adl's defination data structs.
+* User set -P to "C:\work\code\common".
+* Under C:\work\code\common, there is one adl file named "util.adl"
+* User can write "include = any_path.util" to include util.adl's defination data structs.
 
 ### Comments
 
@@ -165,7 +165,13 @@ Use in C++
 
 Assuming you have written a schema using the above language in say player.adl, you've generated a C++ header called player.adl.h(rule: [name].adl.h), you can now start using this in your program by including the header. As noted, this header relies on adata/cpp/adata.hpp, which should be in your include path.
 
-Note: generated C++ code support both C++98 and C++11.
+Note: generated C++ code support both C++03 and C++11.
+
+Assuming adatac exe under adata/example/adl, player.adl under adata/example/adl/my/game, quest.adl under adata/example/adl/my/game, vec3.adl under adata/example/adl/util, the adatac command are:
+
+* player.adl.h: adatac -Imy/game/player.adl -Putil -Pmy/game -Gcpp
+* quest.adl.h: adatac -Imy/game/quest.adl -Gcpp
+* vec3.adl.h: adatac -Iutil/vec3.adl -Gcpp
 
 ### Serialization
 
@@ -224,7 +230,7 @@ The last step to serialize is:
 
 ```cpp
 
-adata::stream_write(stream, pv1);
+adata::write(stream, pv1);
 if (stream.bad())
 {
   // some error, print it
@@ -259,7 +265,7 @@ Now deserialize:
 
 ```cpp
 
-adata::stream_read(stream, pv1_other);
+adata::read(stream, pv1_other);
 if (stream.bad())
 {
   // some error, print it
@@ -300,6 +306,12 @@ Assuming you have written a schema using the above language in say player.adl, y
 Note: adatac support lua four version: lua51 lua52 lua53 luajit(v2.0.3). User need set adatac arg to generate it: adatac -Glua51/lua52/lua53/luajit .
 
 Note: right now adata only support embedde lua in to c/cpp.
+
+Assuming adatac exe under adata/example/adl, player.adl under adata/example/adl/my/game, quest.adl under adata/example/adl/my/game, vec3.adl under adata/example/adl/util, the adatac command are:
+
+* player_adl.lua: adatac -Imy/game/player.adl -Putil -Pmy/game -Glua
+* quest_adl.lua: adatac -Imy/game/quest.adl -Glua
+* vec3_adl.lua: adatac -Iutil/vec3.adl -Glua
 
 ### Serialization
 
@@ -441,6 +453,12 @@ Use in CSharp
 -------------------
 
 Assuming you have written a schema using the above language in say player.adl, you've generated a C# file called player.adl.cs(rule: [name].adl.cs), you can now start using this in your program by adding the file. As noted, this file relies on adata/csharp/adata.cs, which should be added in your project.
+
+Assuming adatac exe under adata/example/adl, player.adl under adata/example/adl/my/game, quest.adl under adata/example/adl/my/game, vec3.adl under adata/example/adl/util, the adatac command are:
+
+* player.adl.cs: adatac -Imy/game/player.adl -Putil -Pmy/game -Gcsharp
+* quest.adl.cs: adatac -Imy/game/quest.adl -Gcsharp
+* vec3.adl.cs: adatac -Iutil/vec3.adl -Gcsharp
 
 ### Serialization
 
