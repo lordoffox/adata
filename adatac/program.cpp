@@ -87,6 +87,7 @@ void run_program(const options& opt)
 
 	descrip_define define;
   define.m_filename = std::move(filename);
+  define.adata_header = opt.adata_header;
 
 	if (input_file_ext == "adl")
 	{

@@ -20,6 +20,7 @@ struct options
 	std::string output_path;
   std::vector<std::string> include_paths;
 	std::vector<std::string> gen;
+  std::string adata_header;
 };
 
 void run_program(const options& opt);

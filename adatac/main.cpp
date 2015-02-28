@@ -29,6 +29,7 @@ int main(int ac, char* av[])
 			("output_path,O", po::value< std::string >(&opt.output_path)->default_value("./"), "output source path")
       ("include_paths,P", po::value<std::vector<std::string> >(&opt.include_paths), "include paths for other adl")
 			("gen,G", po::value<std::vector<std::string> >(&opt.gen), "gen source cpp,csharp,lua(lua51,lua52,lua53,luajit),js")
+      ("adata_header,H", po::value<std::string>(&opt.adata_header)->default_value("<adata.hpp>"), "include adata.hpp path")
 			;
 
 		po::variables_map vm;

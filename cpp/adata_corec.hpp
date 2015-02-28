@@ -6,7 +6,6 @@
 #ifndef l_adata_corec_hpp
 #define l_adata_corec_hpp
 
-#include <cstdint>
 #include "adata.hpp"
 #include "adata_int64.hpp"
 

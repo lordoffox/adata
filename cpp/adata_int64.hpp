@@ -6,7 +6,11 @@
 #ifndef l_adata_int64_hpp
 #define l_adata_int64_hpp
 
-#include <cstdint>
+#if !defined(_MSC_VER) || _MSC_VER >= 1500
+# include <cstdint>
+#else
+# include "stdint.hpp"
+#endif
 
 extern "C" {
 #include "lua.h"

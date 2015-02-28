@@ -6,7 +6,6 @@
 #ifndef l_adata_jit_corec_hpp
 #define l_adata_jit_corec_hpp
 
-#include <cstdint>
 #include "adata.hpp"
 
 extern "C" {

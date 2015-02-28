@@ -225,6 +225,8 @@ struct descrip_define
   type_list_type m_include_types;
   // Nous Xiong: add filename
   std::string m_filename;
+  // Nous Xiong: adata.hpp include path
+  std::string adata_header;
 
   bool has_decl_type(const std::string& type) const;
   const type_define* find_decl_type(const std::string& type) const;
