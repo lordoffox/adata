@@ -259,6 +259,8 @@ public:
                   m_doc -= 2;
                   m_cols -= 2;
                 }
+                // Nous Xiong: fix bug
+                break;
       }
       default:
       {

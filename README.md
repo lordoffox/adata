@@ -154,7 +154,7 @@ Actually, include is an adl file, adatac using -P arg to find these adl files fo
 
 ### Comments
 
-Write "//" behind a field, don't support single one line.
+Write "//" behind a field or single one line.
 
 ### Attributes
 
