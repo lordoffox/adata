@@ -17,9 +17,9 @@
 struct options
 {
   std::string input_file;
-	std::string output_path;
+  std::string output_path;
   std::vector<std::string> include_paths;
-	std::vector<std::string> gen;
+  std::vector<std::string> gen;
   std::string adata_header;
 };
 

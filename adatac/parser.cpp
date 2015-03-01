@@ -21,73 +21,73 @@
 namespace
 {
 
-	char string_code[256] = { 0 };
+  char string_code[256] = { 0 };
 
-	struct init_helper
-	{
-		init_helper()
-		{
-			for (char c = 'A'; c <= 'Z'; ++c)
-			{
-				string_code[c] = 1;
-			}
-			for (char c = 'a'; c <= 'z'; ++c)
-			{
-				string_code[c] = 1;
-			}
-			string_code['_'] = 1;
-		}
-	};
+  struct init_helper
+  {
+    init_helper()
+    {
+      for (char c = 'A'; c <= 'Z'; ++c)
+      {
+        string_code[c] = 1;
+      }
+      for (char c = 'a'; c <= 'z'; ++c)
+      {
+        string_code[c] = 1;
+      }
+      string_code['_'] = 1;
+    }
+  };
 
-	init_helper g_init_helper;
+  init_helper g_init_helper;
 
-	inline bool is_digest( char v )
-	{
-		return v >= '0' && v <= '9';
-	}
+  inline bool is_digest(char v)
+  {
+    return v >= '0' && v <= '9';
+  }
 
-	inline bool is_source_trem(char v)
-	{
-		return v == '<' || v == '>' || v == ':' || v == ',';
-	}
+  inline bool is_source_trem(char v)
+  {
+    return v == '<' || v == '>' || v == ':' || v == ',';
+  }
 
-	inline bool is_string_header( char v )
-	{
-		return string_code[v] > 0;
-	}
+  inline bool is_string_header(char v)
+  {
+    return string_code[v] > 0;
+  }
 
-	inline bool is_number_header(char v)
-	{
-		return is_digest(v) || v == '-';
-	}
+  inline bool is_number_header(char v)
+  {
+    return is_digest(v) || v == '-';
+  }
 
-	const char lower_case_delta = 'a' - 'A';
+  const char lower_case_delta = 'a' - 'A';
 
-	inline char lower_case_char(char v)
-	{
-		if( v >= 'A' && v <= 'Z')
-		{
-			return v + lower_case_delta;
-		}
-		return v;
-	}
+  inline char lower_case_char(char v)
+  {
+    if (v >= 'A' && v <= 'Z')
+    {
+      return v + lower_case_delta;
+    }
+    return v;
+  }
 
-	inline bool is_ws(char v)
-	{
-		return v == ' ' || v == '\t';
-	}
+  inline bool is_ws(char v)
+  {
+    return v == ' ' || v == '\t';
+  }
 }
 
 struct parse_execption : std::runtime_error
 {
-	parse_execption(const char * error_info,int line,int col, std::string include)
+  parse_execption(const char * error_info, int line, int col, std::string include)
     : std::runtime_error(error_info)
     , m_lines(line)
     , m_cols(col)
     , m_include(std::move(include))
-	{}
-	int m_lines;
-	int m_cols;
+  {}
+  int m_lines;
+  int m_cols;
   std::string m_include;
 };
 
@@ -239,32 +239,32 @@ public:
       case '\r':
       case '\n':
       {
-                 break;
+        break;
       }
       case '/':
       {
-                c = read_char();
-                if (c == '/')
-                {
-                  while ((c = read_char()) != 0)
-                  {
-                    if (c == '\n')
-                    {
-                      break;
-                    }
-                  }
-                }
-                else
-                {
-                  m_doc -= 2;
-                  m_cols -= 2;
-                }
-                // Nous Xiong: fix bug
-                break;
+        c = read_char();
+        if (c == '/')
+        {
+          while ((c = read_char()) != 0)
+          {
+            if (c == '\n')
+            {
+              break;
+            }
+          }
+        }
+        else
+        {
+          m_doc -= 2;
+          m_cols -= 2;
+        }
+        // Nous Xiong: fix bug
+        break;
       }
       default:
       {
-               return c;
+        return c;
       }
       }
     }
@@ -534,12 +534,12 @@ public:
 
           include_parsers_.emplace_back(
             new parser(
-              m_define, 
-              m_include_paths, 
-              r.first.get(), 
-              r.second, 
-              true
-              )
+            m_define,
+            m_include_paths,
+            r.first.get(),
+            r.second,
+            true
+            )
             );
           parser* p = include_parsers_.back().get();
           p->parse(file);
@@ -1017,7 +1017,7 @@ public:
         namespace_.m_js_fullname += name;
         namespace_.m_csharp_fullname += name;
       }
-      namespace_.m_cpp_fullname += "::"; 
+      namespace_.m_cpp_fullname += "::";
       namespace_.m_lua_fullname += "_";
       namespace_.m_js_fullname += "_";
       namespace_.m_csharp_fullname += ".";

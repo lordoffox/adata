@@ -117,7 +117,7 @@ namespace csharp_gen
       auto it = mb_list.begin();
       for (; it != mb_list.end(); ++it)
       {
-        if (member_cmp(mb,*it)<0)
+        if (member_cmp(mb, *it) < 0)
         {
           break;
         }
@@ -162,7 +162,7 @@ namespace csharp_gen
     os << tabs(tab_indent) << "{if(" << context_name << ".error()){" << context_name << ".trace_error(\"" << var_name << "\"," << sub << ");return;}}";
   }
 
-  std::string gen_csharp_default_value(const member_define& mdefine,const std::string& decl_type)
+  std::string gen_csharp_default_value(const member_define& mdefine, const std::string& decl_type)
   {
     switch (mdefine.m_type)
     {
@@ -244,7 +244,7 @@ namespace csharp_gen
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent + 2) << decl_type << " element";
         std::string decl_value = gen_csharp_default_value(mdefine.m_template_parameters[0], decl_type);
-        if(!decl_value.empty())
+        if (!decl_value.empty())
         {
           os << "= " << decl_value;
         }
@@ -288,10 +288,10 @@ namespace csharp_gen
     else
     {
       os << tabs(tab_indent) << "{";
-			if (mdefine.m_type != e_base_type::type)
-			{
-				os << "adata.stream.";
-			}
+      if (mdefine.m_type != e_base_type::type)
+      {
+        os << "adata.stream.";
+      }
       else
       {
         // Nous Xiong: add full namespace 
@@ -354,7 +354,7 @@ namespace csharp_gen
     else
     {
       os << tabs(tab_indent) << "{" << make_type_desc(desc_define, mdefine) << " dummy_value = ";
-      if(mdefine.is_initable())
+      if (mdefine.is_initable())
       {
         os << "0";
       }
@@ -363,9 +363,9 @@ namespace csharp_gen
         os << "null";
       }
       os << ";";
-			if (mdefine.m_type != e_base_type::type)
-			{
-				os << "adata.stream.";
+      if (mdefine.m_type != e_base_type::type)
+      {
+        os << "adata.stream.";
       }
       else
       {
@@ -373,7 +373,7 @@ namespace csharp_gen
         auto stream_ns = gen_stream_ns(mdefine);
         os << stream_ns;
       }
-			if (mdefine.m_fixed)
+      if (mdefine.m_fixed)
       {
         os << "fix_";
       }
@@ -431,7 +431,7 @@ namespace csharp_gen
     std::string full_type_name = tdefine.m_name;
     os << tabs(2) << "public static void read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
-    
+
     gen_adata_read_tag(os, 3);
 
     uint64_t tag_mask = 1;
@@ -465,7 +465,7 @@ namespace csharp_gen
     std::string full_type_name = tdefine.m_name;
     os << tabs(2) << "public static void skip_read(adata.zero_copy_buffer stream, ref " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
-    
+
     gen_adata_read_tag(os, 3);
 
     uint64_t tag_mask = 1;
@@ -518,7 +518,7 @@ namespace csharp_gen
         {
           os << tabs(tab_indent) << "if(value." << member.m_name << ".Count > 0){tag|=" << tag_mask << ";}" << std::endl;
         }
-        else if(member.m_type == e_base_type::string)
+        else if (member.m_type == e_base_type::string)
         {
           os << tabs(tab_indent) << "if(value." << member.m_name << ".Length > 0){tag|=" << tag_mask << ";}" << std::endl;
         }
@@ -538,7 +538,7 @@ namespace csharp_gen
         // Nous Xiong: remove check size bcz no need already
         /*if (mdefine.m_size.length())
         {
-          gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
+        gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
         }*/
 
         os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
@@ -552,7 +552,7 @@ namespace csharp_gen
         // Nous Xiong: remove check size bcz no need already
         /*if (mdefine.m_size.length())
         {
-          gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
+        gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
         }*/
 
         os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
@@ -564,7 +564,7 @@ namespace csharp_gen
         os << tabs(tab_indent) << "foreach (" << decl_type << " i in " << var_name << ")" << std::endl;
         os << tabs(tab_indent) << "{" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i", false);
-        
+
         // Nous Xiong: rmv trace error bcz no need for that
         //gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, true, "count");
         //os << std::endl;
@@ -581,7 +581,7 @@ namespace csharp_gen
         // Nous Xiong: remove check size bcz no need already
         /*if (mdefine.m_size.length())
         {
-          gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
+        gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
         }*/
 
         os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
@@ -593,7 +593,7 @@ namespace csharp_gen
         os << tabs(tab_indent) << "{" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i.Key", false);
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "i.Value", false);
-        
+
         // Nous Xiong: rmv trace error bcz no need for that
         //gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, true, "count");
         //os << std::endl;
@@ -607,13 +607,13 @@ namespace csharp_gen
     else
     {
       os << tabs(tab_indent);
-      
+
       // Nous Xiong: add size += 
       os << "size += ";
 
-			if (mdefine.m_type != e_base_type::type)
-			{
-				os << "adata.stream.";
+      if (mdefine.m_type != e_base_type::type)
+      {
+        os << "adata.stream.";
       }
       else
       {
@@ -621,7 +621,7 @@ namespace csharp_gen
         auto stream_ns = gen_stream_ns(mdefine);
         os << stream_ns;
       }
-			if (mdefine.m_fixed)
+      if (mdefine.m_fixed)
       {
         os << "fix_";
       }
@@ -665,7 +665,7 @@ namespace csharp_gen
       tag_mask <<= 1;
     }
     os << tabs(3) << "size += adata.stream.size_of(tag);" << std::endl;
-    
+
     // Nous Xiong: add len tag
     os << tabs(3) << "size += adata.stream.size_of(size + adata.stream.size_of(size));" << std::endl;
 
@@ -725,9 +725,9 @@ namespace csharp_gen
     else
     {
       os << tabs(tab_indent) << "{";
-			if (mdefine.m_type != e_base_type::type)
-			{
-				os << "adata.stream.";
+      if (mdefine.m_type != e_base_type::type)
+      {
+        os << "adata.stream.";
       }
       else
       {
@@ -735,7 +735,7 @@ namespace csharp_gen
         auto stream_ns = gen_stream_ns(mdefine);
         os << stream_ns;
       }
-			if (mdefine.m_fixed)
+      if (mdefine.m_fixed)
       {
         os << "fix_";
       }
@@ -821,7 +821,7 @@ namespace csharp_gen
 
   }
 
-const char * using_define = R"(using System;
+  const char * using_define = R"(using System;
 using System.IO;
 using System.Collections.Generic;
 

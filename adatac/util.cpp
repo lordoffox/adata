@@ -41,55 +41,55 @@ int member_cmp(member_define* const a, member_define* const b)
   return type_weight[a->m_type] - type_weight[b->m_type];
 }
 
-void split_string(const std::string& value, std::vector<std::string>& list , char separator)
+void split_string(const std::string& value, std::vector<std::string>& list, char separator)
 {
-	std::string::size_type start_pos = 0;
-	for (std::string::size_type current_pos = 0; current_pos < value.length(); ++current_pos)
-	{
-		if(value[current_pos] == separator)
-		{
-			if( current_pos > start_pos )
-			{
-				std::string s_value = value.substr(start_pos, current_pos);
-				list.push_back(s_value);
-			}
-			start_pos = current_pos + 1;
-		}
-	}
+  std::string::size_type start_pos = 0;
+  for (std::string::size_type current_pos = 0; current_pos < value.length(); ++current_pos)
+  {
+    if (value[current_pos] == separator)
+    {
+      if (current_pos > start_pos)
+      {
+        std::string s_value = value.substr(start_pos, current_pos);
+        list.push_back(s_value);
+      }
+      start_pos = current_pos + 1;
+    }
+  }
 }
 
 std::string tab_strings[10] = {
-	"",
-	"  ",
-	"    ",
-	"      ",
-	"        ",
-	"          ",
-	"            ",
-	"              ",
-	"                ",
-	"                  ",
+  "",
+  "  ",
+  "    ",
+  "      ",
+  "        ",
+  "          ",
+  "            ",
+  "              ",
+  "                ",
+  "                  ",
 };
 
 const char * data_type_name[] = {
-	"",
-	"fixi8",
-	"fixu8",
-	"fixi16",
-	"fixu16",
-	"fixi32",
-	"fixu32",
-	"fixi64",
-	"fixu64",
-	"i8",
-	"u8",
-	"i16",
-	"u16",
-	"i32",
-	"u32",
-	"i64",
-	"u64",
-	"f32",
-	"f64",
-	"str",
+  "",
+  "fixi8",
+  "fixu8",
+  "fixi16",
+  "fixu16",
+  "fixi32",
+  "fixu32",
+  "fixi64",
+  "fixu64",
+  "i8",
+  "u8",
+  "i16",
+  "u16",
+  "i32",
+  "u32",
+  "i64",
+  "u64",
+  "f32",
+  "f64",
+  "str",
 };

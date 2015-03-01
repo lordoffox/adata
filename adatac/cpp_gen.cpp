@@ -31,7 +31,7 @@ namespace cpp_gen
     {
       type_define const* ty = desc_define.find_decl_type(name);
       BOOST_ASSERT_MSG(ty != nullptr, name.c_str());
-      
+
       if (name.find('.') != std::string::npos)
       {
         // Noux Xiong: if has dot, then poof it is include type
@@ -64,19 +64,19 @@ namespace cpp_gen
         type_name = find->second;
       }
       type_name += "<";
-			/*if (define.m_template_parameters[0].m_type == e_base_type::type)
-			{
-				type_name += desc_define.m_namespace.m_cpp_fullname;
-			}*/
+      /*if (define.m_template_parameters[0].m_type == e_base_type::type)
+      {
+      type_name += desc_define.m_namespace.m_cpp_fullname;
+      }*/
       type_name += make_typename(desc_define, define.m_template_parameters[0].m_typename);
       if (define.m_type == e_base_type::map)
       {
         type_name += ",";
-				/*if (define.m_template_parameters[1].m_type == e_base_type::type)
-				{
-					type_name += desc_define.m_namespace.m_cpp_fullname;
-				}*/
-				type_name += make_typename(desc_define, define.m_template_parameters[1].m_typename);
+        /*if (define.m_template_parameters[1].m_type == e_base_type::type)
+        {
+        type_name += desc_define.m_namespace.m_cpp_fullname;
+        }*/
+        type_name += make_typename(desc_define, define.m_template_parameters[1].m_typename);
       }
       if (desc_define.m_option.m_cpp_allocator.length())
       {
@@ -98,11 +98,11 @@ namespace cpp_gen
     else
     {
       type_name = make_typename(desc_define, define.m_typename);
-			/*if (define.m_type == e_base_type::type)
-			{
-				type_name = desc_define.m_namespace.m_cpp_fullname + type_name;
-			}*/
-		}
+      /*if (define.m_type == e_base_type::type)
+      {
+      type_name = desc_define.m_namespace.m_cpp_fullname + type_name;
+      }*/
+    }
     return type_name;
   }
 
@@ -202,10 +202,10 @@ namespace cpp_gen
         ++init_count;
       }
     }
-		if (init_count)
-		{
-			os << tabs(2) << ":";
-		}
+    if (init_count)
+    {
+      os << tabs(2) << ":";
+    }
     for (const auto& member : tdefine.m_members)
     {
       if (member.m_deleted)
@@ -267,7 +267,7 @@ namespace cpp_gen
         os << tabs(tab_indent + 1) << var_name << ".resize(len);" << std::endl;
         os << tabs(tab_indent + 1) << "for (std::size_t i = 0 ; i < len ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
-				gen_adata_operator_read_member_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, var_name + "[i]", false);
+        gen_adata_operator_read_member_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, var_name + "[i]", false);
         gen_trace_error_info(os, tab_indent + 2, "stream", mdefine.m_name, true, "(int32_t)i");
         os << std::endl;
         os << tabs(tab_indent + 1) << "}";
@@ -429,7 +429,7 @@ namespace cpp_gen
 
     // Nous Xiong: remove max mask check, for backward compat
     //os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
-    
+
     // Nous Xiong: add len tag jump
     gen_adata_len_tag_jump(os, 2);
 
@@ -464,7 +464,7 @@ namespace cpp_gen
 
     // Nous Xiong: remove max mask check, for backward compat
     //os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
-    
+
     // Nous Xiong: add len tag jump
     gen_adata_len_tag_jump(os, 2);
 
@@ -504,7 +504,7 @@ namespace cpp_gen
       // Nous Xiong: remove size_of length check
       /*if (mdefine.m_size.length())
       {
-        gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
+      gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, trace_error);
       }*/
       // Nous Xiong: change to size_of
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
@@ -540,7 +540,7 @@ namespace cpp_gen
         os << tabs(tab_indent) << "{" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i->first", false);
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "i->second", false);
-        
+
         // Nous Xiong: rmv trace error bcz no need for that
         //gen_trace_error_info(os, tab_indent + 1, "context", mdefine.m_name, true, "count");
         //os << std::endl;
@@ -574,7 +574,7 @@ namespace cpp_gen
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
     os << tabs(1) << gen_inline_code(tdefine) << "int32_t size_of(const " << full_type_name << "& value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
-    
+
     // Nous Xiong: add size_of result var
     os << tabs(2) << "int32_t size = 0;" << std::endl;
 
