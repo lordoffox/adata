@@ -204,7 +204,7 @@ public:
   char read_char()
   {
     char c = *m_doc;
-    if (c > 0)
+    if (c != 0)
     {
       ++m_doc;
       ++m_cols;
