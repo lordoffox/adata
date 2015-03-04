@@ -7,7 +7,7 @@
 #define ADATA_HPP_HEADER_
 
 #include <cstddef>
-#if !defined(_MSC_VER) || _MSC_VER >= 1500
+#if !defined(_MSC_VER) || _MSC_VER > 1500
 # include <cstdint>
 #else
 # include "stdint.hpp"

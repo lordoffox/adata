@@ -6,7 +6,7 @@
 #ifndef l_adata_int64_hpp
 #define l_adata_int64_hpp
 
-#if !defined(_MSC_VER) || _MSC_VER >= 1500
+#if !defined(_MSC_VER) || _MSC_VER > 1500
 # include <cstdint>
 #else
 # include "stdint.hpp"
