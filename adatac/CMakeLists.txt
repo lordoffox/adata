@@ -64,7 +64,7 @@ if (WIN32)
   endif ()
 endif ()
 
-file(GLOB_RECURSE SOURCE_FILES  "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file(GLOB SOURCE_FILES  "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 add_executable(adatac ${SOURCE_FILES})
 
 if (ADATAC_COMPILE_PROP)
