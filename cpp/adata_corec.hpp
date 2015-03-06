@@ -20,7 +20,7 @@ namespace adata {
 
     const char * zbuffer_metatable = "zbuf_meta";
 
-    static int regiest_field_info(lua_State * L)
+    static int regist_field_info(lua_State * L)
     {
       size_t len;
       const char * str = lua_tolstring(L, 1, &len);
@@ -78,7 +78,7 @@ namespace adata {
     {
       adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, 1);
       _reset_buf(*zbuf);
-      return 1;
+      return 0;
     }
 
     static int resize_zuf(lua_State * L)
@@ -99,7 +99,7 @@ namespace adata {
       }
 
       zbuf->set_write(buffer, size);
-      return 1;
+      return 0;
     }
 
     static int clear_zuf(lua_State * L)
@@ -110,7 +110,7 @@ namespace adata {
         return luaL_error(L, "arg 1 must be zbuf!");
       }
       zbuf->clear();
-      return 1;
+      return 0;
     }
 
     static int set_error_zuf(lua_State * L)
@@ -122,7 +122,7 @@ namespace adata {
       }
       lua_Integer ec = lua_tointeger(L, 2);
       zbuf->set_error_code((adata::error_code_t)ec);
-      return 1;
+      return 0;
     }
 
     static int trace_error_zuf(lua_State * L)
@@ -140,7 +140,7 @@ namespace adata {
         idx = -1;
       }
       zbuf->trace_error(info + offset, (int)idx);
-      return 1;
+      return 0;
     }
 
     static int trace_info_zuf(lua_State * L)
@@ -209,7 +209,7 @@ namespace adata {
         len = nlen;
       }
       zbuf->set_read(str, len);
-      return 1;
+      return 0;
     }
 
     ADATA_INLINE adata::zero_copy_buffer * _get_zbuf_arg(lua_State * L, int idx)
@@ -887,7 +887,7 @@ namespace adata {
     static int size_of_str(lua_State * L)
     {
       size_t len;
-      char const* str = lua_tolstring(L, 1, &len);
+      lua_tolstring(L, 1, &len);
       int32_t s = adata::size_of((int32_t)len);
       s += (int32_t)len;
       lua_pushinteger(L, s);
@@ -912,7 +912,7 @@ namespace adata {
 
       static const luaL_Reg lib[] =
       {
-        { "regiest_field_info", regiest_field_info },
+        { "regist_field_info", regist_field_info },
         { "new_buf", new_zbuf },
         { "del_buf", del_zbuf },
         { "resize_buf", resize_zuf },
@@ -1029,7 +1029,7 @@ namespace adata {
 
       static const luaL_Reg lib[] =
       {
-        { "regiest_field_info", regiest_field_info },
+        { "regist_field_info", regist_field_info },
         { "new_buf", new_zbuf },
         { "del_buf", del_zbuf },
         { "resize_buf", resize_zuf },

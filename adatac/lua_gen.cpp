@@ -171,7 +171,7 @@ namespace lua_gen
     }
     if (ctx.use_field_type == gen_contex::use_field_pool)
     {
-      os << "local field_info = regiest_field_info('";
+      os << "local field_info = regist_field_info('";
       std::size_t code_size = ctx.f_info.data.length();
       unsigned char * code_ptr = (unsigned char *)ctx.f_info.data.c_str();
       for (std::size_t i = 0; i < code_size; ++i)
@@ -713,7 +713,7 @@ namespace lua_gen
 
     const char * lua_require_define = R"(local adata_m = require'adata_core'
 local ns = require'adata'
-local regiest_field_info = adata_m.regiest_field_info;
+local regist_field_info = adata_m.regist_field_info;
 local new_buf = adata_m.new_buf;
 local del_buf = adata_m.del_buf;
 local resize_buf = adata_m.resize_buf;
@@ -1092,14 +1092,15 @@ local tablen = ns.tablen;
         ++idx;
       }
       os << "local mc = {};" << std::endl;
+      std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+
       idx = 1;
       for (auto& t_define : define.m_types)
       {
         gen_meta_imp(os, t_define, idx, ctx);
         ++idx;
       }
-      std::string ns = define.m_namespace.m_lua_fullname;
-      ns.pop_back();
 
       // Nous Xiong: add ns table set
       os << "if ns." << ns << " == nil then" << std::endl;
@@ -1127,7 +1128,7 @@ local tablen = ns.tablen;
 
     const char * lua_require_define = R"(local adata_m = require'adata_core'
 local ns = require'adata'
-local regiest_field_info = adata_m.regiest_field_info;
+local regist_field_info = adata_m.regist_field_info;
 local new_buf = adata_m.new_buf;
 local del_buf = adata_m.del_buf;
 local resize_buf = adata_m.resize_buf;
@@ -1471,14 +1472,15 @@ local tablen = ns.tablen;
         ++idx;
       }
       os << "local mc = {};" << std::endl;
+      std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+
       idx = 1;
       for (auto& t_define : define.m_types)
       {
         gen_meta_imp(os, t_define, idx, ctx);
         ++idx;
       }
-      std::string ns = define.m_namespace.m_lua_fullname;
-      ns.pop_back();
 
       // Nous Xiong: add ns table set
       os << "if ns." << ns << " == nil then" << std::endl;
@@ -1819,14 +1821,14 @@ local tablen = ns.tablen;
       }
       os << "local mc = {};" << std::endl;
       idx = 1;
+      std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+
       for (auto& t_define : define.m_types)
       {
         gen_meta_imp(os, t_define, idx, ctx);
         ++idx;
       }
-      std::string ns = define.m_namespace.m_lua_fullname;
-      ns.pop_back();
-
       // Nous Xiong: add ns table set
       os << "if ns." << ns << " == nil then" << std::endl;
       os << tabs(1) << "ns." << ns << " = m;" << std::endl;
