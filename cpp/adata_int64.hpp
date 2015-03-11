@@ -49,12 +49,6 @@ namespace adata {
 #endif
     const char * uint64_metatable = "uint64_meta";
 
-    enum e_lua_ret_code
-    {
-      LUA_FAIL = 0,
-      LUA_SUCCESS = 1,
-    };
-
     ADATA_INLINE int lua_tonumber64(lua_State * L, int idx, number64_type * it)
     {
       it->lua_type = lua_type(L, idx);
@@ -177,7 +171,7 @@ namespace adata {
           }
         }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     ADATA_INLINE void lua_pushuint64(lua_State *L, uint64_t n)
@@ -265,7 +259,7 @@ namespace adata {
         break;
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int lua_int64tostring(lua_State *L)
@@ -294,7 +288,7 @@ namespace adata {
         ++pos;
       }
       lua_pushstring(L, str + pos);
-      return LUA_SUCCESS;
+      return 1;
     }
 #endif
 
@@ -388,7 +382,7 @@ namespace adata {
         luaL_error(L, "can't perform eq operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_lt(lua_State *L)
@@ -481,7 +475,7 @@ namespace adata {
         luaL_error(L, "can't perform lt operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_le(lua_State *L)
@@ -574,7 +568,7 @@ namespace adata {
         luaL_error(L, "can't perform le operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_add(lua_State *L)
@@ -667,7 +661,7 @@ namespace adata {
         luaL_error(L, "can't perform add operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_sub(lua_State *L)
@@ -760,7 +754,7 @@ namespace adata {
         luaL_error(L, "can't perform sub operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_mul(lua_State *L)
@@ -853,7 +847,7 @@ namespace adata {
         luaL_error(L, "can't perform mul operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_div(lua_State *L)
@@ -946,7 +940,7 @@ namespace adata {
         luaL_error(L, "can't perform div operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_mod(lua_State *L)
@@ -1039,7 +1033,7 @@ namespace adata {
         luaL_error(L, "can't perform mod operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_pow(lua_State *L)
@@ -1132,7 +1126,7 @@ namespace adata {
         luaL_error(L, "can't perform pow operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int int64_unm(lua_State *L)
@@ -1161,7 +1155,7 @@ namespace adata {
         luaL_error(L, "can't perform unm operator at %s", lua_typename(L, 1));
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
 #if LUA_VERSION_NUM < 503
@@ -1226,7 +1220,7 @@ namespace adata {
         break;
       }
       }
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static int lua_uint64tostring(lua_State *L)
@@ -1242,7 +1236,7 @@ namespace adata {
       }
       ++pos;
       lua_pushstring(L, str + pos);
-      return LUA_SUCCESS;
+      return 1;
     }
 
     static const luaL_Reg uint64_meta[] =
@@ -1309,7 +1303,7 @@ namespace adata {
         { NULL, NULL }
       };
       luaL_newlib(L, lib);
-      return LUA_SUCCESS;
+      return 1;
     }
 
     ADATA_INLINE int init_lua_int64(lua_State *L)
@@ -1326,7 +1320,7 @@ namespace adata {
       lua_setfield(L, -2, "__index");
 
       luaL_requiref(L, "int64", regist_int64, 1);
-      return LUA_SUCCESS;
+      return 1;
     }
 #endif
   }
