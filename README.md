@@ -321,17 +321,7 @@ First in c/cpp, user need include adata's header and call adata::lua::init_adata
 
 #include <lua.hpp>
 
-#ifndef ADATA_USE_LUAJIT
-# ifdef LUAJIT_VERSION
-#   define ADATA_USE_LUAJIT
-# endif
-#endif
-
-#ifdef ADATA_USE_LUAJIT
-# include <adata_jit_corec.hpp>
-#else
-# include <adata_corec.hpp>
-#endif
+#include <adata_jit_corec.hpp>
 
 int main()
 {
