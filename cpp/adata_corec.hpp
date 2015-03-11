@@ -20,19 +20,6 @@ namespace adata {
 
     const char * zbuffer_metatable = "zbuf_meta";
 
-    static int regiest_field_info(lua_State * L)
-    {
-      size_t len;
-      const char * str = lua_tolstring(L, 1, &len);
-      if (len <= 0)
-      {
-        return luaL_error(L, "error info size %d", len);
-      }
-      void * info = lua_newuserdata(L, len);
-      memcpy(info, str, len);
-      return 1;
-    }
-
     static int new_zbuf(lua_State * L)
     {
       lua_Integer size = lua_tointeger(L, 1);
@@ -887,10 +874,1071 @@ namespace adata {
     static int size_of_str(lua_State * L)
     {
       size_t len;
-      char const* str = lua_tolstring(L, 1, &len);
+      lua_tolstring(L, 1, &len);
       int32_t s = adata::size_of((int32_t)len);
       s += (int32_t)len;
       lua_pushinteger(L, s);
+      return 1;
+    }
+
+    enum
+    {
+      adata_et_unknow,
+      adata_et_fix_int8,
+      adata_et_fix_uint8,
+      adata_et_fix_int16,
+      adata_et_fix_uint16,
+      adata_et_fix_int32,
+      adata_et_fix_uint32,
+      adata_et_fix_int64,
+      adata_et_fix_uint64,
+      adata_et_int8,
+      adata_et_uint8,
+      adata_et_int16,
+      adata_et_uint16,
+      adata_et_int32,
+      adata_et_uint32,
+      adata_et_int64,
+      adata_et_uint64,
+      adata_et_float32,
+      adata_et_float64,
+      adata_et_string,
+      adata_et_list,
+      adata_et_map,
+      adata_et_type
+    };
+
+    typedef struct adata_member adata_member;
+
+    typedef struct adata_type
+    {
+      char * name;
+      adata_member * members;
+      size_t member_count;
+      int32_t   mt_idx;
+    }adata_type;
+
+    typedef struct adata_paramter_type
+    {
+      int type;
+      int size;
+      adata_type * type_define;
+    }adata_paramter_type;
+
+    typedef struct adata_member
+    {
+      int type;
+      int del;
+      int size;
+      int filed_idx;
+      char * name;
+      adata_type * type_define;
+      adata_paramter_type * paramter_type[2];
+    }adata_member;
+
+    static int regist_layout(lua_State * L)
+    {
+      size_t len;
+      char * layout_buffer = (char *)lua_tolstring(L, 1, &len);
+      zero_copy_buffer buf;
+      buf.set_read(layout_buffer, len);
+      uint32_t member_count;
+      uint32_t param_type_count;
+      uint32_t string_buffer_size;
+      read(buf, member_count);
+      read(buf, param_type_count);
+      read(buf, string_buffer_size);
+      uint32_t total_size = sizeof(adata_type) + sizeof(adata_member)*member_count + sizeof(adata_paramter_type)*param_type_count + string_buffer_size;
+      char * type_buffer = (char *)lua_newuserdata(L, total_size);
+      adata_type * type = (adata_type *)type_buffer;
+      char * adata_member_buffer = type_buffer + sizeof(adata_type);
+      char * adata_paramter_type_buffer = adata_member_buffer + sizeof(adata_member)*member_count;
+      char * string_buffer = adata_paramter_type_buffer + sizeof(adata_paramter_type)*param_type_count;
+
+      type->member_count = member_count;
+      type->members = (adata_member *)adata_member_buffer;
+
+      int type_idx = 1;
+
+      for (uint32_t i = 0; i < member_count; ++i)
+      {
+        adata_member * mb = &type->members[i];
+        mb->paramter_type[0] = NULL;
+        mb->paramter_type[1] = NULL;
+        uint32_t slen = 0;
+        read(buf, slen);
+        buf.read(string_buffer, slen);
+        mb->name = string_buffer;
+        mb->name[slen] = 0;
+        string_buffer += (slen + 1);
+        uint32_t value;
+        read(buf, value);
+        mb->type = (int)value;
+        read(buf, value);
+        mb->del = (int)value;
+        read(buf, value);
+        mb->size = (int)value;
+        read(buf, value);
+        param_type_count = value;
+        lua_rawgeti(L, 2, i + 1);
+        mb->filed_idx = (int)lua_tointeger(L, -1);
+        lua_pop(L, 1);
+
+        if (mb->type == adata_et_type)
+        {
+          lua_rawgeti(L, 3, type_idx++);
+          mb->type_define = (adata_type *)lua_touserdata(L, -1);
+          lua_pop(L, 1);
+        }
+        for (uint32_t p = 0; p < param_type_count; ++p)
+        {
+          mb->paramter_type[p] = (adata_paramter_type*)adata_paramter_type_buffer;
+          adata_paramter_type_buffer += sizeof(adata_paramter_type);
+          adata_paramter_type * ptype = mb->paramter_type[p];
+          read(buf, value);
+          ptype->type = (int)value;
+          read(buf, value);
+          ptype->size = (int)value;
+          if (ptype->type == adata_et_type)
+          {
+            lua_rawgeti(L, 3, type_idx++);
+            ptype->type_define = (adata_type *)lua_touserdata(L, -1);
+            lua_pop(L, 1);
+          }
+          else
+          {
+            ptype->type_define = NULL;
+          }
+        }
+      }
+      return 1;
+    }
+
+    static int set_layout_mt(lua_State * L)
+    {
+      adata_type * type = (adata_type *)lua_touserdata(L, 1);
+      type->mt_idx = (int)lua_tointeger(L, 2);
+      return 0;
+    }
+
+    static int skip_read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type);
+
+    static ADATA_INLINE int skip_read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
+    {
+      (size);
+      switch (type)
+      {
+      case adata_et_fix_int8: { buf->skip_read(1); break; }
+      case adata_et_fix_uint8:{ buf->skip_read(1); break; }
+      case adata_et_fix_int16:{ buf->skip_read(2); break; }
+      case adata_et_fix_uint16:{ buf->skip_read(2); break; }
+      case adata_et_fix_int32:{ buf->skip_read(4); break; }
+      case adata_et_fix_uint32:{ buf->skip_read(4); break; }
+      case adata_et_fix_int64:{ buf->skip_read(8); break; }
+      case adata_et_fix_uint64:{ buf->skip_read(8); break; }
+      case adata_et_int8:{ adata::skip_read(*buf, (int8_t*)0); break; }
+      case adata_et_uint8:{ adata::skip_read(*buf, (uint8_t*)0); break; }
+      case adata_et_int16:{ adata::skip_read(*buf, (int16_t*)0); break; }
+      case adata_et_uint16:{ adata::skip_read(*buf, (uint16_t*)0); break; }
+      case adata_et_int32:{ adata::skip_read(*buf, (int32_t*)0); break; }
+      case adata_et_uint32:{ adata::skip_read(*buf, (uint32_t*)0); break; }
+      case adata_et_int64:{ adata::skip_read(*buf, (int64_t*)0); break; }
+      case adata_et_uint64:{ adata::skip_read(*buf, (uint64_t*)0); break; }
+      case adata_et_float32:{ buf->skip_read(4); break; }
+      case adata_et_float64:{ buf->skip_read(8); break; }
+      case adata_et_string:
+      {
+        uint32_t len = 0;
+        adata::read(*buf, len);
+        buf->skip_read(len);
+        break;
+      }
+      case adata_et_type:
+      {
+        if (type_define)
+        {
+          skip_read_type(L, buf, type_define);
+        }
+        else
+        {
+          buf->set_error_code(undefined_member_protocol_not_compatible);
+        }
+        break;
+      }
+      default:
+      {
+        buf->set_error_code(undefined_member_protocol_not_compatible);
+      }
+      }
+      return 0;
+    }
+
+    static int skip_read_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb)
+    {
+      if (mb->type == adata_et_list)
+      {
+        uint32_t len = 0;
+        adata::read(*buf, len);
+        adata_paramter_type * ptype = mb->paramter_type[0];
+        for (uint32_t i = 1; i <= len; ++i)
+        {
+          lua_rawgeti(L, -1, len);
+          skip_read_value(L, buf, ptype->type, ptype->size, ptype->type_define);
+          if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
+          lua_pop(L, 1);
+        }
+      }
+      else if (mb->type == adata_et_map)
+      {
+        uint32_t len = 0;
+        adata::read(*buf, len);
+        adata_paramter_type * ptype1 = mb->paramter_type[0];
+        adata_paramter_type * ptype2 = mb->paramter_type[1];
+        for (uint32_t i = 1; i <= len; ++i)
+        {
+          lua_rawgeti(L, -1, len);
+          lua_pushvalue(L, -2);
+          skip_read_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define);
+          if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
+          lua_pop(L, 1);
+          skip_read_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define);
+          if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
+          lua_pop(L, 1);
+        }
+      }
+      else
+      {
+        skip_read_value(L, buf, mb->type, mb->size, mb->type_define);
+        if (buf->error()) { buf->trace_error(mb->name, -1); return 0; }
+      }
+      return 1;
+    }
+
+    static int skip_read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type)
+    {
+      (L);
+      (type);
+      uint64_t data_tag = 0;
+      int32_t  data_len = 0;
+      ::std::size_t offset_beg = buf->read_length();
+      adata::read(*buf, data_tag);
+      adata::read(*buf, data_len);
+      ::std::size_t offset_cur = buf->read_length();
+      buf->skip_read(data_len - (offset_cur - offset_beg));
+      if (buf->error())
+      {
+        return 0;
+      }
+      return 1;
+    }
+
+    template<typename ty>
+    ADATA_INLINE void fix_read_and_push_value(lua_State *L, zero_copy_buffer * buf)
+    {
+      ty v;
+      adata::fix_read(*buf, v);
+      lua_pushinteger(L, v);
+    }
+
+    template<>
+    ADATA_INLINE void fix_read_and_push_value<int64_t>(lua_State *L, zero_copy_buffer * buf)
+    {
+      int64_t v;
+      adata::fix_read(*buf, v);
+      lua_pushint64(L, v);
+    }
+
+    template<>
+    ADATA_INLINE void fix_read_and_push_value<uint64_t>(lua_State *L, zero_copy_buffer * buf)
+    {
+      uint64_t v;
+      adata::fix_read(*buf, v);
+      lua_pushuint64(L, v);
+    }
+
+    template<typename ty>
+    ADATA_INLINE void read_and_push_value(lua_State *L, zero_copy_buffer * buf)
+    {
+      ty v;
+      adata::read(*buf, v);
+      lua_pushinteger(L, v);
+    }
+
+    template<>
+    ADATA_INLINE void read_and_push_value<float>(lua_State *L, zero_copy_buffer * buf)
+    {
+      float v;
+      adata::read(*buf, v);
+      lua_pushnumber(L, v);
+    }
+
+    template<>
+    ADATA_INLINE void read_and_push_value<double>(lua_State *L, zero_copy_buffer * buf)
+    {
+      double v;
+      adata::read(*buf, v);
+      lua_pushnumber(L, v);
+    }
+
+    template<>
+    ADATA_INLINE void read_and_push_value<int64_t>(lua_State *L, zero_copy_buffer * buf)
+    {
+      int64_t v;
+      adata::read(*buf, v);
+      lua_pushint64(L, v);
+    }
+
+    template<>
+    ADATA_INLINE void read_and_push_value<uint64_t>(lua_State *L, zero_copy_buffer * buf)
+    {
+      uint64_t v;
+      adata::read(*buf, v);
+      lua_pushuint64(L, v);
+    }
+
+    static int read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, bool create = true);
+
+    static ADATA_INLINE int read_string(lua_State *L, zero_copy_buffer * buf, int sz)
+    {
+      uint32_t len = 0;
+      adata::read(*buf, len);
+      if (buf->error()) { return 0; }
+      if (sz > 0 && (int)len > sz)
+      {
+        buf->set_error_code(number_of_element_not_macth);
+        return 0;
+      }
+      char * str = (char*)buf->skip_read(len);
+      if (buf->bad())
+      {
+        buf->set_error_code(stream_buffer_overflow);
+        return 0;
+      }
+      lua_pushlstring(L, str, len);
+      return 1;
+    }
+
+    static ADATA_INLINE int read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
+    {
+      switch (type)
+      {
+      case adata_et_fix_int8:{ fix_read_and_push_value<int8_t>(L, buf); break; }
+      case adata_et_fix_uint8:{ fix_read_and_push_value<uint8_t>(L, buf); break; }
+      case adata_et_fix_int16:{ fix_read_and_push_value<int16_t>(L, buf); break; }
+      case adata_et_fix_uint16:{ fix_read_and_push_value<uint16_t>(L, buf); break; }
+      case adata_et_fix_int32:{ fix_read_and_push_value<int32_t>(L, buf); break; }
+      case adata_et_fix_uint32:{ fix_read_and_push_value<uint32_t>(L, buf); break; }
+      case adata_et_fix_int64:{ fix_read_and_push_value<int64_t>(L, buf); break; }
+      case adata_et_fix_uint64:{ fix_read_and_push_value<uint64_t>(L, buf); break; }
+      case adata_et_int8:{ read_and_push_value<int8_t>(L, buf); break; }
+      case adata_et_uint8:{ read_and_push_value<uint8_t>(L, buf); break; }
+      case adata_et_int16:{ read_and_push_value<int16_t>(L, buf); break; }
+      case adata_et_uint16:{ read_and_push_value<uint16_t>(L, buf); break; }
+      case adata_et_int32:{ read_and_push_value<int32_t>(L, buf); break; }
+      case adata_et_uint32:{ read_and_push_value<uint32_t>(L, buf); break; }
+      case adata_et_int64:{ read_and_push_value<int64_t>(L, buf); break; }
+      case adata_et_uint64:{ read_and_push_value<uint64_t>(L, buf); break; }
+      case adata_et_float32:{ read_and_push_value<float>(L, buf); break; }
+      case adata_et_float64:{ read_and_push_value<double>(L, buf); break; }
+      case adata_et_string:
+      {
+        read_string(L, buf, size);
+        break;
+      }
+      case adata_et_type:
+      {
+        if (type_define)
+        {
+          read_type(L, buf, type_define);
+        }
+        else
+        {
+          buf->set_error_code(undefined_member_protocol_not_compatible);
+        }
+        break;
+      }
+      default:
+      {
+        buf->set_error_code(undefined_member_protocol_not_compatible);
+      }
+      }
+      if (buf->error())
+      {
+        return 0;
+      }
+      return 1;
+    }
+
+    static int read_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb)
+    {
+      if (mb->type == adata_et_list)
+      {
+        uint32_t len = 0;
+        adata::read(*buf, len);
+        if (mb->size > 0 && (int)len > mb->size)
+        {
+          buf->set_error_code(number_of_element_not_macth);
+          buf->trace_error(mb->name, -1);
+          return 0;
+        }
+        lua_createtable(L, len, 0);
+        adata_paramter_type * ptype = mb->paramter_type[0];
+        for (uint32_t i = 1; i <= len; ++i)
+        {
+          read_value(L, buf, ptype->type, ptype->size, ptype->type_define);
+          if (buf->error()) { buf->trace_error(mb->name, i - 1); return 0; }
+          lua_rawseti(L, -2, i);
+        }
+      }
+      else if (mb->type == adata_et_map)
+      {
+        uint32_t len = 0;
+        adata::read(*buf, len);
+        if (mb->size > 0 && (int)len > mb->size)
+        {
+          buf->set_error_code(number_of_element_not_macth);
+          buf->trace_error(mb->name, -1);
+          return 0;
+        }
+        adata_paramter_type * ptype1 = mb->paramter_type[0];
+        adata_paramter_type * ptype2 = mb->paramter_type[1];
+        lua_createtable(L, 0, len);
+        for (uint32_t i = 0; i < len; ++i)
+        {
+          read_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define);
+          if (buf->error()) { buf->trace_error(mb->name, i + 1); return 0; }
+          read_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define);
+          if (buf->error()) { buf->trace_error(mb->name, i + 1); return 0; }
+          lua_rawset(L, -3);
+        }
+      }
+      else
+      {
+        read_value(L, buf, mb->type, mb->size, mb->type_define);
+        if (buf->error()) { buf->trace_error(mb->name, -1); return 0; }
+      }
+      return 1;
+    }
+
+    static int read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, bool create)
+    {
+      if (create)
+      {
+        lua_createtable(L, 0, (int)type->member_count);
+        lua_rawgeti(L, 2, type->mt_idx);
+        lua_setmetatable(L, -3);
+      }
+      uint64_t data_tag = 0;
+      uint32_t data_len = 0;
+      ::std::size_t offset = buf->read_length();
+      read(*buf, data_tag);
+      read(*buf, data_len);
+      uint64_t mask = 1;
+      for (size_t i = 0; i < type->member_count; ++i)
+      {
+        adata_member * mb = &type->members[i];
+        int skip = 0;
+        int read = 0;
+        int create_default = 0;
+        if (mb->del == 0)
+        {
+          if (data_tag&mask)
+          {
+            read = 1;
+          }
+          else
+          {
+            if (create)
+            {
+              create_default = 1;
+            }
+          }
+        }
+        else
+        {
+          if (data_tag&mask)
+          {
+            skip = 1;
+          }
+        }
+        if (skip)
+        {
+          if (skip_read_member(L, buf, mb) == 0)
+          {
+            return 0;
+          }
+        }
+        else if (read)
+        {
+          lua_rawgeti(L, 1, mb->filed_idx);
+          if (read_member(L, buf, mb) == 0)
+          {
+            lua_pop(L, 1);
+            return 0;
+          }
+          else
+          {
+            lua_settable(L, -3);
+          }
+        }
+        else if (create_default)
+        {
+          switch (mb->type)
+          {
+          case adata_et_string:
+          {
+            lua_rawgeti(L, 1, mb->filed_idx);
+            lua_pushlstring(L, "", 0);
+            lua_settable(L, -3);
+            break;
+          }
+          case adata_et_list:
+          case adata_et_map:
+          {
+            lua_rawgeti(L, 1, mb->filed_idx);
+            lua_createtable(L, 0, 0);
+            lua_settable(L, -3);
+            break;
+          }
+          }
+        }
+        mask <<= 1;
+      }
+      ::std::size_t read_len = buf->read_length() - offset;
+      ::std::size_t len = (::std::size_t)data_len;
+      if (len > read_len) buf->skip_read(len - read_len);
+      return 1;
+    }
+
+    static int lua_skip_read(lua_State * L)
+    {
+      zero_copy_buffer * zbuf = (zero_copy_buffer*)lua_touserdata(L, 3);
+      adata_type * type = (adata_type*)lua_touserdata(L, 4);
+      skip_read_type(L, zbuf, type);
+      lua_pushinteger(L, zbuf->error_code());
+      return 1;
+    }
+
+    static int lua_read(lua_State * L)
+    {
+      zero_copy_buffer * zbuf = (zero_copy_buffer*)lua_touserdata(L, 3);
+      adata_type * type = (adata_type*)lua_touserdata(L, 4);
+      read_type(L, zbuf, type, false);
+      lua_pushinteger(L, zbuf->error_code());
+      return 1;
+    }
+
+    struct type_sizeof_info
+    {
+      uint64_t tag;
+      uint32_t size;
+      type_sizeof_info() :tag(0), size(0){}
+    };
+
+    typedef std::vector<type_sizeof_info> type_sizeof_info_list_type;
+
+    static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type& list);
+
+    template<typename ty>
+    ADATA_INLINE int lua_to_number(lua_State *L, int idx, ty& v)
+    {
+      v = (ty)lua_tointeger(L, idx);
+      return 0;
+    }
+
+    template<>
+    ADATA_INLINE int lua_to_number<float>(lua_State *L, int idx, float& v)
+    {
+      v = (float)lua_tonumber(L, idx);
+      return 0;
+    }
+
+    template<>
+    ADATA_INLINE int lua_to_number<double>(lua_State *L, int idx, double& v)
+    {
+      v = lua_tonumber(L, idx);
+      return 0;
+    }
+
+#if LUA_VERSION_NUM < 503
+    template<>
+    ADATA_INLINE int lua_to_number<int64_t>(lua_State *L, int idx, int64_t& v)
+    {
+      number64_type it = { et_int64_unknow };
+      lua_tonumber64(L, idx, &it);
+      switch (it.type)
+      {
+      case et_int64_lua_number:{ v = (int64_t)it.value.d64; return 0; }
+      case et_int64_int64:{ v = it.value.i64; return 0; }
+      case et_int64_uint64:
+      {
+        if (it.value.u64 > (1ULL >> 53))
+        {
+          v = 0;
+          return value_too_large_to_integer_number;
+        }
+        v = (int64_t)it.value.u64;
+        return 0;
+      }
+      }
+      return 0;
+    }
+#endif
+
+    template<>
+    ADATA_INLINE int lua_to_number<uint64_t>(lua_State *L, int idx, uint64_t& v)
+    {
+      number64_type it = { et_int64_unknow };
+      lua_tonumber64(L, idx, &it);
+      switch (it.type)
+      {
+      case et_int64_lua_number:
+      {
+        if (it.value.d64 < 0)
+        {
+          v = 0;
+          return negative_assign_to_unsigned_integer_number;
+        }
+        v = (uint64_t)it.value.d64;
+        return 0;
+      }
+      case et_int64_int64:
+      {
+        if (it.value.i64 < 0)
+        {
+          v = 0;
+          return negative_assign_to_unsigned_integer_number;
+        }
+        v = (uint64_t)it.value.i64;
+        return 0;
+      }
+      case et_int64_uint64:{ v = it.value.u64; }
+      }
+      return 0;
+    }
+
+    template<typename ty>
+    void fix_pop_and_write_value(lua_State *L, zero_copy_buffer * buf)
+    {
+      ty v;
+      int err = lua_to_number(L, -1, v);
+      if (err)
+      {
+        buf->set_error_code((error_code_t)err);
+      }
+      adata::fix_write(*buf, v);
+    }
+
+    template<typename ty>
+    void pop_and_write_value(lua_State *L, zero_copy_buffer * buf)
+    {
+      ty v;
+      int err = lua_to_number(L, -1, v);
+      if (err)
+      {
+        buf->set_error_code((error_code_t)err);
+      }
+      adata::write(*buf, v);
+    }
+
+    template<typename ty>
+    int32_t fix_sizeof_value(lua_State *L)
+    {
+      ty v;
+      lua_to_number(L, -1, v);
+      return adata::fix_size_of(v);
+    }
+
+    template<typename ty>
+    int32_t sizeof_value(lua_State *L)
+    {
+      ty v;
+      lua_to_number(L, -1, v);
+      return adata::size_of(v);
+    }
+
+    static ADATA_INLINE char * lua_get_string_ref(lua_State *L, int idx, size_t * slen)
+    {
+      int type = lua_type(L, idx);
+      if (type != LUA_TSTRING)
+      {
+        slen = 0;
+        return NULL;
+      }
+      size_t len = 0;
+      char * str = (char *)lua_tolstring(L, idx, &len);
+      if (slen != NULL)
+      {
+        *slen = len;
+      }
+      return str;
+    }
+
+    static ADATA_INLINE int32_t sizeof_string(lua_State *L)
+    {
+      size_t slen = 0;
+      lua_get_string_ref(L, -1, &slen);
+      int32_t str_len = (int32_t)slen;
+      return str_len + adata::size_of(str_len);
+    }
+
+    static ADATA_INLINE int write_string(lua_State *L, zero_copy_buffer * buf, int sz)
+    {
+      size_t slen = 0;
+      char * str = lua_get_string_ref(L, -1, &slen);
+      if (sz > 0)
+      {
+        if (slen > sz)
+        {
+          buf->set_error_code(number_of_element_not_macth);
+          return 0;
+        }
+      }
+      uint32_t str_len = (uint32_t)slen;
+      adata::write(*buf, str_len);
+      buf->write(str, slen);
+      return 1;
+    }
+
+    static ADATA_INLINE int lua_get_len(lua_State *L, adata_member * mb)
+    {
+      int len = 0;
+      switch (mb->type)
+      {
+      case adata_et_string:
+      {
+        if (lua_type(L, -1) != LUA_TSTRING)
+        {
+          return 0;
+        }
+        size_t slen = 0;
+        lua_tolstring(L, -1,&slen);
+        len = (int)slen;
+        break;
+      }
+      case adata_et_list:
+      {
+        if (lua_type(L, -1) != LUA_TTABLE)
+        {
+          return 0;
+        }
+#if LUA_VERSION_NUM == 501
+        len = (int)lua_objlen(L, -1);
+#else
+        len = (int)lua_rawlen(L, -1);
+#endif
+        break;
+      }
+      case adata_et_map:
+      {
+        if (lua_type(L, -1) != LUA_TTABLE)
+        {
+          return 0;
+        }
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0)
+        {
+          lua_pop(L, 1);
+          ++len;
+        }
+        break;
+      }
+      }
+      return len;
+    }
+
+    static ADATA_INLINE bool test_adata_empty(lua_State *L, adata_member * mb)
+    {
+      switch (mb->type)
+      {
+      case adata_et_string:
+      case adata_et_list:
+      case adata_et_map:
+      {
+        return lua_get_len(L, mb) == 0;
+      }
+      }
+      return false;
+    }
+
+    static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type * list = NULL);
+
+    static ADATA_INLINE int32_t sizeof_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, type_sizeof_info_list_type * list)
+    {
+      (size);
+      switch (type)
+      {
+      case adata_et_fix_int8:{ return fix_sizeof_value<int8_t>(L); }
+      case adata_et_fix_uint8:{ return fix_sizeof_value<uint8_t>(L); }
+      case adata_et_fix_int16:{ return fix_sizeof_value<int16_t>(L); }
+      case adata_et_fix_uint16:{ return fix_sizeof_value<uint16_t>(L); }
+      case adata_et_fix_int32:{ return fix_sizeof_value<int32_t>(L); }
+      case adata_et_fix_uint32:{ return fix_sizeof_value<uint32_t>(L); }
+      case adata_et_fix_int64:{ return fix_sizeof_value<int64_t>(L); }
+      case adata_et_fix_uint64:{ return fix_sizeof_value<uint64_t>(L); }
+      case adata_et_int8:{ return sizeof_value<int8_t>(L); }
+      case adata_et_uint8:{ return sizeof_value<uint8_t>(L); }
+      case adata_et_int16:{ return sizeof_value<int16_t>(L); }
+      case adata_et_uint16:{ return sizeof_value<uint16_t>(L); }
+      case adata_et_int32:{ return sizeof_value<int32_t>(L); }
+      case adata_et_uint32:{ return sizeof_value<uint32_t>(L); }
+      case adata_et_int64:{ return sizeof_value<int64_t>(L); }
+      case adata_et_uint64:{ return sizeof_value<uint64_t>(L); }
+      case adata_et_float32:{ return sizeof_value<float>(L); }
+      case adata_et_float64:{ return sizeof_value<double>(L); }
+      case adata_et_string:
+      {
+        return sizeof_string(L);
+        break;
+      }
+      case adata_et_type:
+      {
+        if (type_define)
+        {
+          return sizeof_type(L, buf, type_define, list);
+        }
+        break;
+      }
+      }
+      return 0;
+    }
+
+    static int32_t sizeof_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb, type_sizeof_info_list_type * list)
+    {
+      int32_t size = 0;
+      if (mb->type == adata_et_list)
+      {
+#if LUA_VERSION_NUM == 501
+        int len = (int)lua_objlen(L, -1);
+#else
+        int len = (int)lua_rawlen(L, -1);
+#endif
+        size += adata::size_of(len);
+        adata_paramter_type * ptype = mb->paramter_type[0];
+        for (int i = 1; i <= len; ++i)
+        {
+          lua_rawgeti(L, -1, i);
+          size += sizeof_value(L, buf, ptype->type, ptype->size, ptype->type_define, list);
+          lua_pop(L, 1);
+        }
+      }
+      else if (mb->type == adata_et_map)
+      {
+        adata_paramter_type * ptype1 = mb->paramter_type[0];
+        adata_paramter_type * ptype2 = mb->paramter_type[1];
+        lua_pushnil(L);
+        uint32_t i = 1;
+        while (lua_next(L, -2))
+        {
+          lua_pushvalue(L, -2);
+          size += sizeof_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, list);
+          lua_pop(L, 1);
+          size += sizeof_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, list);
+          lua_pop(L, 1);
+          ++i;
+        }
+        size += adata::size_of(--i);
+      }
+      else
+      {
+        size += sizeof_value(L, buf, mb->type, mb->size, mb->type_define, list);
+      }
+      return size;
+    }
+
+    static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type * list)
+    {
+      type_sizeof_info info;
+      uint64_t mask = 1;
+      for (size_t i = 0; i < type->member_count; ++i)
+      {
+        adata_member * mb = &type->members[i];
+        if (mb->del == 0)
+        {
+          lua_rawgeti(L, 1, mb->filed_idx);
+          lua_gettable(L, -2);
+          if (test_adata_empty(L, mb) == false)
+          {
+            info.tag |= mask;
+            info.size += sizeof_member(L, buf, mb, list);
+          }
+          lua_pop(L, 1);
+        }
+        mask <<= 1;
+      }
+      info.size += adata::size_of(info.tag);
+      int32_t ret = info.size;
+      if (list)
+      {
+        list->push_back(info);
+      }
+      return ret;
+    }
+
+    static int lua_sizeof(lua_State * L)
+    {
+      zero_copy_buffer * zbuf = (zero_copy_buffer*)lua_touserdata(L, 3);
+      adata_type * type = (adata_type*)lua_touserdata(L, 4);
+      sizeof_type(L, zbuf, type, NULL);
+      lua_pushinteger(L, zbuf->error_code());
+      return 1;
+    }
+
+    static ADATA_INLINE int write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, type_sizeof_info_list_type& list)
+    {
+      switch (type)
+      {
+      case adata_et_fix_int8:{ fix_pop_and_write_value<int8_t>(L, buf); break; }
+      case adata_et_fix_uint8:{ fix_pop_and_write_value<uint8_t>(L, buf); break; }
+      case adata_et_fix_int16:{ fix_pop_and_write_value<int16_t>(L, buf); break; }
+      case adata_et_fix_uint16:{ fix_pop_and_write_value<uint16_t>(L, buf); break; }
+      case adata_et_fix_int32:{ fix_pop_and_write_value<int32_t>(L, buf); break; }
+      case adata_et_fix_uint32:{ fix_pop_and_write_value<uint32_t>(L, buf); break; }
+      case adata_et_fix_int64:{ fix_pop_and_write_value<int64_t>(L, buf); break; }
+      case adata_et_fix_uint64:{ fix_pop_and_write_value<uint64_t>(L, buf); break; }
+      case adata_et_int8:{ pop_and_write_value<int8_t>(L, buf); break; }
+      case adata_et_uint8:{ pop_and_write_value<uint8_t>(L, buf); break; }
+      case adata_et_int16:{ pop_and_write_value<int16_t>(L, buf); break; }
+      case adata_et_uint16:{ pop_and_write_value<uint16_t>(L, buf); break; }
+      case adata_et_int32:{ pop_and_write_value<int32_t>(L, buf); break; }
+      case adata_et_uint32:{ pop_and_write_value<uint32_t>(L, buf); break; }
+      case adata_et_int64:{ pop_and_write_value<int64_t>(L, buf); break; }
+      case adata_et_uint64:{ pop_and_write_value<uint64_t>(L, buf); break; }
+      case adata_et_float32:{ pop_and_write_value<float>(L, buf); break; }
+      case adata_et_float64:{ pop_and_write_value<double>(L, buf); break; }
+      case adata_et_string:
+      {
+        write_string(L, buf, size);
+        break;
+      }
+      case adata_et_type:
+      {
+        if (type_define)
+        {
+          write_type(L, buf, type_define, list);
+        }
+        else
+        {
+          buf->set_error_code(undefined_member_protocol_not_compatible);
+        }
+        break;
+      }
+      default:
+      {
+        buf->set_error_code(undefined_member_protocol_not_compatible);
+      }
+      }
+      return 0;
+    }
+
+    static int lua_table_len(lua_State * L)
+    {
+      int c = 0;
+      lua_pushnil(L);
+      while (lua_next(L, -2) != 0)
+      {
+        lua_pop(L, 1);
+        ++c;
+      }
+      return c;
+    }
+
+    static int write_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb, type_sizeof_info_list_type& list)
+    {
+      if (mb->type == adata_et_list)
+      {
+#if LUA_VERSION_NUM == 501
+        int len = (int)lua_objlen(L, -1);
+#else
+        int len = (int)lua_rawlen(L, -1);
+#endif
+        if (mb->size && len > mb->size)
+        {
+          buf->set_error_code(number_of_element_not_macth);
+          buf->trace_error(mb->name, -1);
+          return 0;
+        }
+        adata::write(*buf, len);
+        adata_paramter_type * ptype = mb->paramter_type[0];
+        for (int i = 1; i <= len; ++i)
+        {
+          lua_rawgeti(L, -1, i);
+          write_value(L, buf, ptype->type, ptype->size, ptype->type_define, list);
+          if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
+          lua_pop(L, 1);
+        }
+      }
+      else if (mb->type == adata_et_map)
+      {
+        int len = lua_table_len(L);
+        if (mb->size && len > mb->size)
+        {
+          buf->set_error_code(number_of_element_not_macth);
+          buf->trace_error(mb->name, -1);
+          return 0;
+        }
+        adata::write(*buf, len);
+        adata_paramter_type * ptype1 = mb->paramter_type[0];
+        adata_paramter_type * ptype2 = mb->paramter_type[1];
+        lua_pushnil(L);
+        uint32_t i = 1;
+        while (lua_next(L, -2))
+        {
+          lua_pushvalue(L, -2);
+          write_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, list);
+          if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
+          lua_pop(L, 1);
+          write_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, list);
+          if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
+          lua_pop(L, 1);
+          ++i;
+        }
+      }
+      else
+      {
+        write_value(L, buf, mb->type, mb->size, mb->type_define, list);
+        if (buf->error()) { buf->trace_error(mb->name, -1); return 0; }
+      }
+      return 1;
+    }
+
+    static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type& list)
+    {
+      type_sizeof_info& info = *list.rbegin();
+      uint64_t data_tag = info.tag;
+      int32_t  data_len = info.size;
+      list.pop_back();
+      adata::write(*buf, data_tag);
+      adata::write(*buf, data_len);
+      uint64_t mask = 1;
+      for (size_t i = 0; i < type->member_count; ++i)
+      {
+        if (data_tag&mask)
+        {
+          adata_member * mb = &type->members[i];
+          lua_rawgeti(L, 1, mb->filed_idx);
+          lua_gettable(L, -2);
+          if (write_member(L, buf, mb, list) == 0)
+          {
+            return 0;
+          }
+          lua_pop(L, 1);
+        }
+        mask <<= 1;
+      }
+      return 1;
+    }
+
+    static int lua_write(lua_State * L)
+    {
+      zero_copy_buffer * zbuf = (zero_copy_buffer*)lua_touserdata(L, 3);
+      adata_type * type = (adata_type*)lua_touserdata(L, 4);
+      type_sizeof_info_list_type list;
+      int top = lua_gettop(L);
+      sizeof_type(L, zbuf, type, &list);
+      top = lua_gettop(L);
+      write_type(L, zbuf, type, list);
+      lua_pushinteger(L, zbuf->error_code());
       return 1;
     }
 
@@ -912,7 +1960,12 @@ namespace adata {
 
       static const luaL_Reg lib[] =
       {
-        { "regiest_field_info", regiest_field_info },
+        { "regist_layout", regist_layout },
+        { "set_layout_mt", set_layout_mt },
+        { "read", lua_read },
+        { "skip_read", lua_skip_read },
+        { "sizeof", lua_sizeof },
+        { "write", lua_write },
         { "new_buf", new_zbuf },
         { "del_buf", del_zbuf },
         { "resize_buf", resize_zuf },
@@ -1029,7 +2082,12 @@ namespace adata {
 
       static const luaL_Reg lib[] =
       {
-        { "regiest_field_info", regiest_field_info },
+        { "regist_layout", regist_layout },
+        { "set_layout_mt", set_layout_mt },
+        { "read", lua_read },
+        { "skip_read", lua_skip_read },
+        { "write", lua_write },
+        { "sizeof", lua_sizeof },
         { "new_buf", new_zbuf },
         { "del_buf", del_zbuf },
         { "resize_buf", resize_zuf },

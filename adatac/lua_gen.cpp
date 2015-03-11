@@ -75,14 +75,15 @@ namespace lua_gen
   struct gen_contex
   {
     enum { use_field_direct, use_field_pool, use_field_list };
+    enum { lua_51 , lua52 , lua53 };
     int		use_field_type;
     bool	use_luajit;
+    int   lua_version;
     field_info f_info;
-    gen_contex() :use_field_type(use_field_direct), use_luajit(false)
+    gen_contex() :use_field_type(use_field_direct), use_luajit(false), lua_version(lua_51)
     {}
   };
 
-  // Nous Xiong: change xxx.xx_t to ns.xxx_xx_t; if no '.' then do nothing
   inline std::string make_typename(std::string const& name)
   {
     std::size_t s = name.find_last_of('.');
@@ -99,6 +100,105 @@ namespace lua_gen
       tab = "m.";
       return tab + name;
     }
+  }
+
+  inline std::string make_fullname(std::string const& name , const std::string& full_ns)
+  {
+    std::size_t s = name.find_last_of('.');
+    std::string tab;
+    if (s != std::string::npos)
+    {
+      std::string ns = name.substr(0, s);
+      boost::algorithm::replace_all(ns, ".", "_");
+      return tab + ns + name.substr(s);
+    }
+    else
+    {
+      tab = full_ns;
+      return tab + "_" + name;
+    }
+  }
+
+  inline void gen_member_define(std::ostream& os, const member_define& m_define, int tab, const gen_contex& ctx)
+  {
+    if (m_define.m_deleted)
+    {
+      return;
+    }
+    os << tabs(tab) << m_define.m_name << " = ";
+    switch (m_define.m_type)
+    {
+    case e_base_type::uint8:
+    case e_base_type::int8:
+    case e_base_type::uint16:
+    case e_base_type::int16:
+    case e_base_type::uint32:
+    case e_base_type::int32:
+    case e_base_type::float32:
+    case e_base_type::float64:
+    {
+      os << m_define.m_default_value;
+      break;
+    }
+    case e_base_type::int64:
+    {
+      int64_t v = boost::lexical_cast<int64_t>(m_define.m_default_value);
+      if (v < -(1LL << 53) || v > (1LL << 53))
+      {
+        if (ctx.use_luajit)
+        {
+          os << m_define.m_default_value << "ll";
+          break;
+        }
+        else if (ctx.lua_version != gen_contex::lua53)
+        {
+          os << "int64.int64(" << m_define.m_default_value << ")";
+        }
+      }
+      os << m_define.m_default_value;
+      break;
+    }
+    case e_base_type::uint64:
+    {
+      uint64_t v = boost::lexical_cast<uint64_t>(m_define.m_default_value);
+      if (v < (1LL << 53))
+      {
+        os << m_define.m_default_value;
+      }
+      else
+      {
+        if (ctx.use_luajit)
+        {
+          os << m_define.m_default_value << "ll";
+          break;
+        }
+        else
+        {
+          os << "int64.uint64(" << m_define.m_default_value << ")";
+        }
+      }
+      break;
+    }
+    case e_base_type::string:
+    {
+      os << "''";
+      break;
+    }
+    case e_base_type::list:
+    case e_base_type::map:
+    {
+      os << "{}";
+      break;
+    }
+    case e_base_type::type:
+    {
+      auto name = make_typename(m_define.m_typedef->m_name);
+      os << name << "()";
+    }
+    default:
+    {}
+    }
+    os << "," << std::endl;
   }
 
   // Nous Xiong: gen requires
@@ -171,16 +271,11 @@ namespace lua_gen
     }
     if (ctx.use_field_type == gen_contex::use_field_pool)
     {
-      os << "local field_info = regiest_field_info('";
-      std::size_t code_size = ctx.f_info.data.length();
-      unsigned char * code_ptr = (unsigned char *)ctx.f_info.data.c_str();
-      for (std::size_t i = 0; i < code_size; ++i)
+      for (auto& i : ctx.f_info.map)
       {
-        uint32_t v = *code_ptr++;
-        os << '\\';
-        os << v;
+        os << "regist_field('" << i.first << "');" << std::endl;
       }
-      os << "');" << std::endl;
+      os << std::endl;
     }
     else if (ctx.use_field_type == gen_contex::use_field_list)
     {
@@ -707,375 +802,212 @@ namespace lua_gen
     }
   }
 
-  namespace lua_5_2
+  namespace lua_5_x
   {
     const char * lua_check_version = R"(require'check_lua_version'(5,)";
 
     const char * lua_require_define = R"(local adata_m = require'adata_core'
-local ns = require'adata'
-local regiest_field_info = adata_m.regiest_field_info;
-local new_buf = adata_m.new_buf;
-local del_buf = adata_m.del_buf;
-local resize_buf = adata_m.resize_buf;
-local clear_buf = adata_m.clear_buf;
-local set_error = adata_m.set_error;
-local trace_error = adata_m.trace_error;
-local trace_info = adata_m.trace_info;
-local get_write_data = adata_m.get_write_data;
-local set_read_data = adata_m.set_read_data;
-local rd_tag = adata_m.rd_tag;
-local wt_tag = adata_m.wt_tag;
-local get_rd_len = adata_m.get_rd_len;
-local get_wt_len = adata_m.get_wt_len;
-local skip_rd_len = adata_m.skip_rd_len;
-local tablen = ns.tablen;
+local int64 = require'int64'
+local detail = require'adata_detail';
+local ns = require'adata';
+local regist_field = detail.regist_field;
+local fields = detail.fields;
+local field_list = detail.field_list;
+local layouts = detail.layouts;
+local regist_mt_type = detail.regist_mt_type;
+local mt_type_list = detail.mt_type_list;
+local read_c = adata_m.read;
+local skip_read_c = adata_m.skip_read;
+local size_of_c = adata_m.size_of;
+local write_c = adata_m.write;
+local regist_layout_c = adata_m.regist_layout;
+local set_layout_mt_c = adata_m.set_layout_mt;
 
 )";
 
-    inline void gen_member_define(std::ostream& os, const member_define& m_define, int tab)
+    inline uint32_t to_lua_layout_type(int type, int fix)
     {
-      if (m_define.m_deleted)
+      if (fix > 0)
       {
-        return;
-      }
-      os << tabs(tab) << m_define.m_name << " = ";
-      switch (m_define.m_type)
-      {
-      case e_base_type::uint8:
-      case e_base_type::int8:
-      case e_base_type::uint16:
-      case e_base_type::int16:
-      case e_base_type::uint32:
-      case e_base_type::int32:
-      case e_base_type::float32:
-      case e_base_type::float64:
-      {
-        os << m_define.m_default_value;
-        break;
-      }
-      case e_base_type::int64:
-      {
-        int64_t v = boost::lexical_cast<int64_t>(m_define.m_default_value);
-        if (v > -(1LL << 52) && v < (1LL << 52))
+        if (type >= int8 && type <= uint64)
         {
-          os << m_define.m_default_value;
+          type = type - (int8 - fix_int8);
         }
-        else
-        {
-          os << "int64.int64(" << m_define.m_default_value << ")";
-        }
-        break;
-
       }
-      case e_base_type::uint64:
-      {
-        uint64_t v = boost::lexical_cast<uint64_t>(m_define.m_default_value);
-        if (v < (1LL << 53))
-        {
-          os << m_define.m_default_value;
-        }
-        else
-        {
-          os << "int64.uint64(" << m_define.m_default_value << ")";
-        }
-        break;
-      }
-      case e_base_type::string:
-      {
-        os << "''";
-        break;
-      }
-      case e_base_type::list:
-      case e_base_type::map:
-      {
-        os << "{}";
-        break;
-      }
-      case e_base_type::type:
-      {
-        // Nous Xiong: change typename gen
-        auto name = make_typename(m_define.m_typedef->m_name);
-        os << name << "()";
-      }
-      default:
-      {}
-      }
-      os << "," << std::endl;
+      return type;
     }
 
-    void gen_meta_read_tag(std::ostream& os, int tab)
+    void gen_layout_bin(std::ostream& os, const type_define& t_define)
     {
-      // Nous Xiong: add len tag
-      os << tabs(tab) << "local offset = get_rd_len(buf);" << std::endl;
+      os << "'";
+      const int buf_len = 65536;
+      char buf[buf_len];
+      adata::zero_copy_buffer zbuf;
+      zbuf.set_write(buf, buf_len);
+      uint32_t member_count = 0;
+      uint32_t param_type_count = 0;
+      uint32_t string_buffer_size = 0;
+      zbuf.clear();
+      member_count = (uint32_t)t_define.m_members.size();
+      for (auto& m_define : t_define.m_members)
+      {
+        param_type_count += (uint32_t)m_define.m_template_parameters.size();
+        string_buffer_size += (uint32_t)(m_define.m_name.length() + 1);
+        if (m_define.m_template_parameters.size() >= 1)
+        {
+          auto& ptype = m_define.m_template_parameters[0];
+        }
+        if (m_define.m_template_parameters.size() >= 2)
+        {
+          auto& ptype = m_define.m_template_parameters[0];
+        }
+      }
+      adata::write(zbuf, member_count);
+      adata::write(zbuf, param_type_count);
+      adata::write(zbuf, string_buffer_size);
+      for (auto& m_define : t_define.m_members)
+      {
+        adata::write(zbuf, m_define.m_name);
+        adata::write(zbuf, to_lua_layout_type(m_define.m_type, m_define.m_fixed));
+        adata::write(zbuf, (uint32_t)m_define.m_deleted);
+        uint32_t size = atoi(m_define.m_size.c_str());
+        adata::write(zbuf, size);
+        size = (uint32_t)m_define.m_template_parameters.size();
+        adata::write(zbuf, size);
+        for (const auto& ptype : m_define.m_template_parameters)
+        {
+          adata::write(zbuf, to_lua_layout_type(ptype.m_type, ptype.m_fixed));
+          size = atoi(ptype.m_size.c_str());
+          adata::write(zbuf, size);
+        }
+      }
+      std::size_t code_size = zbuf.write_length();
+      unsigned char * code_ptr = (unsigned char *)zbuf.write_data();
+      for (std::size_t i = 0; i < code_size; ++i)
+      {
+        uint32_t v = *code_ptr++;
+        os << '\\';
+        os << v;
+      }
+      os << "'";
 
-      os << tabs(tab) << "local ec,read_tag = rd_tag(buf);" << std::endl;
-      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
-
-      // Nous Xiong: add len tag
-      os << tabs(tab) << "local len_tag = 0;" << std::endl;
-      os << tabs(tab) << "ec,len_tag = rd_i32(buf);" << std::endl;
-      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
     }
 
-    void gen_meta_skip_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    inline void gen_layout_field(std::ostream& os, const type_define& t_define)
     {
-      os << tabs(tab) << "skip_read = function(o,buf)" << std::endl;
-
-      // Nous Xiong: add len tag
-      gen_meta_read_tag(os, tab + 1);
-
-      int64_t read_mask = 1;
-      int count = 1;
+      os << "{";
       for (auto& m_define : t_define.m_members)
       {
-        if (count == 63)
-        {
-          os << tabs(tab + 1) << "if read_tag >= " << read_mask << " then" << std::endl;
-        }
-        else
-        {
-          os << tabs(tab + 1) << "if (read_tag % " << int64_mask(count + 1) << ") >= " << int64_mask(count) << " then" << std::endl;
-        }
-        os << tabs(tab + 2) << "read_tag = read_tag - " << int64_mask(count) << ";" << std::endl;
-        gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
-        os << tabs(tab + 1) << "end" << std::endl;
-        read_mask <<= 1;
-        ++count;
+        os << "fields." << m_define.m_name << ",";
       }
-
-      // Nous Xiong: remove max mask check, for backward compat
-      /*os << tabs(tab + 1) << "if read_tag > 0 then ";
-      set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-      os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
-
-      gen_meta_len_tag_jump(os, tab + 1);
-
-      os << tabs(tab + 1) << "return ec;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
+      os << "}";
     }
 
-    void gen_meta_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    inline void gen_layout_type(std::ostream& os, const std::string& full_ns, const type_define& t_define)
     {
-      os << tabs(tab) << "read = function(o,buf)" << std::endl;
-
-      // Nous Xiong: add len tag
-      gen_meta_read_tag(os, tab + 1);
-
-      int64_t read_mask = 1;
-      int count = 1;
+      std::vector<type_define *> types;
       for (auto& m_define : t_define.m_members)
       {
-        if (count == 63)
+        if (m_define.m_type == e_base_type::type)
         {
-          os << tabs(tab + 1) << "if read_tag >= " << read_mask << " then" << std::endl;
+          types.push_back(m_define.m_typedef);
         }
-        else
+        for (const auto& ptype : m_define.m_template_parameters)
         {
-          os << tabs(tab + 1) << "if (read_tag % " << int64_mask(count + 1) << ") >= " << int64_mask(count) << " then" << std::endl;
+          if (ptype.m_type == e_base_type::type)
+          {
+            types.push_back(ptype.m_typedef);
+          }
         }
-        os << tabs(tab + 2) << "read_tag = read_tag - " << int64_mask(count) << ";" << std::endl;
-        if (!m_define.m_deleted)
-        {
-          gen_meta_member_read(os, m_define, tab + 2, ctx);
-          os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
-          //os << tabs(tab + 1) << "else" << std::endl;
-        }
-        else
-        {
-          gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
-        }
-        os << tabs(tab + 1) << "end" << std::endl;
-        read_mask <<= 1;
-        ++count;
       }
-
-      // Nous Xiong: remove max mask check, for backward compat
-      /*os << tabs(tab + 1) << "if read_tag > 0 then ";
-      set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-      os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
-
-      gen_meta_len_tag_jump(os, tab + 1);
-
-      os << tabs(tab + 1) << "return ec;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
+      os << "{";
+      for (auto& type : types)
+      {
+        auto fn = make_fullname(type->m_name,full_ns);
+        os << "layouts." << fn << ",";
+      }
+      os << "}";
     }
 
-    void gen_meta_write(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    inline void gen_layout(std::ostream& os,const std::string& full_ns , const std::string& fullname, const type_define& t_define, gen_contex& ctx)
     {
-      os << tabs(tab) << "write = function(o,buf)" << std::endl;
-      os << tabs(tab + 1) << "local write_tag = 0" << std::endl;
-      int64_t write_mask = 1;
-      int count = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (m_define.is_multi())
-          {
-            if (m_define.m_type == e_base_type::map)
-            {
-              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then write_tag = write_tag + " << int64_mask(count) << "; end;" << std::endl;
-            }
-            else
-            {
-              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << int64_mask(count) << "; end;" << std::endl;
-            }
-          }
-          else
-          {
-            os << tabs(tab + 1) << "write_tag = write_tag + " << int64_mask(count) << ";" << std::endl;
-          }
-        }
-        write_mask <<= 1;
-        ++count;
-      }
-      count = 1;
-      os << tabs(tab + 1) << "ec = wt_tag(buf,write_tag);" << std::endl;
-      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
-
-      // Nous Xiong: add len tag
-      os << tabs(tab + 1) << "ec = wt_i32(buf,o:size_of());" << std::endl;
-      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
-
-      write_mask = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (count == 63)
-          {
-            os << tabs(tab + 1) << "if write_tag >= " << write_mask << " then" << std::endl;
-          }
-          else
-          {
-            os << tabs(tab + 1) << "if (write_tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
-          }
-          gen_meta_member_write(os, m_define, tab + 2, ctx);
-          os << tabs(tab + 1) << "end" << std::endl;
-        }
-        write_mask <<= 1;
-        ++count;
-      }
-      os << tabs(tab + 1) << "return ec;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
+      os << "local layout_" << fullname << " = regist_layout_c(" << std::endl << "  ";
+      gen_layout_bin(os, t_define);
+      os << "," << std::endl << "  ";
+      gen_layout_field(os, t_define);
+      os << "," << std::endl << "  ";
+      gen_layout_type(os,full_ns, t_define);
+      os << ");" << std::endl;
+      os << "layouts." << fullname << " = layout_" << fullname << std::endl;
     }
 
-    // Nous Xiong: add gen_meta_size_of
-    void gen_meta_size_of(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
+    inline void gen_meta_skip_read(std::ostream& os, const std::string& fullname, const type_define& t_define, int tab, gen_contex& ctx)
     {
-      os << tabs(tab) << "size_of = function(o)" << std::endl;
-      os << tabs(tab + 1) << "local size = 0" << std::endl;
-      os << tabs(tab + 1) << "local tag = 0" << std::endl;
-      int64_t write_mask = 1;
-      int count = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (m_define.is_multi())
-          {
-            if (m_define.m_type == e_base_type::map)
-            {
-              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then tag = tag + " << int64_mask(count) << "; end;" << std::endl;
-            }
-            else
-            {
-              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << int64_mask(count) << "; end;" << std::endl;
-            }
-          }
-          else
-          {
-            os << tabs(tab + 1) << "tag = tag + " << int64_mask(count) << ";" << std::endl;
-          }
-        }
-        write_mask <<= 1;
-        ++count;
-      }
-
-      count = 1;
-      write_mask = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (count == 63)
-          {
-            os << tabs(tab + 1) << "if tag >= " << write_mask << " then" << std::endl;
-          }
-          else
-          {
-            os << tabs(tab + 1) << "if (tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
-          }
-          gen_meta_member_size_of(os, m_define, tab + 2, ctx);
-          os << tabs(tab + 1) << "end" << std::endl;
-        }
-        write_mask <<= 1;
-        ++count;
-      }
-      os << tabs(tab + 1) << "size = size + szof_i64(tag);" << std::endl;
-
-      // Nous Xiong: add len tag
-      os << tabs(tab + 1) << "size = size + szof_i32(size + szof_i32(size));" << std::endl;
-
-      os << tabs(tab + 1) << "return size;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
+      os << tabs(tab) << "skip_read = function(o,buf) return skip_read_c( field_list , mt_type_list , buf , layout_" << fullname << " , o) " << "end," << std::endl;
     }
 
-    inline void gen_meta_imp(std::ostream& os, const type_define& t_define, int idx, gen_contex& ctx)
+    inline void gen_meta_read(std::ostream& os, const std::string& fullname, const type_define& t_define, int tab, gen_contex& ctx)
+    {
+      os << tabs(tab) << "read = function(o,buf) return read_c( field_list , mt_type_list , buf , layout_" << fullname << " , o) " << "end," << std::endl;
+    }
+
+    inline void gen_meta_write(std::ostream& os, const std::string& fullname, const type_define& t_define, int tab, gen_contex& ctx)
+    {
+      os << tabs(tab) << "write = function(o,buf) return write_c( field_list , mt_type_list , buf , layout_" << fullname << " , o) " << "end," << std::endl;
+    }
+
+    inline void gen_meta_size_of(std::ostream& os, const std::string& fullname, const type_define& t_define, int tab, gen_contex& ctx)
+    {
+      os << tabs(tab) << "size_of = function(o,buf) return size_of_c( field_list , mt_type_list , buf , layout_" << fullname << " , o) " << "end," << std::endl;
+    }
+
+    inline void gen_meta_imp(std::ostream& os, const std::string& fullname, const type_define& t_define, int idx, gen_contex& ctx)
     {
       os << "mc = {" << std::endl;
       os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
-      gen_meta_skip_read(os, t_define, 1, ctx);
-      gen_meta_size_of(os, t_define, 1, ctx);
-      gen_meta_read(os, t_define, 1, ctx);
-      gen_meta_write(os, t_define, 1, ctx);
+      gen_meta_skip_read(os, fullname, t_define, 1, ctx);
+      gen_meta_size_of(os, fullname, t_define, 1, ctx);
+      gen_meta_read(os, fullname, t_define, 1, ctx);
+      gen_meta_write(os, fullname, t_define, 1, ctx);
       os << "};" << std::endl;
       os << "mc.__index = mc;" << std::endl;
       os << "mt[" << idx << "] = mc;" << std::endl;
     }
 
-    void gen_proto(std::ostream& os, const type_define& t_define, int tab, int idx)
+    void gen_proto(std::ostream& os , const type_define& t_define, int tab, int idx, gen_contex& ctx)
     {
       os << tabs(tab) << "m." << t_define.m_name << " = function()" << std::endl;
       os << tabs(tab + 1) << "local obj = {" << std::endl;
       for (auto& m_define : t_define.m_members)
       {
-        gen_member_define(os, m_define, tab + 2);
+        gen_member_define(os, m_define, tab + 2,ctx);
       }
       os << tabs(tab + 1) << "};" << std::endl;
       os << tabs(tab + 1) << "setmetatable(obj,mt[" << idx << "]);" << std::endl;
       os << tabs(tab + 1) << "return obj;" << std::endl;
       os << tabs(tab) << "end" << std::endl << std::endl;
-    }
-
-    void gen_int64_const(std::ostream& os, const descrip_define& define)
-    {
-      size_t max_field = 0;
-      for (auto& t_define : define.m_types)
-      {
-        max_field = std::max(max_field, t_define.m_members.size());
-      }
-      if (max_field > 52)
-      {
-        for (int i = 53; i < (int)max_field + 1; ++i)
-        {
-          os << "local mask" << i << "= int64.int64(" << (1LL << i) << ");" << std::endl;
-        }
-      }
-      os << std::endl;
     }
 
     void gen_code(const descrip_define& define, const std::string& lua_file, int min_ver)
     {
+      std::string ns = define.m_namespace.m_lua_fullname;
+      ns.pop_back();
+
       ofstream os(lua_file);
       os << lua_check_version << min_ver << ");" << std::endl << std::endl;
       os << lua_require_define;
       gen_contex ctx;
-      gen_filed_type_info(os, define, ctx);
+      ctx.use_field_type = gen_contex::use_field_pool;
+      switch (min_ver)
+      {
+      case 1:{ctx.lua_version = gen_contex::lua_51; break; }
+      case 2:{ctx.lua_version = gen_contex::lua_51; break; }
+      case 3:{ctx.lua_version = gen_contex::lua_51; break; }
+      default:{return; }
+      }
+      
       gen_filed_name_info(os, define, ctx);
-      gen_int64_const(os, define);
 
-      // Nous Xiong: add include gen
       gen_include(define, os);
 
       os << "local mt = {};" << std::endl << std::endl;
@@ -1088,18 +1020,27 @@ local tablen = ns.tablen;
       int idx = 1;
       for (auto& t_define : define.m_types)
       {
-        gen_proto(os, t_define, 0, idx);
+        gen_proto(os, t_define, 0, idx , ctx);
         ++idx;
       }
+      for (auto& t_define : define.m_types)
+      {
+        std::string fullname = ns;
+        fullname.append("_");
+        fullname.append(t_define.m_name);
+        gen_layout(os, ns, fullname, t_define, ctx);
+      }
+      os << std::endl;
       os << "local mc = {};" << std::endl;
       idx = 1;
       for (auto& t_define : define.m_types)
       {
-        gen_meta_imp(os, t_define, idx, ctx);
+        std::string fullname = ns;
+        fullname.append("_");
+        fullname.append(t_define.m_name);
+        gen_meta_imp(os, fullname, t_define, idx, ctx);
         ++idx;
       }
-      std::string ns = define.m_namespace.m_lua_fullname;
-      ns.pop_back();
 
       // Nous Xiong: add ns table set
       os << "if ns." << ns << " == nil then" << std::endl;
@@ -1111,390 +1052,20 @@ local tablen = ns.tablen;
           << " = m." << t_define.m_name << std::endl;
       }
       os << "end" << std::endl;
-
-      //os << "ns." << ns << " = m;" << std::endl;
-      os << "return m;" << std::endl;
-      os.close();
-    }
-
-  }
-
-  namespace lua_5_3
-  {
-    const char * lua_check_version = R"(require'check_lua_version'(5,3)
-
-)";
-
-    const char * lua_require_define = R"(local adata_m = require'adata_core'
-local ns = require'adata'
-local regiest_field_info = adata_m.regiest_field_info;
-local new_buf = adata_m.new_buf;
-local del_buf = adata_m.del_buf;
-local resize_buf = adata_m.resize_buf;
-local clear_buf = adata_m.clear_buf;
-local set_error = adata_m.set_error;
-local trace_error = adata_m.trace_error;
-local trace_info = adata_m.trace_info;
-local get_write_data = adata_m.get_write_data;
-local set_read_data = adata_m.set_read_data;
-local rd_tag = adata_m.rd_tag;
-local wt_tag = adata_m.wt_tag;
-local get_rd_len = adata_m.get_rd_len;
-local get_wt_len = adata_m.get_wt_len;
-local skip_rd_len = adata_m.skip_rd_len;
-local tablen = ns.tablen;
-
-)";
-
-    inline void gen_member_define(std::ostream& os, const member_define& m_define, int tab)
-    {
-      if (m_define.m_deleted)
-      {
-        return;
-      }
-      os << tabs(tab) << m_define.m_name << " = ";
-      switch (m_define.m_type)
-      {
-      case e_base_type::uint8:
-      case e_base_type::int8:
-      case e_base_type::uint16:
-      case e_base_type::int16:
-      case e_base_type::uint32:
-      case e_base_type::int32:
-      case e_base_type::int64:
-      case e_base_type::float32:
-      case e_base_type::float64:
-      {
-        os << m_define.m_default_value;
-        break;
-      }
-      case e_base_type::uint64:
-      {
-        uint64_t v = boost::lexical_cast<uint64_t>(m_define.m_default_value);
-        if (v < (1ULL << 63))
-        {
-          os << m_define.m_default_value;
-        }
-        else
-        {
-          os << "int64.uint64(" << m_define.m_default_value << ")";
-        }
-        break;
-      }
-      case e_base_type::string:
-      {
-        os << "''";
-        break;
-      }
-      case e_base_type::list:
-      case e_base_type::map:
-      {
-        os << "{}";
-        break;
-      }
-      case e_base_type::type:
-      {
-        // Nous Xiong: change typename gen
-        auto name = make_typename(m_define.m_typedef->m_name);
-        os << name << "()";
-      }
-      default:
-      {}
-      }
-      os << "," << std::endl;
-    }
-
-    void gen_meta_read_tag(std::ostream& os, int tab)
-    {
-      // Nous Xiong: add len tag
-      os << tabs(tab) << "local offset = get_rd_len(buf);" << std::endl;
-
-      os << tabs(tab) << "local ec,read_tag = rd_tag(buf);" << std::endl;
-      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
-
-      // Nous Xiong: add len tag
-      os << tabs(tab) << "local len_tag = 0;" << std::endl;
-      os << tabs(tab) << "ec,len_tag = rd_i32(buf);" << std::endl;
-      os << tabs(tab) << "if ec > 0 then return ec; end;" << std::endl;
-    }
-
-    void gen_meta_skip_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
-    {
-      os << tabs(tab) << "skip_read = function(o,buf)" << std::endl;
-
-      // Nous Xiong: add len tag
-      gen_meta_read_tag(os, tab + 1);
-
-      int64_t read_mask = 1;
-      int count = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (count == 63)
-        {
-          os << tabs(tab + 1) << "if read_tag >= " << read_mask << " then" << std::endl;
-        }
-        else
-        {
-          os << tabs(tab + 1) << "if (read_tag % " << (read_mask << 1) << ") >= " << read_mask << " then" << std::endl;
-        }
-        os << tabs(tab + 2) << "read_tag = read_tag - " << read_mask << ";" << std::endl;
-        gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
-        os << tabs(tab + 1) << "end" << std::endl;
-        read_mask <<= 1;
-        ++count;
-      }
-
-      // Nous Xiong: remove max mask check, for backward compat
-      /*os << tabs(tab + 1) << "if read_tag > 0 then ";
-      set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-      os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
-
-      gen_meta_len_tag_jump(os, tab + 1);
-
-      os << tabs(tab + 1) << "return ec;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
-    }
-
-    void gen_meta_read(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
-    {
-      os << tabs(tab) << "read = function(o,buf)" << std::endl;
-
-      // Nous Xiong: add len tag
-      gen_meta_read_tag(os, tab + 1);
-
-      int64_t read_mask = 1;
-      int count = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (count == 63)
-        {
-          os << tabs(tab + 1) << "if read_tag >= " << read_mask << " then" << std::endl;
-        }
-        else
-        {
-          os << tabs(tab + 1) << "if (read_tag % " << (read_mask << 1) << ") >= " << read_mask << " then" << std::endl;
-        }
-        os << tabs(tab + 2) << "read_tag = read_tag - " << read_mask << ";" << std::endl;
-        if (!m_define.m_deleted)
-        {
-          gen_meta_member_read(os, m_define, tab + 2, ctx);
-          os << tabs(tab + 2) << "if ec > 0 then return ec; end;" << std::endl;
-          //os << tabs(tab + 1) << "else" << std::endl;
-        }
-        else
-        {
-          gen_meta_member_skip_read(os, m_define, tab + 2, ctx);
-        }
-        os << tabs(tab + 1) << "end" << std::endl;
-        read_mask <<= 1;
-        ++count;
-      }
-
-      // Nous Xiong: remove max mask check, for backward compat
-      /*os << tabs(tab + 1) << "if read_tag > 0 then ";
-      set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-      os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible  << "; end; " << std::endl;*/
-
-      gen_meta_len_tag_jump(os, tab + 1);
-
-      os << tabs(tab + 1) << "return ec;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
-    }
-
-    void gen_meta_write(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
-    {
-      os << tabs(tab) << "write = function(o,buf)" << std::endl;
-      os << tabs(tab + 1) << "local write_tag = 0" << std::endl;
-      int64_t write_mask = 1;
-      int count = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (m_define.is_multi())
-          {
-            if (m_define.m_type == e_base_type::map)
-            {
-              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
-            }
-            else
-            {
-              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then write_tag = write_tag + " << write_mask << "; end;" << std::endl;
-            }
-          }
-          else
-          {
-            os << tabs(tab + 1) << "write_tag = write_tag + " << write_mask << ";" << std::endl;
-          }
-        }
-        write_mask <<= 1;
-      }
-      os << tabs(tab + 1) << "ec = wt_tag(buf,write_tag);" << std::endl;
-      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
-
-      // Nous Xiong: add len tag
-      os << tabs(tab + 1) << "ec = wt_i32(buf,o:size_of());" << std::endl;
-      os << tabs(tab + 1) << "if ec >0 then return ec; end;" << std::endl;
-
-      write_mask = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (count == 63)
-          {
-            os << tabs(tab + 1) << "if write_tag >= " << write_mask << " then" << std::endl;
-          }
-          else
-          {
-            os << tabs(tab + 1) << "if (write_tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
-          }
-          gen_meta_member_write(os, m_define, tab + 2, ctx);
-          os << tabs(tab + 1) << "end" << std::endl;
-        }
-        write_mask <<= 1;
-        ++count;
-      }
-      os << tabs(tab + 1) << "return ec;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
-    }
-
-    // Nous Xiong: add gen_meta_size_of
-    void gen_meta_size_of(std::ostream& os, const type_define& t_define, int tab, gen_contex& ctx)
-    {
-      os << tabs(tab) << "size_of = function(o)" << std::endl;
-      os << tabs(tab + 1) << "local size = 0" << std::endl;
-      os << tabs(tab + 1) << "local tag = 0" << std::endl;
-      int64_t write_mask = 1;
-      int count = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (m_define.is_multi())
-          {
-            if (m_define.m_type == e_base_type::map)
-            {
-              os << tabs(tab + 1) << "if tablen(o." << m_define.m_name << ") > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
-            }
-            else
-            {
-              os << tabs(tab + 1) << "if #o." << m_define.m_name << " > 0 then tag = tag + " << write_mask << "; end;" << std::endl;
-            }
-          }
-          else
-          {
-            os << tabs(tab + 1) << "tag = tag + " << write_mask << ";" << std::endl;
-          }
-        }
-        write_mask <<= 1;
-      }
-
-      write_mask = 1;
-      for (auto& m_define : t_define.m_members)
-      {
-        if (!m_define.m_deleted)
-        {
-          if (count == 63)
-          {
-            os << tabs(tab + 1) << "if tag >= " << write_mask << " then" << std::endl;
-          }
-          else
-          {
-            os << tabs(tab + 1) << "if (tag % " << (write_mask << 1) << ") >= " << write_mask << " then" << std::endl;
-          }
-          gen_meta_member_size_of(os, m_define, tab + 2, ctx);
-          os << tabs(tab + 1) << "end" << std::endl;
-        }
-        write_mask <<= 1;
-        ++count;
-      }
-      os << tabs(tab + 1) << "size = size + szof_i64(tag);" << std::endl;
-
-      // Nous Xiong: add len tag
-      os << tabs(tab + 1) << "size = size + szof_i32(size + szof_i32(size));" << std::endl;
-
-      os << tabs(tab + 1) << "return size;" << std::endl;
-      os << tabs(tab) << "end," << std::endl;
-    }
-
-    inline void gen_meta_imp(std::ostream& os, const type_define& t_define, int idx, gen_contex& ctx)
-    {
-      os << "mc = {" << std::endl;
-      os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
-      gen_meta_skip_read(os, t_define, 1, ctx);
-      gen_meta_size_of(os, t_define, 1, ctx);
-      gen_meta_read(os, t_define, 1, ctx);
-      gen_meta_write(os, t_define, 1, ctx);
-      os << "};" << std::endl;
-      os << "mc.__index = mc;" << std::endl;
-      os << "mt[" << idx << "] = mc;" << std::endl;
-    }
-
-    void gen_proto(std::ostream& os, const type_define& t_define, int tab, int idx)
-    {
-      os << tabs(tab) << "m." << t_define.m_name << " = function()" << std::endl;
-      os << tabs(tab + 1) << "local obj = {" << std::endl;
-      for (auto& m_define : t_define.m_members)
-      {
-        gen_member_define(os, m_define, tab + 2);
-      }
-      os << tabs(tab + 1) << "};" << std::endl;
-      os << tabs(tab + 1) << "setmetatable(obj,mt[" << idx << "]);" << std::endl;
-      os << tabs(tab + 1) << "return obj;" << std::endl;
-      os << tabs(tab) << "end" << std::endl << std::endl;
-    }
-
-    void gen_code(const descrip_define& define, const std::string& lua_file)
-    {
-      ofstream os(lua_file);
-      os << lua_check_version;
-      os << lua_require_define;
-      gen_contex ctx;
-      gen_filed_type_info(os, define, ctx);
-      gen_filed_name_info(os, define, ctx);
-
-      // Nous Xiong: add include gen
-      gen_include(define, os);
-
-      os << "local mt = {};" << std::endl << std::endl;
-      os << "local m = {" << std::endl;
-      for (auto& t_define : define.m_types)
-      {
-        os << tabs(1) << t_define.m_name << "," << std::endl;
-      }
-      os << "};" << std::endl << std::endl;
-      int idx = 1;
-      for (auto& t_define : define.m_types)
-      {
-        gen_proto(os, t_define, 0, idx);
-        ++idx;
-      }
-      os << "local mc = {};" << std::endl;
       idx = 1;
       for (auto& t_define : define.m_types)
       {
-        gen_meta_imp(os, t_define, idx, ctx);
+        std::string fullname = ns;
+        fullname.append("_");
+        fullname.append(t_define.m_name);
+        os << "set_layout_mt_c( layout_" << fullname << " , regist_mt_type(mt[" << idx << "]));" << std::endl;
         ++idx;
       }
-      std::string ns = define.m_namespace.m_lua_fullname;
-      ns.pop_back();
-
-      // Nous Xiong: add ns table set
-      os << "if ns." << ns << " == nil then" << std::endl;
-      os << tabs(1) << "ns." << ns << " = m;" << std::endl;
-      os << "else" << std::endl;
-      for (auto& t_define : define.m_types)
-      {
-        os << tabs(1) << "ns." << ns << "." << t_define.m_name
-          << " = m." << t_define.m_name << std::endl;
-      }
-      os << "end" << std::endl;
-
-      //os << "ns." << ns << " = m;" << std::endl;
+      os << std::endl;
       os << "return m;" << std::endl;
       os.close();
     }
+
   }
 
   namespace lua_jit
@@ -1516,60 +1087,6 @@ local skip_rd_len = adata_m.skip_rd_len;
 local tablen = ns.tablen;
 
 )";
-
-    inline void gen_member_define(std::ostream& os, const member_define& m_define, int tab)
-    {
-      if (m_define.m_deleted)
-      {
-        return;
-      }
-      os << tabs(tab) << m_define.m_name << " = ";
-      switch (m_define.m_type)
-      {
-      case e_base_type::uint8:
-      case e_base_type::int8:
-      case e_base_type::uint16:
-      case e_base_type::int16:
-      case e_base_type::uint32:
-      case e_base_type::int32:
-      case e_base_type::float32:
-      case e_base_type::float64:
-      {
-        os << m_define.m_default_value;
-        break;
-      }
-      case e_base_type::int64:
-      {
-        os << m_define.m_default_value << "ll";
-        break;
-      }
-      case e_base_type::uint64:
-      {
-        os << m_define.m_default_value << "ull";
-        break;
-      }
-      case e_base_type::string:
-      {
-        os << "''";
-        break;
-      }
-      case e_base_type::list:
-      case e_base_type::map:
-      {
-        os << "{}";
-        break;
-      }
-      case e_base_type::type:
-      {
-        // Nous Xiong: change typename gen
-        auto name = make_typename(m_define.m_typedef->m_name);
-        os << name << "()";
-      }
-      default:
-      {}
-      }
-      os << "," << std::endl;
-    }
 
     void gen_meta_read_tag(std::ostream& os, int tab)
     {
@@ -1777,13 +1294,13 @@ local tablen = ns.tablen;
       os << "mt[" << idx << "] = mc;" << std::endl;
     }
 
-    void gen_proto(std::ostream& os, const type_define& t_define, int tab, int idx)
+    void gen_proto(std::ostream& os, const type_define& t_define, int tab, int idx, gen_contex& ctx)
     {
       os << tabs(tab) << "m." << t_define.m_name << " = function()" << std::endl;
       os << tabs(tab + 1) << "local obj = {" << std::endl;
       for (auto& m_define : t_define.m_members)
       {
-        gen_member_define(os, m_define, tab + 2);
+        gen_member_define(os, m_define, tab + 2,ctx);
       }
       os << tabs(tab + 1) << "};" << std::endl;
       os << tabs(tab + 1) << "setmetatable(obj,mt[" << idx << "]);" << std::endl;
@@ -1814,7 +1331,7 @@ local tablen = ns.tablen;
       int idx = 1;
       for (auto& t_define : define.m_types)
       {
-        gen_proto(os, t_define, 0, idx);
+        gen_proto(os, t_define, 0, idx,ctx);
         ++idx;
       }
       os << "local mc = {};" << std::endl;

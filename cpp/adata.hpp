@@ -157,6 +157,10 @@ namespace adata
 
     ADATA_INLINE void trace_error(const char * tag, int32_t sub = -1)
     {
+      if (m_trace_info_count > 64)
+      {
+        return;
+      }
       this->m_trace_infos[m_trace_info_count].m_tag_name = tag;
       this->m_trace_infos[m_trace_info_count++].m_sub_index = sub;
     }
@@ -3350,6 +3354,17 @@ namespace adata
     write_ptr[ADATA_LEPOS8_7] = value_ptr[7];
   }
 
+  template<typename alloc_type>
+  ADATA_INLINE void write(zero_copy_buffer& stream, const std::basic_string<char, std::char_traits<char>, alloc_type>& str)
+  {
+    uint32_t len = (uint32_t)str.length();
+    write(stream, len);
+    if (!stream.error())
+    {
+      stream.write(str.data(), len);
+    }
+  }
+
   ADATA_INLINE void read(zero_copy_buffer& stream, float& value)
   {
     typedef float value_type;
@@ -3384,6 +3399,18 @@ namespace adata
     value_ptr[ADATA_LEPOS8_5] = read_ptr[5];
     value_ptr[ADATA_LEPOS8_6] = read_ptr[6];
     value_ptr[ADATA_LEPOS8_7] = read_ptr[7];
+  }
+
+  template<typename alloc_type>
+  ADATA_INLINE void read(zero_copy_buffer& stream, std::basic_string<char, std::char_traits<char>, alloc_type>& str)
+  {
+    uint32_t len;
+    read(stream, len);
+    if (!stream.error())
+    {
+      str.resize(len);
+      stream.read(str.data(), len);
+    }
   }
 
   template<typename stream_ty>

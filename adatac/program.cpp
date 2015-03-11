@@ -32,13 +32,9 @@ namespace lua_gen
   {
     void gen_code(const descrip_define&, const std::string&);
   }
-  namespace lua_5_2
+  namespace lua_5_x
   {
-    void gen_code(const descrip_define&, const std::string&, int min_ver = 2);
-  }
-  namespace lua_5_3
-  {
-    void gen_code(const descrip_define&, const std::string&);
+    void gen_code(const descrip_define&, const std::string&, int min_ver = 1);
   }
 }
 
@@ -116,19 +112,19 @@ void run_program(const options& opt)
     }
     else if (gen_type == "lua")
     {
-      lua_gen::lua_5_3::gen_code(define, outputfile + "_adl.lua");
+      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua" , 3);
     }
     else if (gen_type == "lua51")
     {
-      lua_gen::lua_5_2::gen_code(define, outputfile + "_adl.lua", 1);
+      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua", 1);
     }
     else if (gen_type == "lua52")
     {
-      lua_gen::lua_5_2::gen_code(define, outputfile + "_adl.lua");
+      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua", 2);
     }
     else if (gen_type == "lua53")
     {
-      lua_gen::lua_5_3::gen_code(define, outputfile + "_adl.lua");
+      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua", 3);
     }
     else if (gen_type == "luajit")
     {

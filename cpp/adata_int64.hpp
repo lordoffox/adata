@@ -212,7 +212,7 @@ namespace adata {
         int64_t *o = (int64_t *)lua_newuserdata(L, sizeof(int64_t));
         *o = n;
 #if LUA_VERSION_NUM == 501
-        luaL_newmetatable(L, uint64_metatable);
+        luaL_newmetatable(L, int64_metatable);
         lua_setmetatable(L, -2);
 #else
         luaL_setmetatable(L, int64_metatable);
