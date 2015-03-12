@@ -101,7 +101,7 @@ player_v2
 
 ### Data struct
 
-Don't like others, adata's data struct defining has no keyword, just name(here item, player_v1 and player_v2). This is only way of defining objects in adata. Data struct consist of a name (here item, player_v1 and player_v2) and a list of fields. Each field has a type, a name, and optionally a default value.
+Unlike other libraries, there is no keyword in adata data struct definition. All structs are names, e.g. the `item` in previous sample. This is the only way to define objects. Data struct consist of a name (here item, player_v1 and player_v2) and a list of fields. Each field has a type, a name, and optionally a default value.
 
 Data struct is forward and backwards compatibility. User can use **[delete]** on a field to mark it as deprecated as in the example above(player_v2), which will prevent the generation of accessors in the generated code, as a way to enforce the field not being used any more. For compatibility, user can add new fields in the schema **only** at the end of a data struct definition. 
 
@@ -515,3 +515,9 @@ if (stream.error())
 ```
 
 pv1's value should equals with pv1_other and size_of also as well.
+
+
+Change log:
+V 1.1
+1.improvement lua implement performance
+2.fix bug of lua_int64
