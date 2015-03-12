@@ -1780,6 +1780,7 @@ namespace adata {
         mask <<= 1;
       }
       info.size += adata::size_of(info.tag);
+      info.size += adata::size_of(info.size);
       if (ctx)
       {
         ctx->list[top] = info;
