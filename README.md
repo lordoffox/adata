@@ -1,4 +1,4 @@
-ADATA v1.0
+ADATA v1.1
 =======
 
 ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
