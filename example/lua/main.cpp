@@ -8,8 +8,6 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#include <lua.hpp>
-
 #include <adata_corec.hpp>
 
 #include <iostream>
@@ -44,6 +42,7 @@ int main(int argc, char* argv[])
     lua_close(L);
   }
 
+  std::cin.get();
   return 0;
 }
 

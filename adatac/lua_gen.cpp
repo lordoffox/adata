@@ -109,8 +109,9 @@ namespace lua_gen
     if (s != std::string::npos)
     {
       std::string ns = name.substr(0, s);
-      boost::algorithm::replace_all(ns, ".", "_");
-      return tab + ns + name.substr(s);
+      tab = ns + name.substr(s);
+      boost::algorithm::replace_all(tab, ".", "_");
+      return tab;
     }
     else
     {
@@ -1106,9 +1107,9 @@ local tablen = ns.tablen;
     {
       os << tabs(tab) << "skip_read = function(o,buf)" << std::endl;
 
-      // Nous Xiong: add len tag
       gen_meta_read_tag(os, tab + 1);
 
+      /*
       int64_t read_mask = 1;
       int count = 1;
       for (auto& m_define : t_define.m_members)
@@ -1120,12 +1121,7 @@ local tablen = ns.tablen;
         read_mask <<= 1;
         ++count;
       }
-
-      // Nous Xiong: remove max mask check, for backward compat
-      /*os << tabs(tab + 1) << "if read_tag > 0 then ";
-      set_error(os, adata::error_code_t::undefined_member_protocol_not_compatible);
-      os << "return " << adata::error_code_t::undefined_member_protocol_not_compatible << "; end; " << std::endl;*/
-
+      */
       gen_meta_len_tag_jump(os, tab + 1);
 
       os << tabs(tab + 1) << "return ec;" << std::endl;

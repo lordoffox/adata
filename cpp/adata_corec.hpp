@@ -1715,7 +1715,7 @@ namespace adata {
 #endif
         size += adata::size_of(len);
         adata_paramter_type * ptype = mb->paramter_type[0];
-        for (int i = 1; i <= len; ++i)
+        for (int i = len; i >= 1; --i)
         {
           lua_rawgeti(L, -1, i);
           size += sizeof_value(L, buf, ptype->type, ptype->size, ptype->type_define, list);
@@ -1728,16 +1728,19 @@ namespace adata {
         adata_paramter_type * ptype2 = mb->paramter_type[1];
         lua_pushnil(L);
         uint32_t i = 1;
-        while (lua_next(L, -2))
+        while (lua_next(L, -1-i))
         {
           lua_pushvalue(L, -2);
+          ++i;
+        }
+        size += adata::size_of(--i);
+        for (uint32_t j = i + 1; j > 0; --j)
+        {
           size += sizeof_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, list);
           lua_pop(L, 1);
           size += sizeof_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, list);
           lua_pop(L, 1);
-          ++i;
         }
-        size += adata::size_of(--i);
       }
       else
       {
@@ -1749,10 +1752,10 @@ namespace adata {
     static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type * list)
     {
       type_sizeof_info info;
-      uint64_t mask = 1;
-      for (size_t i = 0; i < type->member_count; ++i)
+      uint64_t mask = 1 << (type->member_count-1);
+      for (size_t i = type->member_count; i > 0; --i)
       {
-        adata_member * mb = &type->members[i];
+        adata_member * mb = &type->members[i-1];
         if (mb->del == 0)
         {
           lua_rawgeti(L, 1, mb->filed_idx);
@@ -1764,7 +1767,7 @@ namespace adata {
           }
           lua_pop(L, 1);
         }
-        mask <<= 1;
+        mask >>= 1;
       }
       info.size += adata::size_of(info.tag);
       int32_t ret = info.size;

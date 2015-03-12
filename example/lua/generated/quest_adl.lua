@@ -1,41 +1,25 @@
+require'check_lua_version'(5,1);
+
 local adata_m = require'adata_core'
-local ffi = require'ffi'
-local ns = require'adata'
-local new_buf = adata_m.new_buf;
-local resize_buf = adata_m.resize_buf;
-local clear_buf = adata_m.clear_buf;
-local set_error = adata_m.set_error;
-local trace_error = adata_m.trace_error;
-local trace_info = adata_m.trace_info;
-local get_write_data = adata_m.get_write_data;
-local set_read_data = adata_m.set_read_data;
-local get_rd_len = adata_m.get_rd_len;
-local get_wt_len = adata_m.get_wt_len;
-local skip_rd_len = adata_m.skip_rd_len;
-local tablen = ns.tablen;
+local int64 = require'int64'
+local detail = require'adata_detail';
+local ns = require'adata';
+local regist_field = detail.regist_field;
+local fields = detail.fields;
+local field_list = detail.field_list;
+local layouts = detail.layouts;
+local regist_mt_type = detail.regist_mt_type;
+local mt_type_list = detail.mt_type_list;
+local read_c = adata_m.read;
+local skip_read_c = adata_m.skip_read;
+local size_of_c = adata_m.size_of;
+local write_c = adata_m.write;
+local regist_layout_c = adata_m.regist_layout;
+local set_layout_mt_c = adata_m.set_layout_mt;
 
-local rd_i32 = adata_m.rd_i32
-local rd_u32 = adata_m.rd_u32
-local rd_u64 = adata_m.rd_u64
-local rd_str = adata_m.rd_str
-local skip_rd_i32 = adata_m.skip_rd_i32
-local skip_rd_u32 = adata_m.skip_rd_u32
-local skip_rd_u64 = adata_m.skip_rd_u64
-local skip_rd_str = adata_m.skip_rd_str
-local wt_i32 = adata_m.wt_i32
-local wt_u32 = adata_m.wt_u32
-local wt_u64 = adata_m.wt_u64
-local wt_str = adata_m.wt_str
-local szof_i32 = adata_m.szof_i32
-local szof_u32 = adata_m.szof_u32
-local szof_u64 = adata_m.szof_u64
-local szof_str = adata_m.szof_str
-
-local field_info = {
-  ffi.new("char[11]","description"),
-  ffi.new("char[2]","id"),
-  ffi.new("char[4]","name"),
-}
+regist_field('description');
+regist_field('id');
+regist_field('name');
 
 
 local mt = {};
@@ -54,101 +38,19 @@ m.quest = function()
   return obj;
 end
 
+local layout_my_game_quest = regist_layout_c(
+  '\3\0\20\2\105\100\13\0\0\0\4\110\97\109\101\19\0\0\0\11\100\101\115\99\114\105\112\116\105\111\110\19\0\0\0',
+  {fields.id,fields.name,fields.description,},
+  {});
+layouts.my_game_quest = layout_my_game_quest
+
 local mc = {};
 mc = {
   adtype = function() return m.quest end,
-  skip_read = function(o,buf)
-    local offset = get_rd_len(buf);
-    local ec,read_tag = rd_u64(buf);
-    if ec > 0 then return ec; end;
-    local len_tag = 0;
-    ec,len_tag = rd_i32(buf);
-    if ec > 0 then return ec; end;
-    if (read_tag % 2) >= 1 then
-      read_tag = read_tag - 1;
-      ec = skip_rd_i32(buf);if ec > 0 then trace_error(buf, field_info[2] , -1); return ec; end;
-    end
-    if (read_tag % 4) >= 2 then
-      read_tag = read_tag - 2;
-      ec = skip_rd_str(buf,0);if ec > 0 then trace_error(buf, field_info[3] , -1); return ec; end;
-    end
-    if (read_tag % 8) >= 4 then
-      read_tag = read_tag - 4;
-      ec = skip_rd_str(buf,0);if ec > 0 then trace_error(buf, field_info[1] , -1); return ec; end;
-    end
-    if len_tag >= 0 then
-      local read_len = get_rd_len(buf) - offset;
-      if len_tag > read_len then skip_rd_len(buf, len_tag - read_len); end;
-    end
-    return ec;
-  end,
-  size_of = function(o)
-    local size = 0
-    local tag = 0
-    tag = tag + 1;
-    if #o.name > 0 then tag = tag + 2; end;
-    if #o.description > 0 then tag = tag + 4; end;
-    if (tag % 2) >= 1 then
-      size = size + szof_i32(o.id);
-    end
-    if (tag % 4) >= 2 then
-      size = size + szof_str(o.name);
-    end
-    if (tag % 8) >= 4 then
-      size = size + szof_str(o.description);
-    end
-    size = size + szof_u64(tag);
-    size = size + szof_i32(size + szof_i32(size));
-    return size;
-  end,
-  read = function(o,buf)
-    local offset = get_rd_len(buf);
-    local ec,read_tag = rd_u64(buf);
-    if ec > 0 then return ec; end;
-    local len_tag = 0;
-    ec,len_tag = rd_i32(buf);
-    if ec > 0 then return ec; end;
-    if (read_tag % 2) >= 1 then
-      read_tag = read_tag - 1;
-      ec,o.id = rd_i32(buf);if ec > 0 then trace_error(buf, field_info[2] , -1); return ec; end;
-      if ec > 0 then return ec; end;
-    end
-    if (read_tag % 4) >= 2 then
-      read_tag = read_tag - 2;
-      ec,o.name = rd_str(buf,0);if ec > 0 then trace_error(buf, field_info[3] , -1); return ec; end;
-      if ec > 0 then return ec; end;
-    end
-    if (read_tag % 8) >= 4 then
-      read_tag = read_tag - 4;
-      ec,o.description = rd_str(buf,0);if ec > 0 then trace_error(buf, field_info[1] , -1); return ec; end;
-      if ec > 0 then return ec; end;
-    end
-    if len_tag >= 0 then
-      local read_len = get_rd_len(buf) - offset;
-      if len_tag > read_len then skip_rd_len(buf, len_tag - read_len); end;
-    end
-    return ec;
-  end,
-  write = function(o,buf)
-    local write_tag = 0
-    write_tag = write_tag + 1;
-    if #o.name > 0 then write_tag = write_tag + 2; end;
-    if #o.description > 0 then write_tag = write_tag + 4; end;
-    ec = wt_u64(buf,write_tag);
-    if ec >0 then return ec; end;
-    ec = wt_i32(buf,o:size_of());
-    if ec >0 then return ec; end;
-    if (write_tag % 2) >= 1 then
-      ec = wt_i32(buf,o.id);if ec > 0 then trace_error(buf, field_info[2] , -1); return ec; end;
-    end
-    if (write_tag % 4) >= 2 then
-      ec = wt_str(buf,o.name,0);if ec > 0 then trace_error(buf, field_info[3] , -1); return ec; end;
-    end
-    if (write_tag % 8) >= 4 then
-      ec = wt_str(buf,o.description,0);if ec > 0 then trace_error(buf, field_info[1] , -1); return ec; end;
-    end
-    return ec;
-  end,
+  skip_read = function(o,buf) return skip_read_c( field_list , mt_type_list , buf , layout_my_game_quest , o) end,
+  size_of = function(o,buf) return size_of_c( field_list , mt_type_list , buf , layout_my_game_quest , o) end,
+  read = function(o,buf) return read_c( field_list , mt_type_list , buf , layout_my_game_quest , o) end,
+  write = function(o,buf) return write_c( field_list , mt_type_list , buf , layout_my_game_quest , o) end,
 };
 mc.__index = mc;
 mt[1] = mc;
@@ -157,4 +59,6 @@ if ns.my_game == nil then
 else
   ns.my_game.quest = m.quest
 end
+set_layout_mt_c( layout_my_game_quest , regist_mt_type(mt[1]));
+
 return m;

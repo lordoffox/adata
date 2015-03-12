@@ -3354,17 +3354,6 @@ namespace adata
     write_ptr[ADATA_LEPOS8_7] = value_ptr[7];
   }
 
-  template<typename alloc_type>
-  ADATA_INLINE void write(zero_copy_buffer& stream, const std::basic_string<char, std::char_traits<char>, alloc_type>& str)
-  {
-    uint32_t len = (uint32_t)str.length();
-    write(stream, len);
-    if (!stream.error())
-    {
-      stream.write(str.data(), len);
-    }
-  }
-
   ADATA_INLINE void read(zero_copy_buffer& stream, float& value)
   {
     typedef float value_type;
@@ -3401,8 +3390,8 @@ namespace adata
     value_ptr[ADATA_LEPOS8_7] = read_ptr[7];
   }
 
-  template<typename alloc_type>
-  ADATA_INLINE void read(zero_copy_buffer& stream, std::basic_string<char, std::char_traits<char>, alloc_type>& str)
+  template<typename stream_ty , typename alloc_type>
+  ADATA_INLINE void read(stream_ty& stream, std::basic_string<char, std::char_traits<char>, alloc_type>& str)
   {
     uint32_t len;
     read(stream, len);
@@ -3410,6 +3399,17 @@ namespace adata
     {
       str.resize(len);
       stream.read(str.data(), len);
+    }
+  }
+
+  template<typename stream_ty, typename alloc_type>
+  ADATA_INLINE void write(stream_ty& stream, const std::basic_string<char, std::char_traits<char>, alloc_type>& str)
+  {
+    uint32_t len = (uint32_t)str.length();
+    write(stream, len);
+    if (!stream.error())
+    {
+      stream.write(str.data(), len);
     }
   }
 
@@ -3429,6 +3429,25 @@ namespace adata
       return 0;
     }
     return len;
+  }
+
+  template <typename stream_ty>
+  ADATA_INLINE void skip_read_compatible(stream_ty& stream)
+  {
+    ::std::size_t offset = stream.read_length();
+    uint64_t tag = 0;
+    read(stream, tag);
+    if (stream.error()){ return; }
+    int32_t len_tag = 0;
+    read(stream, len_tag);
+    if (stream.error()){ return; }
+
+    if (len_tag >= 0)
+    {
+      ::std::size_t read_len = stream.read_length() - offset;
+      ::std::size_t len = (::std::size_t)len_tag;
+      if (len > read_len) stream.skip_read(len - read_len);
+    }
   }
 
 }

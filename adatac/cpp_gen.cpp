@@ -450,6 +450,9 @@ namespace cpp_gen
     os << tabs(1) << gen_inline_code(tdefine) << "void skip_read(stream_ty& stream, " << full_type_name << "* value)" << std::endl;
     os << tabs(1) << "{" << std::endl;
 
+    os << tabs(2) << "(value);" << std::endl;
+    os << tabs(2) << "skip_read_compatible(stream);" << std::endl;
+    /*
     gen_adata_read_tag(os, 2);
 
     uint64_t tag_mask = 1;
@@ -461,12 +464,8 @@ namespace cpp_gen
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
-
-    // Nous Xiong: remove max mask check, for backward compat
-    //os << tabs(2) << "if(tag&(~" << total_mask << "ULL)){stream.set_error_code(undefined_member_protocol_not_compatible);return;}" << std::endl;
-
-    // Nous Xiong: add len tag jump
     gen_adata_len_tag_jump(os, 2);
+    */
 
     os << tabs(1) << "}" << std::endl << std::endl;
   }
