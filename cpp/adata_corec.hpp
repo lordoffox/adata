@@ -1437,7 +1437,14 @@ namespace adata {
 
     typedef std::vector<type_sizeof_info> type_sizeof_info_list_type;
 
-    static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type& list);
+    struct sizeof_cache_contex
+    {
+      type_sizeof_info_list_type list;
+      size_t write_idx;
+      sizeof_cache_contex() :write_idx(0){}
+    };
+
+    static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, sizeof_cache_contex& ctx);
 
     template<typename ty>
     ADATA_INLINE int lua_to_number(lua_State *L, int idx, ty& v)
@@ -1661,9 +1668,9 @@ namespace adata {
       return false;
     }
 
-    static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type * list = NULL);
+    static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, sizeof_cache_contex * ctx = NULL);
 
-    static ADATA_INLINE int32_t sizeof_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, type_sizeof_info_list_type * list)
+    static ADATA_INLINE int32_t sizeof_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, sizeof_cache_contex * ctx)
     {
       (size);
       switch (type)
@@ -1695,7 +1702,7 @@ namespace adata {
       {
         if (type_define)
         {
-          return sizeof_type(L, buf, type_define, list);
+          return sizeof_type(L, buf, type_define, ctx);
         }
         break;
       }
@@ -1703,7 +1710,7 @@ namespace adata {
       return 0;
     }
 
-    static int32_t sizeof_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb, type_sizeof_info_list_type * list)
+    static int32_t sizeof_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb, sizeof_cache_contex * ctx)
     {
       int32_t size = 0;
       if (mb->type == adata_et_list)
@@ -1715,10 +1722,10 @@ namespace adata {
 #endif
         size += adata::size_of(len);
         adata_paramter_type * ptype = mb->paramter_type[0];
-        for (int i = len; i >= 1; --i)
+        for (int i = 1; i <= len; ++i)
         {
           lua_rawgeti(L, -1, i);
-          size += sizeof_value(L, buf, ptype->type, ptype->size, ptype->type_define, list);
+          size += sizeof_value(L, buf, ptype->type, ptype->size, ptype->type_define, ctx);
           lua_pop(L, 1);
         }
       }
@@ -1731,31 +1738,34 @@ namespace adata {
         while (lua_next(L, -1-i))
         {
           lua_pushvalue(L, -2);
+          size += sizeof_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, ctx);
+          lua_pop(L, 1);
+          size += sizeof_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, ctx);
+          lua_pop(L, 1);
           ++i;
         }
         size += adata::size_of(--i);
-        for (uint32_t j = i + 1; j > 0; --j)
-        {
-          size += sizeof_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, list);
-          lua_pop(L, 1);
-          size += sizeof_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, list);
-          lua_pop(L, 1);
-        }
       }
       else
       {
-        size += sizeof_value(L, buf, mb->type, mb->size, mb->type_define, list);
+        size += sizeof_value(L, buf, mb->type, mb->size, mb->type_define, ctx);
       }
       return size;
     }
 
-    static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type * list)
+    static int sizeof_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, sizeof_cache_contex * ctx)
     {
       type_sizeof_info info;
-      uint64_t mask = 1 << (type->member_count-1);
-      for (size_t i = type->member_count; i > 0; --i)
+      size_t top = 0;
+      if (ctx)
       {
-        adata_member * mb = &type->members[i-1];
+        ctx->list.push_back(info);
+        top = ctx->list.size() - 1;
+      }
+      uint64_t mask = 1;
+      for (size_t i = 0; i < type->member_count; ++i)
+      {
+        adata_member * mb = &type->members[i];
         if (mb->del == 0)
         {
           lua_rawgeti(L, 1, mb->filed_idx);
@@ -1763,19 +1773,18 @@ namespace adata {
           if (test_adata_empty(L, mb) == false)
           {
             info.tag |= mask;
-            info.size += sizeof_member(L, buf, mb, list);
+            info.size += sizeof_member(L, buf, mb, ctx);
           }
           lua_pop(L, 1);
         }
-        mask >>= 1;
+        mask <<= 1;
       }
       info.size += adata::size_of(info.tag);
-      int32_t ret = info.size;
-      if (list)
+      if (ctx)
       {
-        list->push_back(info);
+        ctx->list[top] = info;
       }
-      return ret;
+      return info.size;
     }
 
     static int lua_sizeof(lua_State * L)
@@ -1787,7 +1796,7 @@ namespace adata {
       return 1;
     }
 
-    static ADATA_INLINE int write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, type_sizeof_info_list_type& list)
+    static ADATA_INLINE int write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, sizeof_cache_contex& ctx)
     {
       switch (type)
       {
@@ -1818,7 +1827,7 @@ namespace adata {
       {
         if (type_define)
         {
-          write_type(L, buf, type_define, list);
+          write_type(L, buf, type_define, ctx);
         }
         else
         {
@@ -1846,7 +1855,7 @@ namespace adata {
       return c;
     }
 
-    static int write_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb, type_sizeof_info_list_type& list)
+    static int write_member(lua_State *L, zero_copy_buffer * buf, adata_member * mb, sizeof_cache_contex& ctx)
     {
       if (mb->type == adata_et_list)
       {
@@ -1866,7 +1875,7 @@ namespace adata {
         for (int i = 1; i <= len; ++i)
         {
           lua_rawgeti(L, -1, i);
-          write_value(L, buf, ptype->type, ptype->size, ptype->type_define, list);
+          write_value(L, buf, ptype->type, ptype->size, ptype->type_define, ctx);
           if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
           lua_pop(L, 1);
         }
@@ -1888,10 +1897,10 @@ namespace adata {
         while (lua_next(L, -2))
         {
           lua_pushvalue(L, -2);
-          write_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, list);
+          write_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, ctx);
           if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
           lua_pop(L, 1);
-          write_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, list);
+          write_value(L, buf, ptype2->type, ptype2->size, ptype2->type_define, ctx);
           if (buf->error()) { buf->trace_error(mb->name, i); return 0; }
           lua_pop(L, 1);
           ++i;
@@ -1899,18 +1908,17 @@ namespace adata {
       }
       else
       {
-        write_value(L, buf, mb->type, mb->size, mb->type_define, list);
+        write_value(L, buf, mb->type, mb->size, mb->type_define, ctx);
         if (buf->error()) { buf->trace_error(mb->name, -1); return 0; }
       }
       return 1;
     }
 
-    static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, type_sizeof_info_list_type& list)
+    static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, sizeof_cache_contex& ctx)
     {
-      type_sizeof_info& info = *list.rbegin();
+      type_sizeof_info& info = ctx.list[ctx.write_idx++];
       uint64_t data_tag = info.tag;
       int32_t  data_len = info.size;
-      list.pop_back();
       adata::write(*buf, data_tag);
       adata::write(*buf, data_len);
       uint64_t mask = 1;
@@ -1921,7 +1929,7 @@ namespace adata {
           adata_member * mb = &type->members[i];
           lua_rawgeti(L, 1, mb->filed_idx);
           lua_gettable(L, -2);
-          if (write_member(L, buf, mb, list) == 0)
+          if (write_member(L, buf, mb, ctx) == 0)
           {
             return 0;
           }
@@ -1936,11 +1944,11 @@ namespace adata {
     {
       zero_copy_buffer * zbuf = (zero_copy_buffer*)lua_touserdata(L, 3);
       adata_type * type = (adata_type*)lua_touserdata(L, 4);
-      type_sizeof_info_list_type list;
+      sizeof_cache_contex ctx;
       int top = lua_gettop(L);
-      sizeof_type(L, zbuf, type, &list);
+      sizeof_type(L, zbuf, type, &ctx);
       top = lua_gettop(L);
-      write_type(L, zbuf, type, list);
+      write_type(L, zbuf, type, ctx);
       lua_pushinteger(L, zbuf->error_code());
       return 1;
     }
