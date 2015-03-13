@@ -21,6 +21,11 @@ namespace cpp_gen
   void gen_code(const descrip_define&, const std::string&);
 }
 
+namespace cpp2lua_gen
+{
+  void gen_code(const descrip_define&, const std::string&);
+}
+
 namespace csharp_gen
 {
   void gen_code(const descrip_define&, const std::string&);
@@ -105,6 +110,10 @@ void run_program(const options& opt)
     if (gen_type == "cpp")
     {
       cpp_gen::gen_code(define, outputfile + ".adl.h");
+    }
+    if (gen_type == "cpp2lua")
+    {
+      cpp2lua_gen::gen_code(define, outputfile + ".adl.h");
     }
     else if (gen_type == "csharp")
     {

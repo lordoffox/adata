@@ -59,6 +59,6 @@ if ns.my_game == nil then
 else
   ns.my_game.quest = m.quest
 end
-set_layout_mt_c( layout_my_game_quest , regist_mt_type(mt[1]));
+set_layout_mt_c( layout_my_game_quest , regist_mt_type(mt[1]) , 'ad_mt_my_game.quest' , mt[1]);
 
 return m;

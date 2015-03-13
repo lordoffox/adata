@@ -78,23 +78,8 @@ namespace adata
   template <typename stream_ty>
   ADATA_INLINE void skip_read(stream_ty& stream, ::my::game::item* value)
   {
-    ::std::size_t offset = stream.read_length();
-    uint64_t tag = 0;
-    read(stream,tag);
-    if(stream.error()){return;}
-    int32_t len_tag = 0;
-    read(stream,len_tag);
-    if(stream.error()){return;}
-
-    if(tag&1ULL)    {int64_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-    if(tag&2ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("type",-1);return;}}}
-    if(tag&4ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("level",-1);return;}}}
-    if(len_tag >= 0)
-    {
-      ::std::size_t read_len = stream.read_length() - offset;
-      ::std::size_t len = (::std::size_t)len_tag;
-      if(len > read_len) stream.skip_read(len - read_len);
-    }
+    (value);
+    skip_read_compatible(stream);
   }
 
   ADATA_INLINE int32_t size_of(const ::my::game::item& value)
@@ -185,51 +170,8 @@ namespace adata
   template <typename stream_ty>
   void skip_read(stream_ty& stream, ::my::game::player_v1* value)
   {
-    ::std::size_t offset = stream.read_length();
-    uint64_t tag = 0;
-    read(stream,tag);
-    if(stream.error()){return;}
-    int32_t len_tag = 0;
-    read(stream,len_tag);
-    if(stream.error()){return;}
-
-    if(tag&1ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-    if(tag&2ULL)
-    {
-      uint32_t len = check_read_size(stream,30);
-      {if(stream.error()){stream.trace_error("name",-1);return;}}
-      stream.skip_read(len);
-      {if(stream.error()){stream.trace_error("name",-1);return;}}
-    }
-    if(tag&4ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-    if(tag&8ULL)    {::util::vec3* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-    if(tag&16ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("inventory",-1);return;}}
-      for (std::size_t i = 0 ; i < len ; ++i)
-      {
-        {::my::game::item* dummy_value = 0;skip_read(stream,dummy_value);}
-        {if(stream.error()){stream.trace_error("inventory",(int32_t)i);return;}}
-      }
-    }
-    if(tag&32ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("quests",-1);return;}}
-      for (std::size_t i = 0 ; i < len ; ++i)
-      {
-        {::my::game::quest* dummy_value = 0;skip_read(stream,dummy_value);}
-        {if(stream.error()){stream.trace_error("quests",(int32_t)i);return;}}
-      }
-    }
-    if(tag&64ULL)    {float* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
-    if(len_tag >= 0)
-    {
-      ::std::size_t read_len = stream.read_length() - offset;
-      ::std::size_t len = (::std::size_t)len_tag;
-      if(len > read_len) stream.skip_read(len - read_len);
-    }
+    (value);
+    skip_read_compatible(stream);
   }
 
   int32_t size_of(const ::my::game::player_v1& value)
@@ -394,61 +336,8 @@ namespace adata
   template <typename stream_ty>
   void skip_read(stream_ty& stream, ::my::game::player_v2* value)
   {
-    ::std::size_t offset = stream.read_length();
-    uint64_t tag = 0;
-    read(stream,tag);
-    if(stream.error()){return;}
-    int32_t len_tag = 0;
-    read(stream,len_tag);
-    if(stream.error()){return;}
-
-    if(tag&1ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-    if(tag&2ULL)
-    {
-      uint32_t len = check_read_size(stream,30);
-      {if(stream.error()){stream.trace_error("name",-1);return;}}
-      stream.skip_read(len);
-      {if(stream.error()){stream.trace_error("name",-1);return;}}
-    }
-    if(tag&4ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-    if(tag&8ULL)    {::util::vec3* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-    if(tag&16ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("inventory",-1);return;}}
-      for (std::size_t i = 0 ; i < len ; ++i)
-      {
-        {::my::game::item* dummy_value = 0;skip_read(stream,dummy_value);}
-        {if(stream.error()){stream.trace_error("inventory",(int32_t)i);return;}}
-      }
-    }
-    if(tag&32ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("quests",-1);return;}}
-      for (std::size_t i = 0 ; i < len ; ++i)
-      {
-        {::my::game::quest* dummy_value = 0;skip_read(stream,dummy_value);}
-        {if(stream.error()){stream.trace_error("quests",(int32_t)i);return;}}
-      }
-    }
-    if(tag&64ULL)    {float* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
-    if(tag&128ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("friends",-1);return;}}
-      for (std::size_t i = 0 ; i < len ; ++i)
-      {
-        {int32_t* dummy_value = 0;skip_read(stream,dummy_value);}
-        {if(stream.error()){stream.trace_error("friends",(int32_t)i);return;}}
-      }
-    }
-    if(len_tag >= 0)
-    {
-      ::std::size_t read_len = stream.read_length() - offset;
-      ::std::size_t len = (::std::size_t)len_tag;
-      if(len > read_len) stream.skip_read(len - read_len);
-    }
+    (value);
+    skip_read_compatible(stream);
   }
 
   int32_t size_of(const ::my::game::player_v2& value)

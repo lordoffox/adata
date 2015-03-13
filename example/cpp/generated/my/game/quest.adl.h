@@ -57,35 +57,8 @@ namespace adata
   template <typename stream_ty>
   ADATA_INLINE void skip_read(stream_ty& stream, ::my::game::quest* value)
   {
-    ::std::size_t offset = stream.read_length();
-    uint64_t tag = 0;
-    read(stream,tag);
-    if(stream.error()){return;}
-    int32_t len_tag = 0;
-    read(stream,len_tag);
-    if(stream.error()){return;}
-
-    if(tag&1ULL)    {int32_t* dummy_value = 0;skip_read(stream,dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-    if(tag&2ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("name",-1);return;}}
-      stream.skip_read(len);
-      {if(stream.error()){stream.trace_error("name",-1);return;}}
-    }
-    if(tag&4ULL)
-    {
-      uint32_t len = check_read_size(stream);
-      {if(stream.error()){stream.trace_error("description",-1);return;}}
-      stream.skip_read(len);
-      {if(stream.error()){stream.trace_error("description",-1);return;}}
-    }
-    if(len_tag >= 0)
-    {
-      ::std::size_t read_len = stream.read_length() - offset;
-      ::std::size_t len = (::std::size_t)len_tag;
-      if(len > read_len) stream.skip_read(len - read_len);
-    }
+    (value);
+    skip_read_compatible(stream);
   }
 
   ADATA_INLINE int32_t size_of(const ::my::game::quest& value)

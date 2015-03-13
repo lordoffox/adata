@@ -1059,7 +1059,7 @@ local set_layout_mt_c = adata_m.set_layout_mt;
         std::string fullname = ns;
         fullname.append("_");
         fullname.append(t_define.m_name);
-        os << "set_layout_mt_c( layout_" << fullname << " , regist_mt_type(mt[" << idx << "]));" << std::endl;
+        os << "set_layout_mt_c( layout_" << fullname << " , regist_mt_type(mt[" << idx << "]) , 'ad_mt_" << ns << "." << t_define.m_name << "' , mt[" << idx << "]);" << std::endl;
         ++idx;
       }
       os << std::endl;

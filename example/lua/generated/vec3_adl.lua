@@ -59,6 +59,6 @@ if ns.util == nil then
 else
   ns.util.vec3 = m.vec3
 end
-set_layout_mt_c( layout_util_vec3 , regist_mt_type(mt[1]));
+set_layout_mt_c( layout_util_vec3 , regist_mt_type(mt[1]) , 'ad_mt_util.vec3' , mt[1]);
 
 return m;

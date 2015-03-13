@@ -1018,7 +1018,22 @@ namespace adata {
     {
       adata_type * type = (adata_type *)lua_touserdata(L, 1);
       type->mt_idx = (int)lua_tointeger(L, 2);
+      const char * str = lua_tostring(L, 3);
+      lua_pushvalue(L, 4);
+      lua_setfield(L, LUA_REGISTRYINDEX, str);
       return 0;
+    }
+
+    inline bool set_metatable(lua_State * L, const char * name)
+    {
+      lua_getfield(L, LUA_REGISTRYINDEX, name);
+      if (lua_type(L, -1) != LUA_TNONE)
+      {
+        lua_setmetatable(L, -2);
+        return true;
+      }
+      lua_pop(L, 1);
+      return false;
     }
 
     static int skip_read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type);
@@ -1735,7 +1750,7 @@ namespace adata {
         adata_paramter_type * ptype2 = mb->paramter_type[1];
         lua_pushnil(L);
         uint32_t i = 1;
-        while (lua_next(L, -1-i))
+        while (lua_next(L, -2))
         {
           lua_pushvalue(L, -2);
           size += sizeof_value(L, buf, ptype1->type, ptype1->size, ptype1->type_define, ctx);

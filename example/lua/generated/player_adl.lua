@@ -127,8 +127,8 @@ else
   ns.my_game.player_v1 = m.player_v1
   ns.my_game.player_v2 = m.player_v2
 end
-set_layout_mt_c( layout_my_game_item , regist_mt_type(mt[1]));
-set_layout_mt_c( layout_my_game_player_v1 , regist_mt_type(mt[2]));
-set_layout_mt_c( layout_my_game_player_v2 , regist_mt_type(mt[3]));
+set_layout_mt_c( layout_my_game_item , regist_mt_type(mt[1]) , 'ad_mt_my_game.item' , mt[1]);
+set_layout_mt_c( layout_my_game_player_v1 , regist_mt_type(mt[2]) , 'ad_mt_my_game.player_v1' , mt[2]);
+set_layout_mt_c( layout_my_game_player_v2 , regist_mt_type(mt[3]) , 'ad_mt_my_game.player_v2' , mt[3]);
 
 return m;

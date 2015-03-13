@@ -785,7 +785,7 @@ namespace cpp_gen
     os << "#ifndef " << header_id << std::endl;
     os << "#define " << header_id << std::endl << std::endl;
 
-    os << "#include " << define.adata_header << std::endl;
+    os << "#include <" << define.adata_header << "adata.hpp>" << std::endl;
 
     gen_include(define, os);
     gen_type_code(define, os);
