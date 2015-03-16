@@ -113,7 +113,7 @@ void run_program(const options& opt)
     }
     if (gen_type == "cpp2lua")
     {
-      cpp2lua_gen::gen_code(define, outputfile + ".adl.h");
+      cpp2lua_gen::gen_code(define, outputfile + ".adl");
     }
     else if (gen_type == "csharp")
     {

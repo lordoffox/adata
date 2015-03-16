@@ -259,7 +259,7 @@ namespace cpp2lua_gen
     for (auto const& inc : desc_define.m_includes)
     {
       std::string inc_path = boost::algorithm::replace_all_copy(inc.first, ".", "/");
-      os << "#include <" << inc_path << "adl.h.c2l.h" << ">" << std::endl;
+      os << "#include <" << inc_path << ".adl.c2l.h" << ">" << std::endl;
     }
     os << std::endl;
   }
@@ -290,7 +290,7 @@ namespace cpp2lua_gen
       header_id = header_id.substr(path_pos + 1);
     }
 
-    header_id += "cpp2lua_";
+    header_id += "_cpp2lua_h_";
 
     os << "#ifndef " << header_id << std::endl;
     os << "#define " << header_id << std::endl << std::endl;
@@ -312,7 +312,7 @@ namespace cpp2lua_gen
     {
       include_file = include_file.substr(path_pos + 1);
     }
-    os << "#include \"" << include_file << "\"" << std::endl;
+    os << "#include \"" << include_file << ".h\"" << std::endl << std::endl;
 
     gen_adata_operator_code(define, os);
 
