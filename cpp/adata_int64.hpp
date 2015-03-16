@@ -178,7 +178,7 @@ namespace adata {
     {
       if (n < (1LL << 53))
       {
-        lua_pushinteger(L, n);
+        lua_pushinteger(L, (lua_Integer)n);
       }
       else
       {
@@ -199,7 +199,7 @@ namespace adata {
 #if LUA_VERSION_NUM < 503
       if (n < (1LL << 53))
       {
-        lua_pushinteger(L, n);
+        lua_pushinteger(L, (lua_Integer)n);
       }
       else
       {

@@ -1610,7 +1610,7 @@ namespace adata {
       char * str = lua_get_string_ref(L, -1, &slen);
       if (sz > 0)
       {
-        if (slen > sz)
+        if (slen > (size_t)sz)
         {
           buf->set_error_code(number_of_element_not_macth);
           return 0;
