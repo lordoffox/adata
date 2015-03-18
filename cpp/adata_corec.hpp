@@ -1341,7 +1341,7 @@ namespace adata {
       {
         lua_createtable(L, 0, (int)type->member_count);
         lua_rawgeti(L, 2, type->mt_idx);
-        lua_setmetatable(L, -3);
+        lua_setmetatable(L, -2);
       }
       uint64_t data_tag = 0;
       uint32_t data_len = 0;
