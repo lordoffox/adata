@@ -56,6 +56,7 @@ endif()
 include_directories (${PROJECT_SOURCE_DIR})
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../../cpp)
+include_directories (${PROJECT_SOURCE_DIR}/generated)
 
 add_definitions (-DSOURCE_DIR="${PROJECT_SOURCE_DIR}")
 
