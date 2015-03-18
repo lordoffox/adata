@@ -1,12 +1,19 @@
 local adata = require('adata_core')
 local player_adl = require('player_adl')
 local quest_adl = require('quest_adl')
+local vec3_adl = require('vec3_adl')
 local tablen = require('adata').tablen
+
+local set_eq = function (o, f)
+  local mt = getmetatable(o)
+  if rawequal(mt, nil) then error('obj must have a metatable!') end
+  mt.__eq = f
+end
 
 -- vec3 comparer
 local vec3_equals = function(lhs, rhs)
-  if lhs == rhs then return true end
-  if lhs == nil or rhs == nil then return false end
+  if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
+	if rawequal(lhs, rhs) then return true end
 
   return 
   	lhs.x == rhs.x and
@@ -16,8 +23,8 @@ end
 
 -- item comparer
 local item_equals = function(lhs, rhs)
-  if lhs == rhs then return true end
-  if lhs == nil or rhs == nil then return false end
+  if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
+	if rawequal(lhs, rhs) then return true end
 
   return 
   	lhs.id == rhs.id and
@@ -27,8 +34,8 @@ end
 
 -- quest comparer
 quest_equals = function(lhs, rhs)
-  if lhs == rhs then return true end
-  if lhs == nil or rhs == nil then return false end
+  if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
+	if rawequal(lhs, rhs) then return true end
 
   return 
   	lhs.id == rhs.id and
@@ -36,24 +43,45 @@ quest_equals = function(lhs, rhs)
   	lhs.description == rhs.description
 end
 
--- player comparer
-local player_cmp = {
-	equals_list,
-	equals,
-	equals_v2
-}
-
-local array_equals = function(cmp, lhs, rhs)
-  if lhs == rhs then return true end
-  if lhs == nil or rhs == nil then return false end
+local tabeq = function(lhs, rhs)
+  if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
+	if rawequal(lhs, rhs) then return true end
 
   local res = true
   if tablen(lhs) == tablen(rhs) then
-  	for i,v in ipairs(lhs) do
-  	  if not cmp(rhs[i], v) then 
-  	  	res = false 
-  	  	break 
-  	  end
+  	for k,v in pairs(lhs) do
+  		local ty = type(v)
+  		if ty ~= type(rhs[k]) then 
+  			res = false 
+		  	break
+  		end
+
+  		if ty == 'table' or ty == 'userdata' then
+	  		local mt = getmetatable(v)
+	  		if mt == nil or mt.__eq == nil then
+	  			if ty == 'table' then
+		  			if not tabeq(v, rhs[k]) then
+		  				res = false
+		  				break
+		  			end
+		  		else
+		  			if not (v == rhs[k]) then 
+			  	  	res = false 
+			  	  	break
+			  	  end
+			  	end
+	  	  else
+		  		if not (v == rhs[k]) then 
+		  	  	res = false 
+		  	  	break 
+	  	  	end
+		  	end
+		  else
+		  	if not (v == rhs[k]) then 
+	  	  	res = false 
+	  	  	break 
+	  	  end
+  		end
   	end
   else
   	res = false
@@ -62,38 +90,52 @@ local array_equals = function(cmp, lhs, rhs)
 end
 
 local player_equals = function(lhs, rhs)
-  if lhs == rhs then return true end
-  if lhs == nil or rhs == nil then return false end
+  if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
+	if rawequal(lhs, rhs) then return true end
 
   return 
   	lhs.id == rhs.id and
   	lhs.name == rhs.name and 
   	lhs.age == rhs.age and
   	lhs.factor == rhs.factor and
-  	vec3_equals(lhs.pos, rhs.pos) and
-  	array_equals(
-  	  item_equals, lhs.inventory, rhs.inventory
+  	lhs.pos == rhs.pos and
+  	tabeq(
+  	  lhs.inventory, rhs.inventory
   	  ) and
-  	array_equals(
-  	  quest_equals, lhs.quests, rhs.quests
+  	tabeq(
+  	  lhs.quests, rhs.quests
   	  )
 end
 
 local player_equals_v2 = function(lhs, rhs)
-  if lhs == rhs then return true end
-  if lhs == nil or rhs == nil then return false end
+  if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
+	if rawequal(lhs, rhs) then return true end
 
   return 
   	lhs.id == rhs.id and
   	lhs.name == rhs.name and 
-  	vec3_equals(lhs.pos, rhs.pos) and
-  	array_equals(
-  	  item_equals, lhs.inventory, rhs.inventory
+  	lhs.pos == rhs.pos and
+  	tabeq(
+  	  lhs.inventory, rhs.inventory
   	  ) and
-  	array_equals(
-  	  quest_equals, lhs.quests, rhs.quests
+  	tabeq(
+  	  lhs.quests, rhs.quests
   	  )
 end
+
+-- set all adl obj __eq
+local tmp_vec3 = vec3_adl.vec3()
+set_eq(tmp_vec3, vec3_equals)
+
+local tmp_item = player_adl.item()
+set_eq(tmp_item, item_equals)
+
+local tmp_quest = quest_adl.quest()
+set_eq(tmp_quest, quest_equals)
+
+local tmp_player_v1 = player_adl.player_v1()
+set_eq(tmp_player_v1, player_equals)
+
 
 local dump_player_v1 = function(pv1)
   print(pv1.id, pv1.name, pv1.age, pv1.factor)
@@ -225,6 +267,6 @@ cpp2lua = function (pv1)
     error(adata.trace_info(stream))
   end
 
-  assert(player_equals(pv1, pv1_other))
+  assert(pv1 == pv1_other)
   return pv1_other
 end
