@@ -199,7 +199,15 @@ namespace cpp2lua_gen
     else
     {
       os << tabs(tab_indent) << "{";
-      os << "push(L, " << var_name << ");";
+      // Nous Xiong: add use_adata arg
+      if (mdefine.m_type == e_base_type::type)
+      {
+        os << "push(L, " << var_name << ", use_adata);";
+      }
+      else
+      {
+        os << "push(L, " << var_name << ");";
+      }
       os << "}" << std::endl;
     }
   }
@@ -219,7 +227,8 @@ namespace cpp2lua_gen
   void gen_adata_operator_push_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
-    os << tabs(2) << gen_inline_code(tdefine) << "void push( lua_State * L, " << full_type_name << " const& value)" << std::endl;
+    // Nous Xiong: add use_adata arg
+    os << tabs(2) << gen_inline_code(tdefine) << "void push( lua_State * L, " << full_type_name << " const& value, bool use_adata = true)" << std::endl;
     os << tabs(2) << "{" << std::endl;
 
     os << tabs(3) << "lua_createtable(L, 0, " << tdefine.m_members.size() << ");" << std::endl;
@@ -227,7 +236,8 @@ namespace cpp2lua_gen
     ns.pop_back();
     ns.append(".");
     ns.append(tdefine.m_name);
-    os << tabs(3) << "if(!set_metatable(L, \"ad_mt_" << ns << "\")){ luaL_error(L,\"unknow type: " << ns << "\"); }" << std::endl;
+    // Nous Xiong: add use_adata arg
+    os << tabs(3) << "if(use_adata && !set_metatable(L, \"ad_mt_" << ns << "\")){ luaL_error(L,\"unknow type: " << ns << "\"); }" << std::endl;
     for (const auto& member : tdefine.m_members)
     {
       gen_adata_push_member_code(desc_define, tdefine, member, os, 3);
