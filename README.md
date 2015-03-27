@@ -20,6 +20,12 @@ Usage in brief
 * Use adatac (the ADATA compiler) to generate a C++ header (or Lua/JavaScript script or Java/C#/ classes) with helper classes to access and construct serialized data. This header (say mydata.adl.h) only depends on adata.h/hpp, which defines the core functionality
 * Store or send your buffer somewhere
 
+Require for C++
+------------
+
+* GCC >= 4.0 or VC >= 8.0
+* header only , no need to build lib.
+
 Build the compiler
 ------------
 
