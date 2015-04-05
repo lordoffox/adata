@@ -373,11 +373,12 @@ namespace cpp_gen
 
   inline std::string gen_inline_code(const type_define& define)
   {
-    if (!define.m_ismulti)
-    {
+    /// Nous Xong: why?
+    /*if (!define.m_ismulti)
+    {*/
       return "ADATA_INLINE ";
-    }
-    return "";
+    /*}
+    return "";*/
   }
 
   // Nous Xiong: add len tag jump
