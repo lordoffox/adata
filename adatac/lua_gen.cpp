@@ -959,13 +959,13 @@ local set_layout_mt_c = adata_m.set_layout_mt;
 
     inline void gen_meta_size_of(std::ostream& os, const std::string& fullname, const type_define& t_define, int tab, gen_contex& ctx)
     {
-      os << tabs(tab) << "size_of = function(o,buf) return size_of_c( field_list , mt_type_list , buf , layout_" << fullname << " , o) " << "end," << std::endl;
+      os << tabs(tab) << "size_of = function(o) return size_of_c( field_list , mt_type_list , layout_" << fullname << " , o) " << "end," << std::endl;
     }
 
     inline void gen_meta_imp(std::ostream& os, const std::string& fullname, const type_define& t_define, int idx, gen_contex& ctx)
     {
       os << "mc = {" << std::endl;
-      os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
+      os << tabs(1) << "adtype = function(o) return m." << t_define.m_name << " end," << std::endl;
       gen_meta_skip_read(os, fullname, t_define, 1, ctx);
       gen_meta_size_of(os, fullname, t_define, 1, ctx);
       gen_meta_read(os, fullname, t_define, 1, ctx);
@@ -1280,7 +1280,7 @@ local tablen = ns.tablen;
     inline void gen_meta_imp(std::ostream& os, const type_define& t_define, int idx, gen_contex& ctx)
     {
       os << "mc = {" << std::endl;
-      os << tabs(1) << "adtype = function() return m." << t_define.m_name << " end," << std::endl;
+      os << tabs(1) << "adtype = function(o) return m." << t_define.m_name << " end," << std::endl;
       gen_meta_skip_read(os, t_define, 1, ctx);
       gen_meta_size_of(os, t_define, 1, ctx);
       gen_meta_read(os, t_define, 1, ctx);
