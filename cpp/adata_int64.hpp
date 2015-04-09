@@ -184,7 +184,7 @@ namespace adata {
 
     ADATA_INLINE void lua_pushuint64(lua_State *L, uint64_t n)
     {
-      if (n < (1 << 53LL))
+      if (n < (1ULL << 53ULL))
       {
         lua_pushnumber(L, (lua_Number)n);
       }
@@ -210,7 +210,7 @@ namespace adata {
       {
         v = n;
       }
-      if (v < (1 << 53LL))
+      if (v < (1LL << 53LL))
       {
         lua_pushnumber(L, (lua_Number)n);
       }
