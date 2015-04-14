@@ -1962,9 +1962,7 @@ namespace adata {
       zero_copy_buffer * zbuf = (zero_copy_buffer*)lua_touserdata(L, 3);
       adata_type * type = (adata_type*)lua_touserdata(L, 4);
       sizeof_cache_contex ctx;
-      int top = lua_gettop(L);
       sizeof_type(L, /*zbuf, */type, &ctx);
-      top = lua_gettop(L);
       write_type(L, zbuf, type, ctx);
       lua_pushinteger(L, zbuf->error_code());
       return 1;

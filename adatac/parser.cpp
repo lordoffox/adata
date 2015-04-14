@@ -996,6 +996,11 @@ public:
 
   void valid()
   {
+    if (namespace_.m_names.empty())
+    {
+      namespace_.m_fullname = "anonymous";
+      namespace_.m_names.push_back("anonymous");
+    }
     if (namespace_.m_names.size())
     {
       bool first_element = true;
