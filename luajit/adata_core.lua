@@ -540,6 +540,38 @@ end
 
 m.wt_fixu64 = wt_fixu64;
 
+m.szof_fixi8 = function(v)
+  return 1;
+end
+
+m.szof_fixu8 = function(v)
+  return 1;
+end
+
+m.szof_fixi16 = function(v)
+  return 2;
+end
+
+m.szof_fixu16 = function(v)
+  return 2;
+end
+
+m.szof_fixi32 = function(v)
+  return 4;
+end
+
+m.szof_fixu32 = function(v)
+  return 4;
+end
+
+m.szof_fixi64 = function(v)
+  return 8;
+end
+
+m.szof_fixu64 = function(v)
+  return 8;
+end
+
 local rd_f32 = function(b)
   if b.rlen + 4 > b.rcap then
     b.e = ec_stream_buffer_overflow;
@@ -1172,6 +1204,72 @@ end
 
 m.wt_u64 = wt_u64;
 
+local szof_i64 = function(n)
+  local tag_as_value , tag , v = encode_tag(n);
+  if tag_as_value == false then
+    if v < 0x100 then
+      return 2;
+    elseif v < 0x10000 then
+      return 3;
+    elseif v < 0x1000000 then
+      return 4;
+    elseif v < 0x100000000 then
+      return 5;
+    elseif v < 0x10000000000 then
+      return 6;
+    elseif v < 0x1000000000000LL then
+      return 7;
+    elseif v < 0x100000000000000LL then
+      return 8;
+    elseif v < 0x8000000000000000LL then
+      return 9;
+    end
+  end
+  return 1;
+end
+
+local szof_u64 = function(n)
+  local tag_as_value , tag , v = encode_tag(n);
+  if tag_as_value == false then
+    local bytes = 0;
+    if v < 0x100 then
+      return 2;
+    elseif v < 0x10000 then
+      return 3;
+    elseif v < 0x1000000 then
+      return 4;
+    elseif v < 0x100000000 then
+      return 5;
+    elseif v < 0x10000000000 then
+      return 6;
+    elseif v < 0x1000000000000ULL then
+      return 7;
+    elseif v < 0x100000000000000ULL then
+      return 8;
+    else
+      return 9;
+    end
+  end
+  return 1;
+end
+
+m.szof_i8 = szof_i64;
+m.szof_u8 = szof_u64;
+m.szof_i16 = szof_i64;
+m.szof_u16 = szof_u64;
+m.szof_i32 = szof_i64;
+m.szof_u32 = szof_u64;
+m.szof_i64 = szof_i64;
+m.szof_u64 = szof_u64;
+
+m.szof_f32 = function(v)
+  return 4;
+end
+
+m.szof_f64 = function(v)
+  return 8;
+end
+
 local wt_str = function(b , s , n)
   local len = #s;
   if n > 0 then
@@ -1183,6 +1281,11 @@ local wt_str = function(b , s , n)
   ffi.copy(b.wbuf + b.wlen , s);
   b.wlen = b.wlen + len;
   return ec;
+end
+
+m.szof_str = function( s )
+  local len = #s;
+  len = len + szof_u32(len);
 end
 
 m.wt_str = wt_str;
