@@ -63,7 +63,7 @@ namespace cpp_gen
       {
         type_name = find->second;
       }
-      type_name += "<";
+      type_name += "< ";
       /*if (define.m_template_parameters[0].m_type == e_base_type::type)
       {
       type_name += desc_define.m_namespace.m_cpp_fullname;
