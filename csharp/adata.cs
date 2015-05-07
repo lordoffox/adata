@@ -187,7 +187,7 @@ namespace adata
 
     public int write_length()
     {
-      return read_len;
+      return write_len;
     }
   }
 
