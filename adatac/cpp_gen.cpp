@@ -206,18 +206,18 @@ namespace cpp_gen
     {
       os << tabs(2) << ":";
     }
-    for (const auto& member : tdefine.m_members)
+    for (const auto& member : mb_list)
     {
-      if (member.m_deleted)
+      if (member->m_deleted)
       {
         continue;
       }
-      if (member.is_initable())
+      if (member->is_initable())
       {
         ++pos;
-        os << tabs(2) << member.m_name;
+        os << tabs(2) << member->m_name;
         os << "(";
-        os << make_type_default(desc_define, member);
+        os << make_type_default(desc_define, *member);
         os << ")";
         if (pos < init_count)
         {
