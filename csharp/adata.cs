@@ -106,7 +106,7 @@ namespace adata
       read_len = 0;
       write_len = 0;
       value = new UType();
-      this.trace_info_count = 64;
+      this.trace_info_count = 0;
       trace_infos = new trace_info[64];
       error_code = error_code_t.success;
     }
@@ -133,6 +133,10 @@ namespace adata
 
     public void trace_error(string tag, int sub)
     {
+      if (trace_info_count > 63)
+      {
+        return;
+      }
       trace_infos[trace_info_count].m_tag_name = tag;
       trace_infos[trace_info_count++].m_sub_index = sub;
     }
@@ -323,7 +327,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -339,7 +343,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -349,7 +353,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref byte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -365,7 +369,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -375,7 +379,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref Int16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -391,7 +395,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -401,7 +405,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -417,7 +421,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -427,7 +431,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref Int32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -443,7 +447,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -453,7 +457,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -469,7 +473,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -479,7 +483,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref Int64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -495,7 +499,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -505,7 +509,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -521,7 +525,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -531,7 +535,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref float value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -541,7 +545,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref double value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -766,7 +770,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -776,7 +780,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref byte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -786,7 +790,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref Int16 value)
     {
-      if (stream.read_len + 2 >= stream.data_len)
+      if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -807,7 +811,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 2 >= stream.data_len)
+      if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -828,7 +832,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref Int32 value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -853,7 +857,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -878,7 +882,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref Int64 value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -911,7 +915,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -944,7 +948,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref float value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -969,7 +973,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref double value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1269,7 +1273,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref byte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1285,7 +1289,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1295,7 +1299,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref Int16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1311,7 +1315,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1364,7 +1368,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1380,7 +1384,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1425,7 +1429,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref Int32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1441,7 +1445,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1524,7 +1528,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1540,7 +1544,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1615,7 +1619,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref Int64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1631,7 +1635,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1798,7 +1802,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1814,7 +1818,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
