@@ -301,6 +301,7 @@ namespace csharp_gen
       {
         auto stream_ns = gen_stream_ns(mdefine);
         os << stream_ns;
+        os << "read(stream," << var_name << ");";
       }
       gen_trace_error_info(os, 0, "stream", mdefine.m_name, trace_error);
       os << "}" << std::endl;
