@@ -83,7 +83,7 @@ namespace cpp_gen
         type_name += ",";
         type_name += desc_define.m_option.m_cpp_allocator;
       }
-      type_name += ">";
+      type_name += " >";
     }
     else if (define.m_type == e_base_type::string)
     {
