@@ -93,11 +93,13 @@ namespace cpp2lua_gen
 
   inline std::string gen_inline_code(const type_define& define)
   {
+    /*
     if (!define.m_ismulti)
     {
       return "ADATA_INLINE ";
     }
-    return "";
+    */
+    return "ADATA_INLINE ";
   }
 
   void gen_adata_operator_load_member_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name , bool lua_pop = true)
