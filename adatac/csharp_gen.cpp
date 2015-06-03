@@ -455,19 +455,20 @@ namespace csharp_gen
     os << tabs(2) << "public static void skip_read(adata.zero_copy_buffer stream, " << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
 
-    gen_adata_read_tag(os, 3);
-
-    uint64_t tag_mask = 1;
-    uint64_t total_mask = 0;
-    for (const auto& member : tdefine.m_members)
-    {
-      os << tabs(3) << "if((tag&" << tag_mask << ")>0)";
-      gen_adata_skip_read_member_code(desc_define, tdefine, member, os, 3);
-      total_mask |= tag_mask;
-      tag_mask <<= 1;
-    }
-
-    gen_adata_len_tag_jump(os, 3);
+    os << tabs(3) << "adata.stream.skip_read_compatible(stream);" << std::endl;
+//     gen_adata_read_tag(os, 3);
+// 
+//     uint64_t tag_mask = 1;
+//     uint64_t total_mask = 0;
+//     for (const auto& member : tdefine.m_members)
+//     {
+//       os << tabs(3) << "if((tag&" << tag_mask << ")>0)";
+//       gen_adata_skip_read_member_code(desc_define, tdefine, member, os, 3);
+//       total_mask |= tag_mask;
+//       tag_mask <<= 1;
+//     }
+// 
+//     gen_adata_len_tag_jump(os, 3);
     os << tabs(2) << "}" << std::endl << std::endl;
   }
 

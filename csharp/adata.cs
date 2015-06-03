@@ -2810,5 +2810,19 @@ namespace adata
       stream.read_len += (int)len;
       return;
     }
+
+    public static void skip_read_compatible(zero_copy_buffer stream)
+    {
+      int offset = stream.read_len;
+      UInt64 tag = 0;
+      read(stream, ref tag);
+      if (stream.error()) { return; }
+      Int32 len_tag = 0;
+      read(stream, ref len_tag);
+      if (stream.error()) { return; }
+      UInt32 read_len = (UInt32)(stream.read_len - offset);
+      UInt32 len = (UInt32)len_tag;
+      if (len > read_len) stream.skip_read(len - read_len);
+    }
   }
 }
