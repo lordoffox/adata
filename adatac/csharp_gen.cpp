@@ -106,7 +106,7 @@ namespace csharp_gen
 
   void gen_code_type(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    os << tabs(1) << "public partial class " << tdefine.m_name << std::endl << "  {" << std::endl;
+    os << tabs(1) << "public partial class " << tdefine.m_name << ": adata.base_obj" << std::endl << "  {" << std::endl;
 
     std::vector<member_define*> mb_list;
 
@@ -743,7 +743,7 @@ namespace csharp_gen
     {
       os << tabs(1) << "public partial class " << t_define.m_name << std::endl << "  {" << std::endl;
 
-      os << tabs(2) << "public void read(adata.zero_copy_buffer stream)" << std::endl;
+      os << tabs(2) << "public override void read(adata.zero_copy_buffer stream)" << std::endl;
       os << tabs(2) << "{" << std::endl;
       os << tabs(3) << desc_define.m_filename << "_stream.read(stream,this);" << std::endl;
       os << tabs(2) << "}" << std::endl;
@@ -753,12 +753,12 @@ namespace csharp_gen
       os << tabs(3) << desc_define.m_filename << "_stream.skip_read(stream,this);" << std::endl;
       os << tabs(2) << "}" << std::endl;
 
-      os << tabs(2) << "public Int32 size_of(adata.zero_copy_buffer stream)" << std::endl;
+      os << tabs(2) << "public override Int32 size_of(adata.zero_copy_buffer stream)" << std::endl;
       os << tabs(2) << "{" << std::endl;
       os << tabs(3) << "return " << desc_define.m_filename << "_stream.size_of(this);" << std::endl;
       os << tabs(2) << "}" << std::endl;
 
-      os << tabs(2) << "public void write(adata.zero_copy_buffer stream)" << std::endl;
+      os << tabs(2) << "public override void write(adata.zero_copy_buffer stream)" << std::endl;
       os << tabs(2) << "{" << std::endl;
       os << tabs(3) << desc_define.m_filename << "_stream.write(stream,this);" << std::endl;
       os << tabs(2) << "}" << std::endl;
@@ -785,6 +785,7 @@ namespace csharp_gen
   const char * using_define = R"(using System;
 using System.IO;
 using System.Collections.Generic;
+using adata;
 
 )";
 

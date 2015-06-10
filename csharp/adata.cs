@@ -99,8 +99,12 @@ namespace adata
       error_code = error_code_t.success;
     }
 
-    public zero_copy_buffer(byte[] buf)
+    public zero_copy_buffer(byte[] buf , int size = -1)
     {
+      if(size == -1)
+      {
+        size = buf.Length;
+      }
       buffer = buf;
       data_len = buf.Length;
       read_len = 0;
@@ -110,8 +114,12 @@ namespace adata
       trace_infos = new trace_info[64];
       error_code = error_code_t.success;
     }
-    public void reset(byte[] the_buffer)
+    public void reset(byte[] the_buffer , int size = -1)
     {
+      if(size == -1)
+      {
+        size = the_buffer.Length;
+      }
       this.buffer = the_buffer;
       this.data_len = the_buffer.Length;
       this.read_len = 0;
@@ -2824,5 +2832,12 @@ namespace adata
       UInt32 len = (UInt32)len_tag;
       if (len > read_len) stream.skip_read(len - read_len);
     }
+  }
+
+  public abstract class base_obj
+  {
+    public abstract void read(adata.zero_copy_buffer stream);
+    public abstract Int32 size_of(adata.zero_copy_buffer stream);
+    public abstract void write(adata.zero_copy_buffer stream);
   }
 }
