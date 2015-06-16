@@ -520,7 +520,7 @@ namespace csharp_gen
       {
         os << tabs(tab_indent) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Length;" << std::endl;
         os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent) << "size += (Int32)len" << tab_indent << ";";
+        os << tabs(tab_indent) << "size += (UInt32)len" << tab_indent << ";";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
@@ -574,10 +574,10 @@ namespace csharp_gen
   void gen_adata_operator_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = tdefine.m_name;
-    os << tabs(2) << "public static Int32 size_of(" << full_type_name << " value)" << std::endl;
+    os << tabs(2) << "public static UInt32 size_of(" << full_type_name << " value)" << std::endl;
     os << tabs(2) << "{" << std::endl;
 
-    os << tabs(3) << "Int32 size = 0;" << std::endl;
+    os << tabs(3) << "UInt32 size = 0;" << std::endl;
 
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     uint64_t tag_mask = 1;
@@ -753,7 +753,7 @@ namespace csharp_gen
       os << tabs(3) << desc_define.m_filename << "_stream.skip_read(stream,this);" << std::endl;
       os << tabs(2) << "}" << std::endl;
 
-      os << tabs(2) << "public override Int32 size_of(adata.zero_copy_buffer stream)" << std::endl;
+      os << tabs(2) << "public override UInt32 size_of()" << std::endl;
       os << tabs(2) << "{" << std::endl;
       os << tabs(3) << "return " << desc_define.m_filename << "_stream.size_of(this);" << std::endl;
       os << tabs(2) << "}" << std::endl;

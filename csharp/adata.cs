@@ -293,42 +293,42 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static Int32 fix_size_of(sbyte value)
+    public static UInt32 fix_size_of(sbyte value)
     {
       return 1;
     }
 
-    public static Int32 fix_size_of(byte value)
+    public static UInt32 fix_size_of(byte value)
     {
       return 1;
     }
 
-    public static Int32 fix_size_of(Int16 value)
+    public static UInt32 fix_size_of(Int16 value)
     {
       return 2;
     }
 
-    public static Int32 fix_size_of(UInt16 value)
+    public static UInt32 fix_size_of(UInt16 value)
     {
       return 2;
     }
 
-    public static Int32 fix_size_of(Int32 value)
+    public static UInt32 fix_size_of(Int32 value)
     {
       return 4;
     }
 
-    public static Int32 fix_size_of(UInt32 value)
+    public static UInt32 fix_size_of(UInt32 value)
     {
       return 4;
     }
 
-    public static Int32 fix_size_of(Int64 value)
+    public static UInt32 fix_size_of(Int64 value)
     {
       return 8;
     }
 
-    public static Int32 fix_size_of(UInt64 value)
+    public static UInt32 fix_size_of(UInt64 value)
     {
       return 8;
     }
@@ -561,7 +561,7 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static Int32 size_of(sbyte value)
+    public static UInt32 size_of(sbyte value)
     {
       if ((value & const_tag_as_type) > 0)
       {
@@ -573,7 +573,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(byte value)
+    public static UInt32 size_of(byte value)
     {
       if (value < const_tag_as_type)
       {
@@ -585,7 +585,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(UInt16 value)
+    public static UInt32 size_of(UInt16 value)
     {
       if (value < const_tag_as_type)
       {
@@ -601,7 +601,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(Int16 value)
+    public static UInt32 size_of(Int16 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
@@ -624,7 +624,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(UInt32 value)
+    public static UInt32 size_of(UInt32 value)
     {
       if (value < const_tag_as_type)
       {
@@ -648,7 +648,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(Int32 value)
+    public static UInt32 size_of(Int32 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
@@ -679,7 +679,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(UInt64 value)
+    public static UInt32 size_of(UInt64 value)
     {
       if (value < const_tag_as_type)
       {
@@ -719,7 +719,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(Int64 value)
+    public static UInt32 size_of(Int64 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
@@ -766,12 +766,12 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(float value)
+    public static UInt32 size_of(float value)
     {
       return 4;
     }
 
-    public static Int32 size_of(double value)
+    public static UInt32 size_of(double value)
     {
       return 8;
     }
@@ -2837,7 +2837,7 @@ namespace adata
   public abstract class base_obj
   {
     public abstract void read(adata.zero_copy_buffer stream);
-    public abstract Int32 size_of(adata.zero_copy_buffer stream);
+    public abstract UInt32 size_of();
     public abstract void write(adata.zero_copy_buffer stream);
   }
 }
