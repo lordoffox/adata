@@ -2085,6 +2085,12 @@ namespace adata
       return ptr;
     }
 
+    ADATA_INLINE void clear_read()
+    {
+      this->m_read_ptr = this->m_read_header_ptr;
+      stream_context::clear();
+    }
+
     ADATA_INLINE void clear_write()
     {
       this->m_write_ptr = this->m_write_header_ptr;
