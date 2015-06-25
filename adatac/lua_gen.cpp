@@ -547,6 +547,7 @@ namespace lua_gen
       os << tabs(tab) << "if ec > 0 then ";
       make_trace_info(os, m_define.m_name, "-1", ctx);
       os << " return ec; end;" << std::endl;
+      os << tabs(tab) << "o." << m_define.m_name << " = {};" << std::endl;
       if (m_define.m_size.length())
       {
         os << tabs(tab) << "if len >" << m_define.m_size << " then ";
@@ -577,6 +578,7 @@ namespace lua_gen
         make_trace_info(os, m_define.m_name, "-1", ctx);
         os << " return ec; end;" << std::endl;
       }
+      os << tabs(tab) << "o." << m_define.m_name << " = {};" << std::endl;
       os << tabs(tab) << "local k,v;" << std::endl;
       os << tabs(tab) << "for i = 1 , len do" << std::endl;
       os << tabs(tab + 1);

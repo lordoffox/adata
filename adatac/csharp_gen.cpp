@@ -239,6 +239,7 @@ namespace csharp_gen
       }
       else if (mdefine.m_type == e_base_type::list)
       {
+        os << tabs(tab_indent + 1) << var_name << ".Clear();" << std::endl;
         os << tabs(tab_indent + 1) << "for (int i = 0 ; i < len" << tab_indent << " ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
@@ -257,6 +258,7 @@ namespace csharp_gen
       }
       else if (mdefine.m_type == e_base_type::map)
       {
+        os << tabs(tab_indent + 1) << var_name << ".Clear();" << std::endl;
         os << tabs(tab_indent + 1) << "for (int i = 0 ; i < len" << tab_indent << " ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);

@@ -3411,7 +3411,7 @@ namespace adata
     if (!stream.error())
     {
       str.resize(len);
-      stream.read(str.data(), len);
+      stream.read((char *)str.data(), len);
     }
   }
 
