@@ -2808,6 +2808,20 @@ namespace adata
       return;
     }
 
+    public static void read(zero_copy_buffer stream, ref string value)
+    {
+      UInt32 len = 0;
+      read(stream, ref len);
+      read(stream, ref value, len);
+    }
+
+    public static void write(zero_copy_buffer stream, string value)
+    {
+      UInt32 len = (UInt32)value.Length;
+      write(stream, len);
+      write(stream, value, len);
+    }
+
     public static void skip_read(zero_copy_buffer stream, ref string value, UInt32 len)
     {
       if (stream.read_len + len > stream.data_len)
