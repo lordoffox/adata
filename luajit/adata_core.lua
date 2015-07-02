@@ -129,7 +129,6 @@ local new_buf = function(n)
   b.rbuf = nil;
   b.trace = {};
   b.trace_count = 1;
-   
   return b;
 end
 
@@ -177,6 +176,10 @@ local set_error = function(b,e)
 end
 
 m.set_error = set_error;
+
+m.good = function(b) return b.e == ec_success; end
+
+m.get_error = function(b) return b.e; end
 
 local trace_error = function(b,info,idx)
   b.trace[b.trace_count] = {info,idx};
@@ -806,7 +809,7 @@ m.rd_u64 = rd_u64;
 local rd_str = function(b , n)
   local ec , len = rd_u32(b);
   if ec > 0 then return ec; end
-  if n > 0 then
+  if n ~= nill and n > 0 then
     if len > n then b.e = ec_sequence_length_overflow; return b.e; end
   end
   if b.rlen + len > b.rcap then b.e = ec_stream_buffer_overflow; return b.e; end
@@ -1272,7 +1275,7 @@ end
 
 local wt_str = function(b , s , n)
   local len = #s;
-  if n > 0 then
+  if n ~= nil and n > 0 then
     if len > n then b.e = ec_sequence_length_overflow; return b.e; end
   end
   local ec = wt_u32(b,len);
