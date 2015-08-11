@@ -149,7 +149,7 @@ private:
   static FILE* open(std::string const& adl_file)
   {
     FILE* fd = nullptr;
-    if (::fopen_s(&fd, adl_file.c_str(), "r") != 0)
+    if (::fopen_s(&fd, adl_file.c_str(), "rb") != 0)
     {
       return nullptr;
     }
