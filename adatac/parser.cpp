@@ -462,7 +462,8 @@ public:
       if (ty == type)
       {
         // add full name
-        type_name = m_define.m_namespace.m_fullname + "." + type_name;
+        //type_name = m_define.m_namespace.m_fullname + "." + type_name;
+        type_name = namespace_.m_fullname + "." + type_name;
       }
     }
     return type_name;
