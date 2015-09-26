@@ -1,4 +1,4 @@
-ADATA v1.1
+ADATA v1.2
 =======
 
 ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
@@ -309,16 +309,18 @@ Use in Lua
 
 Assuming you have written a schema using the above language in say player.adl, you've generated a lua script file called player_adl.lua(rule: [name]_adl.lua), you can now start using this in your program by require it. As noted, this script file relies on adata/lua/adata_core.lua, which should be in your lua path.
 
-Note: adatac support lua four version: lua51 lua52 lua53 luajit(v2.0.3). User need set adatac arg to generate it: adatac -Glua51/lua52/lua53/luajit .
+Note: adatac support lua four version: lua51 lua52 lua53 luajit(v2.0.3). User need set adatac arg to generate it: adatac -Gadt .
 
-Note: right now adata only support embedde lua in to c/cpp.
+Note: right now adata only support embedde lua in to c/cpp and pure luajit.
 
 Assuming adatac exe under adata/example/adl, player.adl under adata/example/adl/my/game, quest.adl under adata/example/adl/my/game, vec3.adl under adata/example/adl/util, the adatac command are:
 
-* player_adl.lua: adatac -Imy/game/player.adl -Putil -Pmy/game -Glua
-* quest_adl.lua: adatac -Imy/game/quest.adl -Glua
-* vec3_adl.lua: adatac -Iutil/vec3.adl -Glua
+* player.adt: adatac -Imy/game/player.adl -Putil -Pmy/game -Gadt
+* quest.adt: adatac -Imy/game/quest.adl -Gadt
+* vec3.adt: adatac -Iutil/vec3.adl -Gadt
 
+and you can pack player.adt and quest.adt in one file pack.adt
+*pack.adt adatac.exe -ppaley.adt -pquest.adt -opack.adt
 ### Serialization
 
 First in c/cpp, user need include adata's header and call adata::lua::init_adata_corec: 
@@ -327,7 +329,7 @@ First in c/cpp, user need include adata's header and call adata::lua::init_adata
 
 #include <lua.hpp>
 
-#include <adata_jit_corec.hpp>
+#include <adata_corec.hpp>
 
 int main()
 {
@@ -343,10 +345,12 @@ Then in lua, require adata, player_adl.lua and quest_adl.lua:
 
 ```lua
 
-local adata = require("adata_core")
-local player_adl = require("player_adl")
-local quest_adl = require("quest_adl")
+local adata = require("adata")
 
+adata.load('play.adt')
+adata.load('quest.adt')
+--or
+--adata.load('pack.adt')
 ```
 
 And create stream:
@@ -354,7 +358,7 @@ And create stream:
 ```lua
 
 local buf_len = 4096
-local stream = adata.new_buf(buf_len)
+local stream = adata.new(buf_len)
 
 ```
 
@@ -363,9 +367,8 @@ Don't like cpp, in lua, zero_copy_buffer already have a buffer to write when cre
 Now create player_v1 object and set its value to serialize:
 
 ```lua
-
 -- create a player_v1 object
-local pv1 = player_adl.player_v1()
+local pv1 = adata.types['game.player_v1']
 
 -- set its value
 pv1.id = 1
@@ -382,7 +385,7 @@ itm = player_adl.item()
 itm.id = 12
 table.insert(pv1.inventory, itm)
 
-local qst = quest_adl.quest()
+local qst = adata.types['game.quest']
 qst.id = 50
 qst.name = "quest1"
 qst.description = "There are something unusual..."
@@ -397,7 +400,7 @@ Then serialize:
 local ec = pv1:write(stream)
 if ec > 0 then 
   -- some error, print it
-  error(ec, adata.trace_info(stream))
+  error(ec, stream:trace_info())
 end
 
 -- serialize success, data already write into stream's write buffer
@@ -409,7 +412,7 @@ User can get write data:
 ```lua
 
 -- data actually is a string
-local data = adata.get_write_data(stream)
+local data = stream:get_write_data()
 
 ```
 
@@ -419,7 +422,7 @@ First set read data to stream:
 
 ```lua
 
-adata.set_read_data(stream, data)
+stream:set_read_data(data)
 
 ```
 
@@ -427,7 +430,7 @@ Create another player_v1 object, will deserialize data to it
 
 ```lua
 
-local pv1_other = player_adl.player_v1()
+local pv1_other = adata.types['game.player_v1']
 
 ```
 
@@ -438,7 +441,7 @@ Now deserialize:
 local ec = pv1_other:read(stream)
 if ec > 0 then 
   -- some error, print it
-  error(ec, adata.trace_info(stream))
+  error(ec, stream:trace_info())
 end
 
 -- deserialize success, pv1_other should equals with pv1
@@ -524,6 +527,10 @@ pv1's value should equals with pv1_other and size_of also as well.
 
 
 Change log:
-V 1.1
+*v1.2
+1.remove lua code generate,all lua(5.1,5.2,luajit) and add binary format adt files,lua and javascript use adt file dynamic load schema data type.
+2.adt can package some single adt file in one file. usage: adatac.exe -Ppath -pfile1.adt -pfile2.adt -opack.adt
+
+*V 1.1
 1.improvement lua implement performance
 2.fix bug of lua_int64

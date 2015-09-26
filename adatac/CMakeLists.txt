@@ -16,7 +16,7 @@ project (adatac)
 
 # The version number.
 set (ADATAC_VERSION_MAJOR 1)
-set (ADATAC_VERSION_MINOR 0)
+set (ADATAC_VERSION_MINOR 2)
 
 if (WIN32)
   set (WINVER "0x0501" CACHE STRING "Windows version maro. Default is 0x0501 - winxp, user can reset")
@@ -24,7 +24,7 @@ if (WIN32)
 endif ()
 
 if (MSVC)
-  add_definitions (-D__CRT_SECURE_NO_WARNINGS)
+  add_definitions (-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 # Add the source and build tree to the search path for include gce header files.

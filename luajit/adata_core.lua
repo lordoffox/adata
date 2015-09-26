@@ -1,4 +1,6 @@
 --[[ only work with luajit without C adata function , usally work in client program woth luajit script ]]
+local tinsert = table.insert;
+
 local ffi = require("ffi")
 
 local le = ffi.abi('le');
@@ -87,6 +89,30 @@ local ec_error_value_string = 26;
 local ec_error_value_list = 27;
 local ec_error_value_map = 28;
 
+local adata_et_unknow     = 0;
+local adata_et_fix_int8   = 1;
+local adata_et_fix_uint8  = 2;
+local adata_et_fix_int16  = 3;
+local adata_et_fix_uint16 = 4;
+local adata_et_fix_int32  = 5;
+local adata_et_fix_uint32 = 6;
+local adata_et_fix_int64  = 7;
+local adata_et_fix_uint64 = 8;
+local adata_et_int8       = 9;
+local adata_et_uint8      =10;
+local adata_et_int16      =11;
+local adata_et_uint16     =12;
+local adata_et_int32      =13;
+local adata_et_uint32     =14;
+local adata_et_int64      =15;
+local adata_et_uint64     =16;
+local adata_et_float32    =17;
+local adata_et_float64    =18;
+local adata_et_string     =19;
+local adata_et_list       =20;
+local adata_et_map        =21;
+local adata_et_type       =22;
+
 local m = {};
 
 local decode_tag = function(tag)
@@ -117,6 +143,9 @@ local encode_tag = function(v)
   return tag_as_value , tag , v
 end
 
+local buf_mt = {};
+buf_mt.__index = buf_mt;
+
 local new_buf = function(n)
   local b = {};
   b.uv = ffi.new("union uval_t");
@@ -129,6 +158,7 @@ local new_buf = function(n)
   b.rbuf = nil;
   b.trace = {};
   b.trace_count = 1;
+  setmetatable(b,buf_mt);
   return b;
 end
 
@@ -142,6 +172,7 @@ local resize_buf = function(b , n)
 end
 
 m.resize_buf = resize_buf;
+buf_mt.resize = resize_buf;
 
 local clear_read = function(b)
   b.e = 0;
@@ -151,6 +182,7 @@ local clear_read = function(b)
   b.trace_count = 1;
 end
 m.clear_read = clear_read;
+buf_mt.clear_read = clear_read;
 
 local clear_write = function(b)
   b.e = 0;
@@ -160,6 +192,7 @@ local clear_write = function(b)
   b.trace_count = 1;
 end
 m.clear_write = clear_write;
+buf_mt.clear_write = clear_write;
 
 local clear_buf = function(b)
   b.e = 0;
@@ -170,12 +203,14 @@ local clear_buf = function(b)
 end
 
 m.clear_buf = clear_buf;
+buf_mt.clear = clear_buf;
 
 local set_error = function(b,e)
   b.e = e;
 end
 
 m.set_error = set_error;
+buf_mt.set_error = set_error;
 
 m.good = function(b) return b.e == ec_success; end
 
@@ -187,6 +222,7 @@ local trace_error = function(b,info,idx)
 end
 
 m.trace_error = trace_error;
+buf_mt.trace_error = trace_error;
 
 local tcat = table.concat;
 
@@ -204,6 +240,7 @@ local trace_info = function(b)
 end
 
 m.trace_info = trace_info;
+buf_mt.trace_info = trace_info;
 
 local get_wt_data = function(b,dont_clear)
   local str = ffi.string(b.wbuf , b.wlen);
@@ -212,6 +249,7 @@ local get_wt_data = function(b,dont_clear)
 end
 
 m.get_write_data = get_wt_data;
+buf_mt.get_write_data = get_wt_data;
 
 local set_rd_data = function(b,s)
   b.rcap = #s;
@@ -220,6 +258,7 @@ local set_rd_data = function(b,s)
   b.e = 0;
 end
 m.set_read_data = set_rd_data;
+buf_mt.set_read_data = set_rd_data;
 
 local loadbyte2p = function(b , n)
   if b.rlen + n > b.rcap then
@@ -1288,12 +1327,563 @@ end
 
 m.szof_str = function( s )
   local len = #s;
-  len = len + szof_u32(len);
+  len = len + szof_i64(len);
 end
 
 m.wt_str = wt_str;
 
-m.regiest_metatable = function(name,mt)
+local make_zbuf_with_file = function(filename)
+  local fp = io.open(filename,"rb");
+  local buff = fp:read('*a');
+  fp:close();
+  local zbuf = new_buf(1);
+  set_rd_data(zbuf,buff);
+  return zbuf
 end
 
+local register_str_pool = function(s,pool,idx)
+  local idx_len = #idx;
+  local sidx = pool[s];
+  if sidx == nil then
+    idx_len = idx_len + 1;
+    pool[s] = idx_len;
+    idx[idx_len] = s;
+    sidx = idx_len
+  end
+  return sidx;
+end
+
+local tablen = function(tab)
+	if tab == nil then return 0 end
+	local count = 0
+  for _ in pairs(tab) do count = count + 1 end
+  return count
+end
+
+local def_pos_type =1;
+local def_pos_size  = 2;
+local def_pos_typename =3;
+local def_pos_type_def = 4;
+local def_pos_name =5;
+local def_pos_del =6;
+local def_pos_params = 7;
+
+local rehash = function( ns_str_pool_idx , idx )
+  return ns_str_pool_idx[idx+1];
+end
+
+local decode_default_value = function(buf,t,tname)
+  local ec = 0;
+  local v = nil;
+  if t >= adata_et_fix_int8 and t <= adata_et_int64 then
+    ec , v = rd_i64(buf);
+  elseif t == adata_et_fix_uint64 then
+    ec , v = rd_u64(buf);
+  elseif t == adata_et_float32 then
+    ec , v = rd_f32(buf);
+  elseif t == adata_et_float64 then
+    ec , v = rd_f64(buf);
+  elseif t == adata_et_string then
+    v = "";
+  elseif t == adata_et_type then
+    v = tname;
+  end
+  return v;
+end
+
+local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
+  local ec , ns_name = rd_str(buf,0);
+  local ec , str_pool_count = rd_i32(buf);
+  local ns_str_pool_idx = {};
+  for i = 1 , str_pool_count do
+    local ec,str = rd_str(buf,0);
+    ns_str_pool_idx[i] = register_str_pool(str,str_pool,str_idx);
+  end
+  local ec , type_count = rd_i32(buf);
+  local ns_types = {};
+  for i = 1 , type_count do
+    local type_name = nil;
+    local field_list = {};
+    local construct_list = {};
+    local mt = {};
+    local type_members = {};
+    
+    local type_def = {name , type_members};
+
+    local ec , member_count = rd_i32(buf);
+    type_def.member_count = member_count;
+    local ec , param_type_count = rd_i32(buf);
+    
+    local ec , type_name_sid = rd_i32(buf);
+    type_name_sid = rehash(ns_str_pool_idx,type_name_sid);
+    type_name = str_idx[type_name_sid];
+    local process_count = 1;
+    for m = 1, member_count do
+      local ec,member_name_sid = rd_i32(buf);
+      member_name_sid = rehash(ns_str_pool_idx,member_name_sid);     
+      local member_name = str_idx[member_name_sid];
+      
+      local ec,member_type = rd_i32(buf);
+      
+      local member_type_def = nil;
+      local member_type_name = nil;
+      
+      if member_type == adata_et_type then
+        local ec,member_typename_sid = rd_i32(buf);
+        member_typename_sid = rehash(ns_str_pool_idx,member_typename_sid);
+        member_typename = str_idx[member_typename_sid];
+        local ec,namespace_idx = rd_i32(buf);
+        
+        if namespace_idx == -1 then
+          member_type_def = types[member_typename];
+        else
+          member_type_def = ns_types[namespace_idx+1];
+        end        
+      end
+      
+      local ec , member_del = rd_i32(buf);
+      if member_del == 0 then
+        field_list[process_count] = member_name;
+        local construct_value = decode_default_value(buf,member_type,member_type_def);
+        construct_list[process_count] = construct_value;
+        process_count = process_count + 1;
+      end
+      
+      local ec,member_size = rd_i32(buf);
+      
+      member_params = {};
+      local ec,param_count = rd_i32(buf);
+      for p = 1,param_count do
+        local ec , p_type = rd_i32(buf);
+        local ec , size = rd_i32(buf);
+        local ptype_type = p_type;
+        local ptype_size = size;
+        local ptype_typename = nil;
+        local ptype_typedef = nil;
+        if p_type == adata_et_type then
+          local ec , ptype_typename_sid = rd_i32(buf);
+          ptype_typename_sid = rehash(ns_str_pool_idx,ptype_typename_sid);
+          ptype_typname = str_pool[ptype_typename_sid];
+          local ec , namespace_idx = rd_i32(buf);
+          if namespace_idx == -1 then
+            ptype_type_def = types[ptype.typename];
+          else
+            ptype_type_def = ns_types[namespace_idx+1];
+          end            
+        end
+        local ptype = {ptype_type,ptype_size,ptype_typename,ptype_typedef};
+        tinsert(member_params,ptype);
+      end
+      local member = { member_type , member_size , member_type_name , member_type_def , member_name , member_del ,  member_params};
+
+      tinsert(type_members , member);
+    end
+    
+    local obj_def = { type_def , type_name , field_list , construct_list , mt};
+    types[ns_name .. '.' .. type_name] = type_def;
+    ns_types[i] = obj_def;
+  end
+  return {ns_name,ns_types};
+end
+
+m.load = function(adt_file,str_pool,str_idx,types,mts,mt_list)
+  local buf = make_zbuf_with_file(adt_file);
+  local ec,count = rd_i32(buf);
+  local nss = {};
+  for i = 1, count do
+    local ns = load_namespace(buf,str_pool,str_idx,types,mts,mt_list);
+    tinsert(nss,ns);
+  end
+  return nss;
+end
+
+local skip_rd_type = function(str_idx , mt_list , buf , obj_type , o)
+  local offset = get_rd_len(buf);
+  local ec,read_tag = rd_u64(buf);
+  if ec > 0 then return ec; end;
+  local ec,len_tag = rd_i32(buf);
+  if ec > 0 then return ec; end;
+  if len_tag >= 0 then
+    local read_len = get_rd_len(buf) - offset;
+    if len_tag > read_len then skip_rd_len(buf, len_tag - read_len); end;
+  end    
+end
+
+m.skip_rd = skip_rd_type;
+
+local read_type;
+
+local read_value = function(buf , def , o)
+  local ty = def[def_pos_type];
+  if ty == adata_et_fix_int8 then
+    return rd_fixi8(buf);
+  elseif ty == adata_et_fix_uint8 then
+    return rd_fixu8(buf);
+  elseif ty == adata_et_fix_int16 then
+    return rd_fixi16(buf);
+  elseif ty == adata_et_fix_uint16 then
+    return rd_fixu16(buf);
+  elseif ty == adata_et_fix_int32 then
+    return rd_fixi32(buf);
+  elseif ty == adata_et_fix_uint32 then
+    return rd_fixu32(buf);
+  elseif ty == adata_et_fix_int64 then
+    return rd_fixi64(buf);
+  elseif ty == adata_et_fix_uint64 then
+    return rd_fixu64(buf);
+  elseif ty == adata_et_int8 then
+    return rd_i8(buf);
+  elseif ty == adata_et_uint8 then
+    return rd_u8(buf);
+  elseif ty == adata_et_int16 then
+    return rd_i16(buf);
+  elseif ty == adata_et_uint16 then
+    return rd_u16(buf);
+  elseif ty == adata_et_int32 then
+    return rd_i32(buf);
+  elseif ty == adata_et_uint32 then
+    return rd_u32(buf);
+  elseif ty == adata_et_int64 then
+    return rd_i64(buf);
+  elseif ty == adata_et_uint64 then
+    return rd_u64(buf);
+  elseif ty == adata_et_float32 then
+    return rd_f32(buf);
+  elseif ty == adata_et_float64 then
+    return rd_f64(buf);
+  elseif ty == adata_et_string then
+    return rd_str(buf,def[def_pos_size]);
+  elseif ty == adata_et_type then
+    return read_type(buf,def[def_pos_type_def],o)
+  end
+end
+
+local construct_value = function(def)
+  if def[def_pos_type] == adata_et_type then return def.constructor(); end;
+end
+
+local read_member = function( buf , mb , o)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local ec,count = rd_u32(buf);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      trace_error(buf,mb[def_pos_name],-1);
+      return ec_sequence_length_overflow;
+    end;
+    local param = mb[def_pos_params][1];
+    for i = 1 , count do
+      local val = construct_value(param);
+      ec , val = read_value(buf,param , val);
+      if ec > 0 then
+        trace_error(buf,mb[def_pos_name],i-1);
+        return ec;
+      end;
+      o[i] = val;
+    end
+    return ec , o;
+  elseif ty == adata_et_map then
+    local ec,count = rd_u32(buf);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      trace_error(buf,mb.name,-1);
+      return ec_sequence_length_overflow;
+    end;
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    for i = 1 , count do
+      local kval = construct_value(kparam);
+      ec , kval = read_value(buf,kparam,kval);
+      if ec > 0 then
+        trace_error(buf,mb[def_pos_name],i-1);
+        return ec;
+      end;
+      local vval = construct_value(vparam);
+      ec , vval = read_value(buf,vparam,vval);
+      if ec > 0 then
+        trace_error(buf,mb[def_pos_name],i-1);
+        return ec;
+      end;
+      o[kval] = vval;
+    end
+    return ec , o;
+  else
+    return read_value(buf,mb,o);
+  end
+end
+
+local masks = {
+  1 , 2 , 4 , 8 , 16 , 32 , 64 , 128 , 256 , 512 , 1024 , 2048 , 4096 , 8192 ,
+  16384 , 32768, 65536 , 131072 , 262144 , 524288 , 1048576 , 2097152 , 4194304 ,
+  8388608 , 16777216 , 33554432 , 67108864 , 134217728 , 268435456,536870912 ,
+  1073741824 , 2147483648 , 4294967296 , 8589934592 , 17179869184 , 34359738368 ,
+  68719476736 , 137438953472 , 274877906944 , 549755813888 , 1099511627776 ,
+  2199023255552 , 4398046511104 , 8796093022208 , 17592186044416 , 35184372088832 ,
+  70368744177664 , 140737488355328ull , 281474976710656ull , 562949953421312ull ,
+  1125899906842624ull , 2251799813685248ull , 4503599627370496ull ,
+  9007199254740992ull , 18014398509481984ull , 36028797018963968ull ,
+  72057594037927936ull , 144115188075855872ull , 288230376151711744ull ,
+  576460752303423488ull , 1152921504606846976ull , 2305843009213693952ull ,
+  4611686018427387904ull , 9223372036854775808ull , 0
+};
+
+local get_rd_len = function(buf)
+  return buf.rlen;
+end
+buf_mt.read_len = get_rd_len;
+
+local get_wt_len = function(buf)
+  return buf.wlen;
+end
+buf_mt.write_len = get_wt_len;
+
+local skip_rd_len = function(b,n)
+  b.rlen = b.rlen + n;
+end
+
+read_type = function(buf,type_def,o)
+  local offset = get_rd_len(buf);
+  local ec,read_tag = rd_u64(buf);
+  if ec > 0 then return ec; end;
+  local ec,len_tag = rd_i32(buf);
+  if ec > 0 then return ec; end;
+  
+  local members = type_def[2];
+  for i = 1 , #members do
+    local mb = members[i];
+    if read_tag % masks[i+1] >= masks[i] then
+      if mb[def_pos_del] > 0 then
+        skip_rd();
+      else
+        local mname = mb[def_pos_name];
+        ec , o[mname] = read_member(buf,mb,o[mname]);        
+        if ec > 0 then return ec; end
+      end;     
+    end  
+  end
+  
+  if len_tag >= 0 then
+    local read_len = get_rd_len(buf) - offset;
+    if len_tag > read_len then
+      skip_rd_len(buf, len_tag - read_len);
+    end;
+  end
+  return ec , o;
+end
+
+m.read = function(str_idx , mt_list , buf , type_def , o)
+  return read_type(buf,type_def,o);
+end
+
+local sizeof_fixs ={1,1,2,2,4,4,8,8};
+
+local sizeof_type;
+
+local sizeof_value = function(def , o , ctx)
+  local ty = def[def_pos_type];
+  if ty >= adata_et_fix_int8 and ty <= adata_et_fix_uint64 then
+    return sizeof_fixs[ty];
+  elseif ty >= adata_et_int8 and ty <= adata_et_int64 then
+    return szof_i64(o);
+  elseif ty == adata_et_uint64 then
+    return szof_u64(o);
+  elseif ty == adata_et_float32 then
+    return 4;
+  elseif ty == adata_et_float64 then
+    return 8;
+  elseif ty == adata_et_string then
+    local len = #o;
+    return szof_i64(len) + len;
+  elseif ty == adata_et_type then
+    return sizeof_type(def[def_pos_type_def],o,ctx)
+  end
+end
+
+local sizeof_member = function(mb , o , ctx)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local len = #o;
+    if len == 0 then return true,0; end;
+    local sz = szof_i64(len);
+    local param = mb[def_pos_params][1];
+    for i = 1 , len do 
+      sz = sz + sizeof_value(param,o[i],ctx);
+    end;
+    return false , sz;
+  elseif ty == adata_et_map then
+    local len = tablen(o);
+    if len == 0 then return true,0; end;
+    local sz = szof_i64(len);
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    for k,v in pairs(o) do
+      sz = sz + sizeof_value(kparam,k,ctx);
+      sz = sz + sizeof_value(vparam,v,ctx);
+    end
+    return false,sz;
+  else
+    return false , sizeof_value(mb,o,ctx);
+  end
+end
+
+sizeof_type = function(type_def,o,ctx) 
+  local mask = 0;
+  local sz = 0;
+  local idx = 0;
+  if ctx ~= nill then
+    idx = ctx[1];
+    idx = idx + 1;
+    ctx[1] = idx;
+    info  = {};
+    tinsert(ctx,{});
+  end;
+  
+  local members = type_def[2];
+  for i = 1 , #members do
+    local mb = members[i];
+    if mb[def_pos_del] == 0 then
+      local name = mb[def_pos_name];
+      local skip , msz = sizeof_member(mb,o[name],ctx);
+      if skip == false then
+        mask = mask + masks[i];
+        sz = sz + msz;
+      end
+    end
+  end
+  local len_tag = sz + szof_i64(mask);
+  len_tag = len_tag + szof_i64(len_tag);
+  if ctx ~= nill then
+    ctx[idx] = {mask , len_tag};
+  end;
+  return len_tag;
+end
+
+m.size_of = function(str_idx , mt_list , type_def , o)
+  return sizeof_type(type_def,o);
+end
+
+local pop_ctx = function(ctx)
+  local widx = ctx[1];
+  widx = widx + 1;
+  ctx[1] = widx;
+  return ctx[widx];
+end
+
+local write_type;
+
+local write_value = function(buf , def , o , ctx)
+  local ty = def[def_pos_type];
+  if ty == adata_et_fix_int8 then
+    return wt_fixi8(buf,o);
+  elseif ty == adata_et_fix_uint8 then
+    return wt_fixu8(buf,o);
+  elseif ty == adata_et_fix_int16 then
+    return wt_fixi16(buf,o);
+  elseif ty == adata_et_fix_uint16 then
+    return wt_fixu16(buf,o);
+  elseif ty == adata_et_fix_int32 then
+    return wt_fixi32(buf,o);
+  elseif ty == adata_et_fix_uint32 then
+    return wt_fixu32(buf,o);
+  elseif ty == adata_et_fix_int64 then
+    return wt_fixi64(buf,o);
+  elseif ty == adata_et_fix_uint64 then
+    return wt_fixu64(buf,o);
+  elseif ty == adata_et_int8 then
+    return wt_i8(buf,o);
+  elseif ty == adata_et_uint8 then
+    return wt_u8(buf,o);
+  elseif ty == adata_et_int16 then
+    return wt_i16(buf,o);
+  elseif ty == adata_et_uint16 then
+    return wt_u16(buf,o);
+  elseif ty == adata_et_int32 then
+    return wt_i32(buf,o);
+  elseif ty == adata_et_uint32 then
+    return wt_u32(buf,o);
+  elseif ty == adata_et_int64 then
+    return wt_i64(buf,o);
+  elseif ty == adata_et_uint64 then
+    return wt_u64(buf,o);
+  elseif ty == adata_et_float32 then
+    return wt_f32(buf,o);
+  elseif ty == adata_et_float64 then
+    return wt_f64(buf,o);
+  elseif ty == adata_et_string then
+    return wt_str(buf,o,def[def_pos_size]);
+  elseif ty == adata_et_type then
+    return write_type(buf,def[def_pos_type_def],o,ctx)
+  end
+end
+
+local write_member = function( buf , mb , o , ctx)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local count = #o;
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      trace_error(buf,mb[def_pos_name],-1);
+      return ec_sequence_length_overflow;
+    end;
+    wt_u32(buf,count);
+    local param = mb[def_pos_params][1];
+    for i = 1 , count do
+      local val = o[i];
+      ec , val = write_value(buf,param , val , ctx);
+      if ec > 0 then
+        trace_error(buf,mb[def_pos_name],i-1);
+        return ec;
+      end;
+    end
+  elseif ty == adata_et_map then
+    local count = tablen(o);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      trace_error(buf,mb[def_pos_name],-1);
+      return ec_sequence_length_overflow;
+    end;
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    wt_u32(buf,count);
+    for k,v in pairs(o) do
+      ec = write_value(buf,kparam,k,ctx);
+      if ec > 0 then
+        trace_error(buf,mb[def_pos_name],i-1);
+        return ec;
+      end;
+      ec = write_value(buf,vparam,v,ctx);
+      if ec > 0 then
+        trace_error(buf,mb[def_pos_name],i-1);
+        return ec;
+      end;
+    end
+  else
+    return write_value(buf,mb,o,ctx);
+  end
+  return buf.e;
+end
+
+write_type = function(buf,type_def,o,ctx)
+  local info = pop_ctx(ctx);
+  local write_tag = info[1];
+  local len_tag = info[2];
+  wt_u64(buf,write_tag);
+  wt_u32(buf,len_tag);
+  local members = type_def[2];
+  for i = 1 , #members do
+    local mb = members[i];
+    if write_tag % masks[i+1] >= masks[i] then
+      local ec = write_member(buf,mb,o[mb[def_pos_name]],ctx);
+      if ec > 0 then return ec; end
+    end  
+  end
+  return buf.e;
+end
+
+m.write = function(str_idx , mt_list , buf , type_def , o)
+  local ctx = {1};
+  local sz = sizeof_type(type_def,o,ctx);
+  ctx[1] = 1;
+  return write_type(buf,type_def,o,ctx);
+end
 return m;

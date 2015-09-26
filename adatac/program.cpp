@@ -31,25 +31,20 @@ namespace csharp_gen
   void gen_code(const descrip_define&, const std::string&);
 }
 
-namespace lua_gen
+namespace adt_gen
 {
-  namespace lua_jit
-  {
-    void gen_code(const descrip_define&, const std::string&);
-  }
-  namespace lua_5_x
-  {
-    void gen_code(const descrip_define&, const std::string&, int min_ver = 1);
-  }
+  void gen_code(const descrip_define&, const std::string&);
+  void pack_adt(const std::vector<std::string>& adt_list, const std::string& adp_file);
 }
-
-//namespace js_gen
-//{
-//  void gen_code(const descrip_define&, const std::string&);
-//}
 
 void run_program(const options& opt)
 {
+  if (!opt.pack_files.empty())
+  {
+    adt_gen::pack_adt(opt.pack_files, opt.output_path + opt.pack_output_file);
+    return;
+  }
+
   auto ext_pos = opt.input_file.rfind('.');
   if (ext_pos == std::string::npos)
   {
@@ -119,30 +114,9 @@ void run_program(const options& opt)
     {
       csharp_gen::gen_code(define, outputfile + ".adl.cs");
     }
-    else if (gen_type == "lua")
+    else if (gen_type == "adt")
     {
-      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua" , 3);
+      adt_gen::gen_code(define, outputfile + ".adt");
     }
-    else if (gen_type == "lua51")
-    {
-      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua", 1);
-    }
-    else if (gen_type == "lua52")
-    {
-      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua", 2);
-    }
-    else if (gen_type == "lua53")
-    {
-      lua_gen::lua_5_x::gen_code(define, outputfile + "_adl.lua", 3);
-    }
-    else if (gen_type == "luajit")
-    {
-      lua_gen::lua_jit::gen_code(define, outputfile + "_adl.lua");
-    }
-    /// Noux Xiong: temp no js support
-    /*else if (gen_type == "js")
-    {
-    js_gen::gen_code(define, outputfile + "_adl.js");
-    }*/
   }
 }

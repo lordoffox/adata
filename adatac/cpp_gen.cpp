@@ -731,7 +731,7 @@ namespace cpp_gen
     {
       std::string inc_path = boost::algorithm::replace_all_copy(inc.first, ".", "/");
       inc_path += ".adl.h";
-      os << "#include <" << inc_path << ">" << std::endl;
+      os << "#include \"" << inc_path << "\"" << std::endl;
     }
     os << std::endl;
   }

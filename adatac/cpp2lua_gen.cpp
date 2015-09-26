@@ -234,12 +234,11 @@ namespace cpp2lua_gen
     os << tabs(2) << "{" << std::endl;
 
     os << tabs(3) << "lua_createtable(L, 0, " << tdefine.m_members.size() << ");" << std::endl;
-    std::string ns = desc_define.m_namespace.m_lua_fullname;
-    ns.pop_back();
+    std::string ns = desc_define.m_namespace.m_fullname;
     ns.append(".");
     ns.append(tdefine.m_name);
     // Nous Xiong: add use_adata arg
-    os << tabs(3) << "if(use_adata && !set_metatable(L, \"ad_mt_" << ns << "\")){ luaL_error(L,\"unknow type: " << ns << "\"); }" << std::endl;
+    os << tabs(3) << "if(use_adata && !set_metatable(L, \"ad.mt." << ns << "\")){ luaL_error(L,\"unknow type: " << ns << "\"); }" << std::endl;
     for (const auto& member : tdefine.m_members)
     {
       gen_adata_push_member_code(desc_define, tdefine, member, os, 3);
@@ -271,7 +270,7 @@ namespace cpp2lua_gen
     for (auto const& inc : desc_define.m_includes)
     {
       std::string inc_path = boost::algorithm::replace_all_copy(inc.first, ".", "/");
-      os << "#include <" << inc_path << ".adl.c2l.h" << ">" << std::endl;
+      os << "#include \"" << inc_path << ".adl.c2l.h" << "\"" << std::endl;
     }
     os << std::endl;
   }
