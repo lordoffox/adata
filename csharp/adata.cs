@@ -114,6 +114,10 @@ namespace adata
           size = buf.Length;
         }
       }
+      else
+      {
+        size = 0;
+      }
       data_len = size;
       read_len = 0;
       write_len = 0;
