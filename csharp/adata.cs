@@ -102,12 +102,19 @@ namespace adata
 
     public zero_copy_buffer(byte[] buf , int size = -1)
     {
-      if(size == -1)
-      {
-        size = buf.Length;
-      }
       buffer = buf;
-      data_len = buf.Length;
+      if(buf != null)
+      {
+        if (buf.Length < size)
+        {
+          size = buf.Length;
+        }
+        else if (size == -1)
+        {
+          size = buf.Length;
+        }
+      }
+      data_len = size;
       read_len = 0;
       write_len = 0;
       value = new UType();
