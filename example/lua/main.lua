@@ -65,18 +65,18 @@ tabeq = function(lhs, rhs)
             end
           else
             if not (v == rhs[k]) then 
-              res = false 
+              res = false
               break
             end
           end
         else
-                 if ty == 'table' then
+          if ty == 'table' then
             if not tabeq(v, rhs[k]) then
               res = false
               break
             end
           elseif not (v == rhs[k]) then 
-            res = false 
+            res = false
             break 
           end
         end
@@ -88,7 +88,6 @@ tabeq = function(lhs, rhs)
       end
     end
   else
-      print( 'len not eq ')
     res = false
   end
   return res
@@ -97,13 +96,15 @@ end
 local player_equals = function(lhs, rhs)
   if rawequal(lhs, nil) or rawequal(rhs, nil) then return false end
   if rawequal(lhs, rhs) then return true end
-  print('test player_equals')
+
   return 
     lhs.id == rhs.id and
     lhs.name == rhs.name and 
     lhs.age == rhs.age and
     lhs.factor == rhs.factor and
-    lhs.pos == rhs.pos and
+    tabeq(
+      lhs.pos , rhs.pos
+      ) and
     tabeq(
       lhs.inventory, rhs.inventory
       ) and
@@ -119,7 +120,9 @@ local player_equals_v2 = function(lhs, rhs)
   return 
     lhs.id == rhs.id and
     lhs.name == rhs.name and 
-    lhs.pos == rhs.pos and
+    tabeq(
+      lhs.pos , rhs.pos
+      ) and
     tabeq(
       lhs.inventory, rhs.inventory
       ) and
@@ -139,7 +142,6 @@ set_eq(tmp_quest, quest_equals)
 
 local tmp_player_v1 = adata.types['my.game.player_v1']()
 set_eq(tmp_player_v1, player_equals)
-
 
 local dump_player_v1 = function(pv1)
   print(pv1.id, pv1.name, pv1.age, pv1.factor)
