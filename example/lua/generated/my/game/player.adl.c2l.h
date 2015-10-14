@@ -2,8 +2,8 @@
 #define player_adl_cpp2lua_h_
 
 #include <adata_cpp2lua.hpp>
-#include <my/game/quest.adl.c2l.h>
-#include <util/vec3.adl.c2l.h>
+#include "my/game/quest.adl.c2l.h"
+#include "util/vec3.adl.c2l.h"
 
 #include "player.adl.h"
 
@@ -24,7 +24,7 @@ namespace adata
     ADATA_INLINE void push( lua_State * L, ::my::game::item const& value, bool use_adata = true)
     {
       lua_createtable(L, 0, 3);
-      if(use_adata && !set_metatable(L, "ad_mt_my_game.item")){ luaL_error(L,"unknow type: my_game.item"); }
+      if(use_adata && !set_metatable(L, "ad.mt.my.game.item")){ luaL_error(L,"unknow type: my.game.item"); }
       {push(L, value.id);}
       lua_setfield(L, -2, "id");
       {push(L, value.type);}
@@ -33,7 +33,7 @@ namespace adata
       lua_setfield(L, -2, "level");
     }
 
-    void load( lua_State * L, ::my::game::player_v1& value)
+    ADATA_INLINE void load( lua_State * L, ::my::game::player_v1& value)
     {
       lua_getfield(L, -1, "id");
       {load(L, value.id);lua_pop(L, 1);}
@@ -69,10 +69,10 @@ namespace adata
       {load(L, value.factor);lua_pop(L, 1);}
     }
 
-    void push( lua_State * L, ::my::game::player_v1 const& value, bool use_adata = true)
+    ADATA_INLINE void push( lua_State * L, ::my::game::player_v1 const& value, bool use_adata = true)
     {
       lua_createtable(L, 0, 7);
-      if(use_adata && !set_metatable(L, "ad_mt_my_game.player_v1")){ luaL_error(L,"unknow type: my_game.player_v1"); }
+      if(use_adata && !set_metatable(L, "ad.mt.my.game.player_v1")){ luaL_error(L,"unknow type: my.game.player_v1"); }
       {push(L, value.id);}
       lua_setfield(L, -2, "id");
       {push(L, value.name);}
@@ -105,7 +105,7 @@ namespace adata
       lua_setfield(L, -2, "factor");
     }
 
-    void load( lua_State * L, ::my::game::player_v2& value)
+    ADATA_INLINE void load( lua_State * L, ::my::game::player_v2& value)
     {
       lua_getfield(L, -1, "id");
       {load(L, value.id);lua_pop(L, 1);}
@@ -148,10 +148,10 @@ namespace adata
       }
     }
 
-    void push( lua_State * L, ::my::game::player_v2 const& value, bool use_adata = true)
+    ADATA_INLINE void push( lua_State * L, ::my::game::player_v2 const& value, bool use_adata = true)
     {
       lua_createtable(L, 0, 8);
-      if(use_adata && !set_metatable(L, "ad_mt_my_game.player_v2")){ luaL_error(L,"unknow type: my_game.player_v2"); }
+      if(use_adata && !set_metatable(L, "ad.mt.my.game.player_v2")){ luaL_error(L,"unknow type: my.game.player_v2"); }
       {push(L, value.id);}
       lua_setfield(L, -2, "id");
       {push(L, value.name);}

@@ -22,7 +22,7 @@ namespace adata
     ADATA_INLINE void push( lua_State * L, ::my::game::quest const& value, bool use_adata = true)
     {
       lua_createtable(L, 0, 3);
-      if(use_adata && !set_metatable(L, "ad_mt_my_game.quest")){ luaL_error(L,"unknow type: my_game.quest"); }
+      if(use_adata && !set_metatable(L, "ad.mt.my.game.quest")){ luaL_error(L,"unknow type: my.game.quest"); }
       {push(L, value.id);}
       lua_setfield(L, -2, "id");
       {push(L, value.name);}

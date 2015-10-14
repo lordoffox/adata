@@ -22,7 +22,7 @@ namespace adata
     ADATA_INLINE void push( lua_State * L, ::util::vec3 const& value, bool use_adata = true)
     {
       lua_createtable(L, 0, 3);
-      if(use_adata && !set_metatable(L, "ad_mt_util.vec3")){ luaL_error(L,"unknow type: util.vec3"); }
+      if(use_adata && !set_metatable(L, "ad.mt.util.vec3")){ luaL_error(L,"unknow type: util.vec3"); }
       {push(L, value.x);}
       lua_setfield(L, -2, "x");
       {push(L, value.y);}

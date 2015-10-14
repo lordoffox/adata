@@ -1145,7 +1145,6 @@ namespace adata {
           adata_paramter_type_buffer += sizeof(adata_paramter_type);
           adata_paramter_type * ptype = mb->paramter_type[p];
           read(buf, ptype->type);
-          read(buf, ptype->size);
           if (ptype->type == adata_et_type)
           {
             int ptype_typename_sid;
@@ -1176,6 +1175,7 @@ namespace adata {
           {
             ptype->type_define = NULL;
           }
+          read(buf, ptype->size);
         }
       }
       lua_createtable(L,4,0);

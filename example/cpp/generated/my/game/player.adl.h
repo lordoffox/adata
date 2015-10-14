@@ -2,8 +2,8 @@
 #define player_adl_h_adata_header_define
 
 #include <adata.hpp>
-#include <my/game/quest.adl.h>
-#include <util/vec3.adl.h>
+#include "my/game/quest.adl.h"
+#include "util/vec3.adl.h"
 
 namespace my {namespace game {
   struct item
@@ -12,9 +12,9 @@ namespace my {namespace game {
     int32_t level;
     int64_t id;
     item()
-    :    id(0LL),
-    type(0),
-    level(0)
+    :    type(0),
+    level(0),
+    id(0LL)
     {}
   };
 
@@ -25,8 +25,8 @@ namespace my {namespace game {
     float factor;
     ::std::string name;
     ::util::vec3 pos;
-    ::std::vector<::my::game::item> inventory;
-    ::std::vector<::my::game::quest> quests;
+    ::std::vector< ::my::game::item > inventory;
+    ::std::vector< ::my::game::quest > quests;
     player_v1()
     :    id(0),
     age(0),
@@ -41,9 +41,9 @@ namespace my {namespace game {
     //factor deleted , skip define.
     ::std::string name;
     ::util::vec3 pos;
-    ::std::vector<::my::game::item> inventory;
-    ::std::vector<::my::game::quest> quests;
-    ::std::vector<int32_t> friends;
+    ::std::vector< ::my::game::item > inventory;
+    ::std::vector< ::my::game::quest > quests;
+    ::std::vector< int32_t > friends;
     player_v2()
     :    id(0)
     {}
@@ -115,7 +115,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  void read( stream_ty& stream, ::my::game::player_v1& value)
+  ADATA_INLINE void read( stream_ty& stream, ::my::game::player_v1& value)
   {
     ::std::size_t offset = stream.read_length();
     uint64_t tag = 0;
@@ -168,13 +168,13 @@ namespace adata
   }
 
   template <typename stream_ty>
-  void skip_read(stream_ty& stream, ::my::game::player_v1* value)
+  ADATA_INLINE void skip_read(stream_ty& stream, ::my::game::player_v1* value)
   {
     (value);
     skip_read_compatible(stream);
   }
 
-  int32_t size_of(const ::my::game::player_v1& value)
+  ADATA_INLINE int32_t size_of(const ::my::game::player_v1& value)
   {
     int32_t size = 0;
     uint64_t tag = 77ULL;
@@ -200,7 +200,7 @@ namespace adata
     {
       int32_t len = (int32_t)(value.inventory).size();
       size += size_of(len);
-      for (::std::vector<::my::game::item>::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i)
+      for (::std::vector< ::my::game::item >::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i)
       {
         size += size_of(*i);
       }
@@ -209,7 +209,7 @@ namespace adata
     {
       int32_t len = (int32_t)(value.quests).size();
       size += size_of(len);
-      for (::std::vector<::my::game::quest>::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i)
+      for (::std::vector< ::my::game::quest >::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i)
       {
         size += size_of(*i);
       }
@@ -223,7 +223,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  void write(stream_ty& stream , const ::my::game::player_v1&value)
+  ADATA_INLINE void write(stream_ty& stream , const ::my::game::player_v1&value)
   {
     uint64_t tag = 77ULL;
     if(!value.name.empty()){tag|=2ULL;}
@@ -248,7 +248,7 @@ namespace adata
       uint32_t len = (uint32_t)(value.inventory).size();
       write(stream,len);
       int32_t count = 0;
-      for (::std::vector<::my::game::item>::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i, ++count)
+      for (::std::vector< ::my::game::item >::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i, ++count)
       {
         {write(stream,*i);}
         {if(stream.error()){stream.trace_error("inventory",count);return;}}
@@ -259,7 +259,7 @@ namespace adata
       uint32_t len = (uint32_t)(value.quests).size();
       write(stream,len);
       int32_t count = 0;
-      for (::std::vector<::my::game::quest>::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i, ++count)
+      for (::std::vector< ::my::game::quest >::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i, ++count)
       {
         {write(stream,*i);}
         {if(stream.error()){stream.trace_error("quests",count);return;}}
@@ -270,7 +270,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  void read( stream_ty& stream, ::my::game::player_v2& value)
+  ADATA_INLINE void read( stream_ty& stream, ::my::game::player_v2& value)
   {
     ::std::size_t offset = stream.read_length();
     uint64_t tag = 0;
@@ -334,13 +334,13 @@ namespace adata
   }
 
   template <typename stream_ty>
-  void skip_read(stream_ty& stream, ::my::game::player_v2* value)
+  ADATA_INLINE void skip_read(stream_ty& stream, ::my::game::player_v2* value)
   {
     (value);
     skip_read_compatible(stream);
   }
 
-  int32_t size_of(const ::my::game::player_v2& value)
+  ADATA_INLINE int32_t size_of(const ::my::game::player_v2& value)
   {
     int32_t size = 0;
     uint64_t tag = 9ULL;
@@ -365,7 +365,7 @@ namespace adata
     {
       int32_t len = (int32_t)(value.inventory).size();
       size += size_of(len);
-      for (::std::vector<::my::game::item>::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i)
+      for (::std::vector< ::my::game::item >::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i)
       {
         size += size_of(*i);
       }
@@ -374,7 +374,7 @@ namespace adata
     {
       int32_t len = (int32_t)(value.quests).size();
       size += size_of(len);
-      for (::std::vector<::my::game::quest>::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i)
+      for (::std::vector< ::my::game::quest >::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i)
       {
         size += size_of(*i);
       }
@@ -384,7 +384,7 @@ namespace adata
     {
       int32_t len = (int32_t)(value.friends).size();
       size += size_of(len);
-      for (::std::vector<int32_t>::const_iterator i = value.friends.begin() ; i != value.friends.end() ; ++i)
+      for (::std::vector< int32_t >::const_iterator i = value.friends.begin() ; i != value.friends.end() ; ++i)
       {
         size += size_of(*i);
       }
@@ -395,7 +395,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  void write(stream_ty& stream , const ::my::game::player_v2&value)
+  ADATA_INLINE void write(stream_ty& stream , const ::my::game::player_v2&value)
   {
     uint64_t tag = 9ULL;
     if(!value.name.empty()){tag|=2ULL;}
@@ -421,7 +421,7 @@ namespace adata
       uint32_t len = (uint32_t)(value.inventory).size();
       write(stream,len);
       int32_t count = 0;
-      for (::std::vector<::my::game::item>::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i, ++count)
+      for (::std::vector< ::my::game::item >::const_iterator i = value.inventory.begin() ; i != value.inventory.end() ; ++i, ++count)
       {
         {write(stream,*i);}
         {if(stream.error()){stream.trace_error("inventory",count);return;}}
@@ -432,7 +432,7 @@ namespace adata
       uint32_t len = (uint32_t)(value.quests).size();
       write(stream,len);
       int32_t count = 0;
-      for (::std::vector<::my::game::quest>::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i, ++count)
+      for (::std::vector< ::my::game::quest >::const_iterator i = value.quests.begin() ; i != value.quests.end() ; ++i, ++count)
       {
         {write(stream,*i);}
         {if(stream.error()){stream.trace_error("quests",count);return;}}
@@ -444,7 +444,7 @@ namespace adata
       uint32_t len = (uint32_t)(value.friends).size();
       write(stream,len);
       int32_t count = 0;
-      for (::std::vector<int32_t>::const_iterator i = value.friends.begin() ; i != value.friends.end() ; ++i, ++count)
+      for (::std::vector< int32_t >::const_iterator i = value.friends.begin() ; i != value.friends.end() ; ++i, ++count)
       {
         {write(stream,*i);}
         {if(stream.error()){stream.trace_error("friends",count);return;}}

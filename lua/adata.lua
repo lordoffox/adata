@@ -99,10 +99,18 @@ local load = function(file)
   end
 end
 
+local tablen = function(tab)
+	if tab == nil then return 0 end
+	local count = 0
+  for _ in pairs(tab) do count = count + 1 end
+  return count
+end
+
 m = {
   load = load,
   types = types,
   new = core.new_buf,
+  tablen = tablen,
 }
 
 return m;
