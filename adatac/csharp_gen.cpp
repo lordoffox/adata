@@ -434,7 +434,7 @@ namespace csharp_gen
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
     {
-      os << tabs(3) << "if((tag&" << tag_mask << ")>0)";
+      os << tabs(3) << "if((tag&" << tag_mask << "ul)>0)";
       gen_adata_read_member_code(desc_define, tdefine, member, os, 3);
       total_mask |= tag_mask;
       tag_mask <<= 1;
@@ -496,18 +496,18 @@ namespace csharp_gen
       tag_mask <<= 1;
     }
     tag_mask = 1;
-    os << tabs(tab_indent) << "UInt64 tag = " << tag << ";" << std::endl;
+    os << tabs(tab_indent) << "UInt64 tag = " << tag << "ul;" << std::endl;
     for (const auto& member : tdefine.m_members)
     {
       if (member.m_deleted == 0)
       {
         if (member.is_container())
         {
-          os << tabs(tab_indent) << "if(value." << member.m_name << ".Count > 0){tag|=" << tag_mask << ";}" << std::endl;
+          os << tabs(tab_indent) << "if(value." << member.m_name << ".Count > 0){tag|=" << tag_mask << "ul;}" << std::endl;
         }
         else if (member.m_type == e_base_type::string)
         {
-          os << tabs(tab_indent) << "if(value." << member.m_name << ".Length > 0){tag|=" << tag_mask << ";}" << std::endl;
+          os << tabs(tab_indent) << "if(value." << member.m_name << ".Length > 0){tag|=" << tag_mask << "ul;}" << std::endl;
         }
       }
       tag_mask <<= 1;
@@ -591,7 +591,7 @@ namespace csharp_gen
       {
         if (member.is_multi())
         {
-          os << tabs(3) << "if((tag&" << tag_mask << ")>0)" << std::endl;
+          os << tabs(3) << "if((tag&" << tag_mask << "ul)>0)" << std::endl;
         }
         os << tabs(3) << "{" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, member, os, 4, var_name);
@@ -704,7 +704,7 @@ namespace csharp_gen
       {
         if (member.is_multi())
         {
-          os << tabs(3) << "if((tag&" << tag_mask << ")>0)";
+          os << tabs(3) << "if((tag&" << tag_mask << "ul)>0)";
         }
         gen_member_write_type_code(desc_define, tdefine, member, os, 3, var_name);
         os << std::endl;
