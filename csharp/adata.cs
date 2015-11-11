@@ -788,6 +788,14 @@ namespace adata
       return 8;
     }
 
+    public static UInt32 size_of(string value)
+    {
+      UInt32 len = (UInt32)System.Text.Encoding.Default.GetByteCount(value);
+
+      len += adata.stream.size_of(len);
+      return len;
+    }
+
     public static void fix_read(zero_copy_buffer stream, ref sbyte value)
     {
       if (stream.read_len + 1 > stream.data_len)
@@ -2809,9 +2817,10 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
+      byte[] buff = stream.m_encoding.GetBytes(value);
       for (int i = 0; i < len; ++i)
       {
-        stream.buffer[stream.write_len++] = (byte)value[i];
+        stream.buffer[stream.write_len++] = buff[i];
       }
       return;
     }
@@ -2825,9 +2834,19 @@ namespace adata
 
     public static void write(zero_copy_buffer stream, string value)
     {
-      UInt32 len = (UInt32)value.Length;
+      byte[] buff = stream.m_encoding.GetBytes(value);
+
+      UInt32 len = (UInt32)buff.Length;
+      if (stream.write_len + len > stream.data_len)
+      {
+        stream.error_code = error_code_t.stream_buffer_overflow;
+        return;
+      }
       write(stream, len);
-      write(stream, value, len);
+      for (int i = 0; i < len; ++i)
+      {
+        stream.buffer[stream.write_len++] = buff[i];
+      }
     }
 
     public static void skip_read(zero_copy_buffer stream, ref string value, UInt32 len)

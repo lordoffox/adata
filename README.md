@@ -527,6 +527,7 @@ pv1's value should equals with pv1_other and size_of also as well.
 
 
 Change log:
+
 *v1.2
 1.remove lua code generate,all lua(5.1,5.2,luajit) and add binary format adt files,lua and javascript use adt file dynamic load schema data type.
 2.adt can package some single adt file in one file. usage: adatac.exe -Ppath -pfile1.adt -pfile2.adt -opack.adt

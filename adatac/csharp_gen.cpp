@@ -520,10 +520,7 @@ namespace csharp_gen
     {
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Length;" << std::endl;
-        os << tabs(tab_indent) << "size += adata.stream.size_of(len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent) << "size += (UInt32)len" << tab_indent << ";";
-        os << std::endl;
+        os << tabs(tab_indent) << "size += adata.stream.size_of(" << var_name << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -621,9 +618,7 @@ namespace csharp_gen
 
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent + 1) << "UInt32 len" << tab_indent << " = (UInt32)" << var_name << ".Length;" << std::endl;
-        os << tabs(tab_indent + 1) << "adata.stream.write(stream,len" << tab_indent << ");" << std::endl;
-        os << tabs(tab_indent + 1) << "adata.stream.write(stream," << var_name << ",len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "adata.stream.write(stream," << var_name << ");" << std::endl;
         gen_trace_error_info(os, tab_indent + 1, "stream", mdefine.m_name, trace_error);
         if (trace_error)os << std::endl;
       }
