@@ -709,19 +709,19 @@ namespace adata
       {
         return 4;
       }
-      else if (value < 0x100000000)
+      else if (value < 0x100000000UL)
       {
         return 5;
       }
-      else if (value < 0x10000000000)
+      else if (value < 0x10000000000UL)
       {
         return 6;
       }
-      else if (value < 0x1000000000000)
+      else if (value < 0x1000000000000UL)
       {
         return 7;
       }
-      else if (value < 0x100000000000000)
+      else if (value < 0x100000000000000UL)
       {
         return 8;
       }
@@ -755,19 +755,19 @@ namespace adata
         {
           return 4;
         }
-        if (value < 0x100000000)
+        if (value < 0x100000000L)
         {
           return 5;
         }
-        if (value < 0x10000000000)
+        if (value < 0x10000000000L)
         {
           return 6;
         }
-        if (value < 0x1000000000000)
+        if (value < 0x1000000000000L)
         {
           return 7;
         }
-        if (value < 0x100000000000000)
+        if (value < 0x100000000000000L)
         {
           return 8;
         }
@@ -1992,7 +1992,7 @@ namespace adata
             }
         }
       }
-      value = stream.value.VU32;
+      value = stream.value.VU64;
     }
 
     public static void write(zero_copy_buffer stream, sbyte value)
@@ -2413,7 +2413,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000)
+        else if (value < 0x100000000L)
         {
           if (stream.write_len + 5 >= stream.data_len)
           {
@@ -2438,7 +2438,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x10000000000)
+        else if (value < 0x10000000000L)
         {
           if (stream.write_len + 6 >= stream.data_len)
           {
@@ -2465,7 +2465,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000000000)
+        else if (value < 0x1000000000000L)
         {
           if (stream.write_len + 7 >= stream.data_len)
           {
@@ -2494,7 +2494,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000000000)
+        else if (value < 0x100000000000000L)
         {
           if (stream.write_len + 8 >= stream.data_len)
           {
@@ -2626,7 +2626,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000)
+        else if (value < 0x100000000UL)
         {
           if (stream.write_len + 5 >= stream.data_len)
           {
@@ -2650,7 +2650,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x10000000000)
+        else if (value < 0x10000000000UL)
         {
           if (stream.write_len + 6 >= stream.data_len)
           {
@@ -2676,7 +2676,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000000000)
+        else if (value < 0x1000000000000UL)
         {
           if (stream.write_len + 7 >= stream.data_len)
           {
@@ -2704,7 +2704,7 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000000000)
+        else if (value < 0x100000000000000UL)
         {
           if (stream.write_len + 8 >= stream.data_len)
           {
