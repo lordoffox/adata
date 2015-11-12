@@ -76,7 +76,6 @@ namespace adata
     private int trace_info_count;
     private StringBuilder trace_build;
     public error_code_t error_code;
-    public Encoding m_encoding = Encoding.Default;
 
     static private String[] err_msgs = {"",
                                          "assign negative value to unsigned.",
@@ -2805,7 +2804,7 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      value = stream.m_encoding.GetString(stream.buffer, stream.read_len, (int)len);
+      value = Encoding.Default.GetString(stream.buffer, stream.read_len, (int)len);
       stream.read_len += (int)len;
       return;
     }
@@ -2817,7 +2816,7 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      byte[] buff = stream.m_encoding.GetBytes(value);
+      byte[] buff = Encoding.Default.GetBytes(value);
       for (int i = 0; i < len; ++i)
       {
         stream.buffer[stream.write_len++] = buff[i];
@@ -2834,7 +2833,7 @@ namespace adata
 
     public static void write(zero_copy_buffer stream, string value)
     {
-      byte[] buff = stream.m_encoding.GetBytes(value);
+      byte[] buff = Encoding.Default.GetBytes(value);
 
       UInt32 len = (UInt32)buff.Length;
       if (stream.write_len + len > stream.data_len)
