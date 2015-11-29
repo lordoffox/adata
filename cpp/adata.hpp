@@ -1770,7 +1770,7 @@ namespace adata
         bytes[4] = ptr[ADATA_LEPOS8_3];
         write_bytes = 5;
       }
-      else if (value < 0x10000000000)
+      else if (value < 0x10000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1779,7 +1779,7 @@ namespace adata
         bytes[5] = ptr[ADATA_LEPOS8_4];
         write_bytes = 6;
       }
-      else if (value < 0x1000000000000)
+      else if (value < 0x1000000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1789,7 +1789,7 @@ namespace adata
         bytes[6] = ptr[ADATA_LEPOS8_5];
         write_bytes = 7;
       }
-      else if (value < 0x100000000000000)
+      else if (value < 0x100000000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1869,7 +1869,7 @@ namespace adata
         bytes[4] = ptr[ADATA_LEPOS8_3];
         write_bytes = 5;
       }
-      else if (temp < 0x10000000000)
+      else if (temp < 0x10000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1878,7 +1878,7 @@ namespace adata
         bytes[5] = ptr[ADATA_LEPOS8_4];
         write_bytes = 6;
       }
-      else if (temp < 0x1000000000000)
+      else if (temp < 0x1000000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1888,7 +1888,7 @@ namespace adata
         bytes[6] = ptr[ADATA_LEPOS8_5];
         write_bytes = 7;
       }
-      else if (temp < 0x100000000000000)
+      else if (temp < 0x100000000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
