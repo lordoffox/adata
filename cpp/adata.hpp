@@ -482,6 +482,9 @@ namespace adata
       m_stream_.clear();
     }
 
+    ADATA_INLINE std::size_t read_size() { return 0; }
+    ADATA_INLINE std::size_t write_size() { return 0; }
+
   private:
     stream_ty&		m_stream_;
   };
@@ -2129,6 +2132,10 @@ namespace adata
     {
       return this->m_write_ptr - this->m_write_header_ptr;
     }
+
+    ADATA_INLINE std::size_t read_size() { return this->m_read_tail_ptr - this->m_read_header_ptr; }
+    ADATA_INLINE std::size_t write_size() { return this->m_write_tail_ptr - this->m_write_header_ptr; }
+
   };
 
   ADATA_INLINE void fix_read(zero_copy_buffer& stream, int8_t& value)
@@ -2915,18 +2922,23 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = value;
     }
     else
     {
       uint8_t * ptr = stream.append_write(2);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       ptr[0] = 0x80;
       ptr[1] = value;
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
@@ -2936,6 +2948,11 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = value;
     }
     else
@@ -2948,13 +2965,13 @@ namespace adata
         temp = -value;
       }
       uint8_t * ptr = stream.append_write(2);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       ptr[0] = 0x80 | negative_bit;
       ptr[1] = temp;
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
@@ -2964,6 +2981,11 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = (uint8_t)value;
     }
     else
@@ -2972,21 +2994,26 @@ namespace adata
       if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x80;
         wptr[1] = ptr[ADATA_LEPOS2_0];
       }
       else
       {
         uint8_t * wptr = stream.append_write(3);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x81;
         wptr[1] = ptr[ADATA_LEPOS2_0];
         wptr[2] = ptr[ADATA_LEPOS2_1];
       }
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
@@ -2996,6 +3023,11 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3011,12 +3043,22 @@ namespace adata
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS2_0];
       }
       else
       {
         uint8_t * wptr = stream.append_write(3);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS2_0];
         wptr[2] = ptr[ADATA_LEPOS2_1];
@@ -3035,6 +3077,11 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3043,12 +3090,22 @@ namespace adata
       if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x80;
         wptr[1] = ptr[ADATA_LEPOS4_0];
       }
       else if (value < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x81;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3056,6 +3113,11 @@ namespace adata
       else if (value < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x82;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3064,17 +3126,17 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(5);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x83;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
         wptr[3] = ptr[ADATA_LEPOS4_2];
         wptr[4] = ptr[ADATA_LEPOS4_3];
       }
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
@@ -3084,6 +3146,11 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3099,12 +3166,22 @@ namespace adata
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
       }
       else if (temp < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3112,6 +3189,11 @@ namespace adata
       else if (temp < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x82 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3120,6 +3202,11 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(5);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x83 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3140,6 +3227,11 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3148,12 +3240,22 @@ namespace adata
       if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x80;
         wptr[1] = ptr[ADATA_LEPOS8_0];
       }
       else if (value < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x81;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3161,6 +3263,11 @@ namespace adata
       else if (value < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x82;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3169,6 +3276,11 @@ namespace adata
       else if (value < 0x100000000)
       {
         uint8_t * wptr = stream.append_write(5);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x83;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3178,6 +3290,11 @@ namespace adata
       else if (value < 0x10000000000LL)
       {
         uint8_t * wptr = stream.append_write(6);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x84;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3188,6 +3305,11 @@ namespace adata
       else if (value < 0x1000000000000LL)
       {
         uint8_t * wptr = stream.append_write(7);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x85;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3199,6 +3321,11 @@ namespace adata
       else if (value < 0x100000000000000LL)
       {
         uint8_t * wptr = stream.append_write(8);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x86;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3211,6 +3338,11 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(9);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x87;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3222,11 +3354,6 @@ namespace adata
         wptr[8] = ptr[ADATA_LEPOS8_7];
       }
     }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   ADATA_INLINE void write(zero_copy_buffer& stream, const int64_t& value)
@@ -3235,6 +3362,11 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
+      if (stream.bad())
+      {
+        stream.m_error_code = stream_buffer_overflow;
+        return;
+      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3250,12 +3382,22 @@ namespace adata
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
       }
       else if (temp < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3263,6 +3405,11 @@ namespace adata
       else if (temp < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x82 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3271,6 +3418,11 @@ namespace adata
       else if (temp < 0x100000000)
       {
         uint8_t * wptr = stream.append_write(5);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x83 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3280,6 +3432,11 @@ namespace adata
       else if (temp < 0x10000000000LL)
       {
         uint8_t * wptr = stream.append_write(6);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x84 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3290,6 +3447,11 @@ namespace adata
       else if (temp < 0x1000000000000LL)
       {
         uint8_t * wptr = stream.append_write(7);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x85 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3301,6 +3463,11 @@ namespace adata
       else if (temp < 0x100000000000000LL)
       {
         uint8_t * wptr = stream.append_write(8);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x86 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3313,6 +3480,11 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(9);
+        if (stream.bad())
+        {
+          stream.m_error_code = stream_buffer_overflow;
+          return;
+        }
         wptr[0] = 0x87 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3323,11 +3495,6 @@ namespace adata
         wptr[7] = ptr[ADATA_LEPOS8_6];
         wptr[8] = ptr[ADATA_LEPOS8_7];
       }
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
