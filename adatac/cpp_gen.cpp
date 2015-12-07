@@ -499,7 +499,7 @@ namespace cpp_gen
   {
     if (mdefine.is_multi())
     {
-      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
 
       // Nous Xiong: remove size_of length check
       /*if (mdefine.m_size.length())
