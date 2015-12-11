@@ -43,15 +43,15 @@
 #include <arpa/inet.h>  /* __BYTE_ORDER */
 #endif
 
-#	if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-#		if __BYTE_ORDER == __LITTLE_ENDIAN
-#			define __LITTLE_ENDIAN__
-#		elif __BYTE_ORDER == __BIG_ENDIAN
-#			define __BIG_ENDIAN__
-#		elif _WIN32
-#			define __LITTLE_ENDIAN__
-#		endif
-#	endif
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#    if __BYTE_ORDER == __LITTLE_ENDIAN
+#        define __LITTLE_ENDIAN__
+#    elif __BYTE_ORDER == __BIG_ENDIAN
+#        define __BIG_ENDIAN__
+#    elif _WIN32
+#        define __LITTLE_ENDIAN__
+#    endif
+#endif
 
 #if defined(__LITTLE_ENDIAN__)
 #define ADATA_LEPOS2_0 0
@@ -2262,6 +2262,7 @@ namespace adata
     if (stream.bad())
     {
       stream.m_error_code = stream_buffer_overflow;
+      return;
     }
     *ptr = (uint8_t)value;
   }
@@ -2272,6 +2273,7 @@ namespace adata
     if (stream.bad())
     {
       stream.m_error_code = stream_buffer_overflow;
+      return;
     }
     *ptr = value;
   }
