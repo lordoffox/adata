@@ -422,6 +422,7 @@ namespace cpp_gen
     if (mdefine.is_multi())
     {
       os << tabs(tab_indent) << "{";
+      ++tab_indent;
       os << tabs(tab_indent) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
       if (mdefine.m_type == e_base_type::string)
