@@ -47,7 +47,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE void _reset_buf(adata::zero_copy_buffer& zbuf)
+    inline void _reset_buf(adata::zero_copy_buffer& zbuf)
     {
       if (zbuf.write_data() != 0)
       {
@@ -152,7 +152,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE adata::zero_copy_buffer * _get_zbuf_arg(lua_State * L, int idx)
+    inline adata::zero_copy_buffer * _get_zbuf_arg(lua_State * L, int idx)
     {
       adata::zero_copy_buffer * zbuf = (adata::zero_copy_buffer *)lua_touserdata(L, idx);
       if (NULL == zbuf)
@@ -163,7 +163,7 @@ namespace adata {
     }
 
     template<typename T>
-    ADATA_INLINE void core_adata_fix_read(lua_State * L , adata::zero_copy_buffer * zbuf , T& v)
+    inline void core_adata_fix_read(lua_State * L , adata::zero_copy_buffer * zbuf , T& v)
     {
       try
       {
@@ -176,7 +176,7 @@ namespace adata {
     }
 
     template<typename T>
-    ADATA_INLINE void core_adata_read(lua_State * L, adata::zero_copy_buffer * zbuf, T& v)
+    inline void core_adata_read(lua_State * L, adata::zero_copy_buffer * zbuf, T& v)
     {
       try
       {
@@ -189,7 +189,7 @@ namespace adata {
     }
 
     template<typename T>
-    ADATA_INLINE void core_adata_fix_write(lua_State * L, adata::zero_copy_buffer * zbuf, T const& v)
+    inline void core_adata_fix_write(lua_State * L, adata::zero_copy_buffer * zbuf, T const& v)
     {
       try
       {
@@ -202,7 +202,7 @@ namespace adata {
     }
 
     template<typename T>
-    ADATA_INLINE void core_adata_write(lua_State * L, adata::zero_copy_buffer * zbuf, T const& v)
+    inline void core_adata_write(lua_State * L, adata::zero_copy_buffer * zbuf, T const& v)
     {
       try
       {
@@ -215,7 +215,7 @@ namespace adata {
     }
 
     template <typename T>
-    ADATA_INLINE int read_fix_value(lua_State * L)
+    inline int read_fix_value(lua_State * L)
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       T v;
@@ -225,7 +225,7 @@ namespace adata {
     }
 
     template <typename T>
-    ADATA_INLINE int read_value(lua_State * L)
+    inline int read_value(lua_State * L)
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       T v;
@@ -311,7 +311,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE char const * core_adata_buffer_skip_read(lua_State * L , adata::zero_copy_buffer * zbuf, size_t len)
+    inline char const * core_adata_buffer_skip_read(lua_State * L , adata::zero_copy_buffer * zbuf, size_t len)
     {
       try
       {
@@ -335,7 +335,7 @@ namespace adata {
     }
 
     template <typename T>
-    ADATA_INLINE int skip_read_fix_value(lua_State * L)
+    inline int skip_read_fix_value(lua_State * L)
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       core_adata_buffer_skip_read(L, zbuf, sizeof(T));
@@ -343,7 +343,7 @@ namespace adata {
     }
 
     template<typename T>
-    ADATA_INLINE void core_adata_skip_read(lua_State * L, adata::zero_copy_buffer * zbuf, T& v)
+    inline void core_adata_skip_read(lua_State * L, adata::zero_copy_buffer * zbuf, T& v)
     {
       try
       {
@@ -355,7 +355,7 @@ namespace adata {
       }
     }
     template <typename T>
-    ADATA_INLINE int skip_read_value(lua_State * L)
+    inline int skip_read_value(lua_State * L)
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       T* v = 0;
@@ -381,7 +381,7 @@ namespace adata {
     }
 
     template<typename T>
-    ADATA_INLINE void get_lua_number64(lua_State * L, int idx, T& v)
+    inline void get_lua_number64(lua_State * L, int idx, T& v)
     {
       number64_type it;
       lua_tonumber64(L, idx, &it);
@@ -407,7 +407,7 @@ namespace adata {
     }
 
     template <typename T>
-    ADATA_INLINE int write_fix_value(lua_State * L)
+    inline int write_fix_value(lua_State * L)
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       T v = (T)lua_tointeger(L, 2);
@@ -416,7 +416,7 @@ namespace adata {
     }
 
     template <typename T>
-    ADATA_INLINE int write_value(lua_State * L)
+    inline int write_value(lua_State * L)
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       T v = (T)lua_tointeger(L, 2);
@@ -532,14 +532,14 @@ namespace adata {
     }
 
     template <typename T>
-    ADATA_INLINE int size_of_fix_value(lua_State * L)
+    inline int size_of_fix_value(lua_State * L)
     {
       lua_pushinteger(L, adata::fix_size_of(T()));
       return 1;
     }
 
     template <typename T>
-    ADATA_INLINE int size_of_value(lua_State * L)
+    inline int size_of_value(lua_State * L)
     {
       T v = (T)lua_tointeger(L, 1);
       int32_t s = adata::size_of(v);
@@ -673,7 +673,7 @@ namespace adata {
       {}
     };
 
-    ADATA_INLINE void decode_default_value(lua_State * L, adata::zero_copy_buffer& buf, adata_member * mb, int32_t typename_sid , int member_idx, int construct_list_idx)
+    inline void decode_default_value(lua_State * L, adata::zero_copy_buffer& buf, adata_member * mb, int32_t typename_sid , int member_idx, int construct_list_idx)
     {
       switch (mb->type)
       {
@@ -744,7 +744,7 @@ namespace adata {
       }
     }
 
-    ADATA_INLINE int32_t get_lua_len(lua_State * L, int idx)
+    inline int32_t get_lua_len(lua_State * L, int idx)
     {
 #if LUA_VERSION_NUM == 501
       return (int32_t)lua_objlen(L, idx);
@@ -753,7 +753,7 @@ namespace adata {
 #endif
     }
 
-    ADATA_INLINE int load_type(lua_State * L, adata::zero_copy_buffer& buf, load_contex& context)
+    inline int load_type(lua_State * L, adata::zero_copy_buffer& buf, load_contex& context)
     {
       //type { layout , name , {field list} , { construct list }  ,  metatable }
       enum
@@ -913,7 +913,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE void load_namespace(lua_State * L, adata::zero_copy_buffer& buf, load_contex& context)
+    inline void load_namespace(lua_State * L, adata::zero_copy_buffer& buf, load_contex& context)
     {
       //{ namespace , {type...} }
       lua_createtable(L, 2, 0);
@@ -1030,7 +1030,7 @@ namespace adata {
 
     static int lua_skip_read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type);
 
-    static ADATA_INLINE int skip_read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
+    static inline int skip_read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
     {
       (size);
       switch (type)
@@ -1126,7 +1126,7 @@ namespace adata {
     }
 
     template<typename ty>
-    ADATA_INLINE void fix_read_and_push_value(lua_State *L, zero_copy_buffer * buf)
+    inline void fix_read_and_push_value(lua_State *L, zero_copy_buffer * buf)
     {
       ty v;
       adata::fix_read(*buf, v);
@@ -1134,7 +1134,7 @@ namespace adata {
     }
 
     template<>
-    ADATA_INLINE void fix_read_and_push_value<int64_t>(lua_State *L, zero_copy_buffer * buf)
+    inline void fix_read_and_push_value<int64_t>(lua_State *L, zero_copy_buffer * buf)
     {
       int64_t v;
       core_adata_fix_read(L, buf, v);
@@ -1142,7 +1142,7 @@ namespace adata {
     }
 
     template<>
-    ADATA_INLINE void fix_read_and_push_value<uint64_t>(lua_State *L, zero_copy_buffer * buf)
+    inline void fix_read_and_push_value<uint64_t>(lua_State *L, zero_copy_buffer * buf)
     {
       uint64_t v;
       adata::fix_read(*buf, v);
@@ -1150,7 +1150,7 @@ namespace adata {
     }
 
     template<typename ty>
-    ADATA_INLINE void read_and_push_value(lua_State *L, zero_copy_buffer * buf)
+    inline void read_and_push_value(lua_State *L, zero_copy_buffer * buf)
     {
       ty v;
       adata::read(*buf, v);
@@ -1158,7 +1158,7 @@ namespace adata {
     }
 
     template<>
-    ADATA_INLINE void read_and_push_value<float>(lua_State *L, zero_copy_buffer * buf)
+    inline void read_and_push_value<float>(lua_State *L, zero_copy_buffer * buf)
     {
       float v;
       adata::read(*buf, v);
@@ -1166,7 +1166,7 @@ namespace adata {
     }
 
     template<>
-    ADATA_INLINE void read_and_push_value<double>(lua_State *L, zero_copy_buffer * buf)
+    inline void read_and_push_value<double>(lua_State *L, zero_copy_buffer * buf)
     {
       double v;
       adata::read(*buf, v);
@@ -1174,7 +1174,7 @@ namespace adata {
     }
 
     template<>
-    ADATA_INLINE void read_and_push_value<int64_t>(lua_State *L, zero_copy_buffer * buf)
+    inline void read_and_push_value<int64_t>(lua_State *L, zero_copy_buffer * buf)
     {
       int64_t v;
       adata::read(*buf, v);
@@ -1182,7 +1182,7 @@ namespace adata {
     }
 
     template<>
-    ADATA_INLINE void read_and_push_value<uint64_t>(lua_State *L, zero_copy_buffer * buf)
+    inline void read_and_push_value<uint64_t>(lua_State *L, zero_copy_buffer * buf)
     {
       uint64_t v;
       adata::read(*buf, v);
@@ -1191,7 +1191,7 @@ namespace adata {
 
     static int read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, bool create = true);
 
-    static ADATA_INLINE int read_string(lua_State *L, zero_copy_buffer * buf, int sz)
+    static inline int read_string(lua_State *L, zero_copy_buffer * buf, int sz)
     {
       uint32_t len = adata::check_read_size(*buf,sz);
       char * str = (char*)buf->skip_read(len);
@@ -1199,7 +1199,7 @@ namespace adata {
       return 1;
     }
 
-    static ADATA_INLINE int read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
+    static inline int read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
     {
       switch (type)
       {
@@ -1402,7 +1402,7 @@ namespace adata {
 
     static int raw_read_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, bool create = true);
 
-    static ADATA_INLINE int raw_read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
+    static inline int raw_read_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
     {
       switch (type)
       {
@@ -1544,21 +1544,21 @@ namespace adata {
     static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, sizeof_cache_contex& ctx);
 
     template<typename ty>
-    ADATA_INLINE int lua_to_number(lua_State *L, int idx, ty& v)
+    inline int lua_to_number(lua_State *L, int idx, ty& v)
     {
       v = (ty)lua_tointeger(L, idx);
       return 0;
     }
 
     template<>
-    ADATA_INLINE int lua_to_number<float>(lua_State *L, int idx, float& v)
+    inline int lua_to_number<float>(lua_State *L, int idx, float& v)
     {
       v = (float)lua_tonumber(L, idx);
       return 0;
     }
 
     template<>
-    ADATA_INLINE int lua_to_number<double>(lua_State *L, int idx, double& v)
+    inline int lua_to_number<double>(lua_State *L, int idx, double& v)
     {
       v = lua_tonumber(L, idx);
       return 0;
@@ -1566,7 +1566,7 @@ namespace adata {
 
 #if LUA_VERSION_NUM < 503
     template<>
-    ADATA_INLINE int lua_to_number<int64_t>(lua_State *L, int idx, int64_t& v)
+    inline int lua_to_number<int64_t>(lua_State *L, int idx, int64_t& v)
     {
       number64_type it = { et_int64_unknow };
       lua_tonumber64(L, idx, &it);
@@ -1590,7 +1590,7 @@ namespace adata {
 #endif
 
     template<>
-    ADATA_INLINE int lua_to_number<uint64_t>(lua_State *L, int idx, uint64_t& v)
+    inline int lua_to_number<uint64_t>(lua_State *L, int idx, uint64_t& v)
     {
       number64_type it = { et_int64_unknow };
       lua_tonumber64(L, idx, &it);
@@ -1653,7 +1653,7 @@ namespace adata {
       return adata::size_of(v);
     }
 
-    static ADATA_INLINE char * lua_get_string_ref(lua_State *L, int idx, size_t * slen)
+    static inline char * lua_get_string_ref(lua_State *L, int idx, size_t * slen)
     {
       int type = lua_type(L, idx);
       if (type != LUA_TSTRING)
@@ -1670,7 +1670,7 @@ namespace adata {
       return str;
     }
 
-    static ADATA_INLINE int32_t sizeof_string(lua_State *L)
+    static inline int32_t sizeof_string(lua_State *L)
     {
       size_t slen = 0;
       lua_get_string_ref(L, -1, &slen);
@@ -1678,7 +1678,7 @@ namespace adata {
       return str_len + adata::size_of(str_len);
     }
 
-    static ADATA_INLINE int write_string(lua_State *L, zero_copy_buffer * buf, int sz)
+    static inline int write_string(lua_State *L, zero_copy_buffer * buf, int sz)
     {
       size_t slen = 0;
       char * str = lua_get_string_ref(L, -1, &slen);
@@ -1696,7 +1696,7 @@ namespace adata {
       return 1;
     }
 
-    static ADATA_INLINE int lua_get_len(lua_State *L, adata_member * mb)
+    static inline int lua_get_len(lua_State *L, adata_member * mb)
     {
       int len = 0;
       switch (mb->type)
@@ -1743,7 +1743,7 @@ namespace adata {
       return len;
     }
 
-    static ADATA_INLINE bool test_adata_empty(lua_State *L, adata_member * mb)
+    static inline bool test_adata_empty(lua_State *L, adata_member * mb)
     {
       switch (mb->type)
       {
@@ -1759,7 +1759,7 @@ namespace adata {
 
     static int sizeof_type(lua_State *L, adata_type * type, sizeof_cache_contex * ctx = NULL);
 
-    static ADATA_INLINE int32_t sizeof_value(lua_State *L, int type, int size, adata_type * type_define, sizeof_cache_contex * ctx)
+    static inline int32_t sizeof_value(lua_State *L, int type, int size, adata_type * type_define, sizeof_cache_contex * ctx)
     {
       (size);
       switch (type)
@@ -1799,7 +1799,7 @@ namespace adata {
       return 0;
     }
 
-    ADATA_INLINE int lua_length(lua_State * L, int idx)
+    inline int lua_length(lua_State * L, int idx)
     {
 #if LUA_VERSION_NUM == 501
       int len = (int)lua_objlen(L, idx);
@@ -1893,7 +1893,7 @@ namespace adata {
 
     static int raw_sizeof_type(lua_State *L, adata_type * type);
 
-    static ADATA_INLINE int32_t raw_sizeof_value(lua_State *L, int type, int size, adata_type * type_define)
+    static inline int32_t raw_sizeof_value(lua_State *L, int type, int size, adata_type * type_define)
     {
       (size);
       switch (type)
@@ -1997,7 +1997,7 @@ namespace adata {
       return 1;
     }
 
-    static ADATA_INLINE int write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, sizeof_cache_contex& ctx)
+    static inline int write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define, sizeof_cache_contex& ctx)
     {
       switch (type)
       {
@@ -2148,7 +2148,7 @@ namespace adata {
 
     static int raw_write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type);
 
-    static ADATA_INLINE int raw_write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
+    static inline int raw_write_value(lua_State *L, zero_copy_buffer * buf, int type, int size, adata_type * type_define)
     {
       switch (type)
       {
@@ -2276,7 +2276,7 @@ namespace adata {
       return 0;
     }
 
-    ADATA_INLINE const luaL_Reg * build_lib()
+    inline const luaL_Reg * build_lib()
     {
       static const luaL_Reg lib[] =
       {
@@ -2383,7 +2383,7 @@ namespace adata {
     }
 
 #if LUA_VERSION_NUM == 501
-    ADATA_INLINE int init_adata_corec(lua_State *L)
+    inline int init_adata_corec(lua_State *L)
     {
       init_lua_int64(L);
 
@@ -2412,7 +2412,7 @@ namespace adata {
 
 #else
 
-    ADATA_INLINE int regist_adata_core(lua_State *L)
+    inline int regist_adata_core(lua_State *L)
     {
       luaL_checkversion(L);
       static const luaL_Reg buf_meta_table[] =
@@ -2437,7 +2437,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE int init_adata_corec(lua_State *L)
+    inline int init_adata_corec(lua_State *L)
     {
       init_lua_int64(L);
       luaL_requiref(L, "adata_core", regist_adata_core, 1);

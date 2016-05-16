@@ -57,7 +57,7 @@ namespace adata {
 #endif
     static const char * uint64_metatable = "uint64_meta";
 
-    ADATA_INLINE int lua_tonumber64(lua_State * L, int idx, number64_type * it)
+    inline int lua_tonumber64(lua_State * L, int idx, number64_type * it)
     {
       it->lua_type = lua_type(L, idx);
       if (it->lua_type == LUA_TNUMBER)
@@ -182,7 +182,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE void lua_pushuint64(lua_State *L, uint64_t n)
+    inline void lua_pushuint64(lua_State *L, uint64_t n)
     {
       if (n < (1ULL << 53ULL))
       {
@@ -202,7 +202,7 @@ namespace adata {
       return;
     }
 
-    ADATA_INLINE void lua_pushint64(lua_State *L, int64_t n)
+    inline void lua_pushint64(lua_State *L, int64_t n)
     {
 #if LUA_VERSION_NUM < 503
       int64_t v = n;
@@ -1282,7 +1282,7 @@ namespace adata {
       lua_pop(L, nup);  /* remove upvalues */
     }
 
-    ADATA_INLINE int init_lua_int64(lua_State *L)
+    inline int init_lua_int64(lua_State *L)
     {
       static const luaL_Reg lib[] =
       {
@@ -1319,7 +1319,7 @@ namespace adata {
       return 1;
     }
 
-    ADATA_INLINE int init_lua_int64(lua_State *L)
+    inline int init_lua_int64(lua_State *L)
     {
 # if LUA_VERSION_NUM < 503
       luaL_newmetatable(L, int64_metatable);
