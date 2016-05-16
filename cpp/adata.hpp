@@ -29,9 +29,9 @@
 #ifndef ADATA_INLINE
 # ifdef _MSC_VER
 #  pragma inline_recursion(on)
-#  define ADATA_INLINE inline
+#  define ADATA_INLINE __forceinline
 # elif defined(__GNUC__)
-#  define ADATA_INLINE inline
+#  define ADATA_INLINE inline __attribute__((always_inline))
 # else
 #  define ADATA_INLINE inline
 # endif

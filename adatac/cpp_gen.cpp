@@ -326,9 +326,9 @@ namespace cpp_gen
     }
   }
 
-  inline std::string gen_inline_code(const type_define& define)
+  inline std::string gen_inline_code(const type_define&)
   {
-    return "ADATA_INLINE ";
+    return "inline ";
   }
 
   void gen_adata_len_tag_jump(std::ofstream& os, int tab_indent)
