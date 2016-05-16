@@ -8,8 +8,7 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#ifndef ADATAC_PROGRAM_H
-#define ADATAC_PROGRAM_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -17,14 +16,13 @@
 struct options
 {
   std::string input_file;
-  std::string output_path;
+  std::string output_path = "./";
   std::vector<std::string> include_paths;
   std::vector<std::string> gen;
   std::vector<std::string> pack_files;
-  std::string pack_output_file;
+  std::string pack_output_file = "pack";
   std::string adata_header;
 };
 
 void run_program(const options& opt);
 
-#endif /// ADATAC_PROGRAM_H

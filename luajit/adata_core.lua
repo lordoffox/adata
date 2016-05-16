@@ -156,8 +156,6 @@ local new_buf = function(n)
   b.wbuf = ffi.new("uint8_t[?]", n);
   b.rcap = 0;
   b.rbuf = nil;
-  b.trace = {};
-  b.trace_count = 1;
   setmetatable(b,buf_mt);
   return b;
 end
@@ -178,8 +176,6 @@ local clear_read = function(b)
   b.e = 0;
   b.rlen = 0;
   b.wlen = 0;
-  b.trace = {};
-  b.trace_count = 1;
 end
 m.clear_read = clear_read;
 buf_mt.clear_read = clear_read;
@@ -188,8 +184,6 @@ local clear_write = function(b)
   b.e = 0;
   b.rlen = 0;
   b.wlen = 0;
-  b.trace = {};
-  b.trace_count = 1;
 end
 m.clear_write = clear_write;
 buf_mt.clear_write = clear_write;
@@ -198,8 +192,6 @@ local clear_buf = function(b)
   b.e = 0;
   b.rlen = 0;
   b.wlen = 0;
-  b.trace = {};
-  b.trace_count = 1;
 end
 
 m.clear_buf = clear_buf;
@@ -215,29 +207,6 @@ buf_mt.set_error = set_error;
 m.good = function(b) return b.e == ec_success; end
 
 m.get_error = function(b) return b.e; end
-
-local trace_error = function(b,info,idx)
-  b.trace[b.trace_count] = {info,idx};
-  b.trace_count = b.trace_count +1;
-end
-
-m.trace_error = trace_error;
-buf_mt.trace_error = trace_error;
-
-local tcat = table.concat;
-
-local trace_info = function(b)
-  local info = {};
-  local c = 1;
-  for _,v in ipairs(b.trace) do
-    info[c] = v[1]; c = c + 1;
-    if v[2] ~= -1 then
-      info[c] = '['..v[1]..']'; c = c + 1;
-    end
-    info[c] = '.'; c = c + 1;
-  end
-  return tcat(info);
-end
 
 m.trace_info = trace_info;
 buf_mt.trace_info = trace_info;
@@ -263,53 +232,49 @@ buf_mt.set_read_data = set_rd_data;
 local loadbyte2p = function(b , n)
   if b.rlen + n > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e
+    error("stream buffer overflow");
   end
   b.uv.i64 = 0;
   if n > 0 then b.uv.b[p2_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
   if n > 1 then b.uv.b[p2_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  return 0;
 end
 
 local savebyte2p = function(b , n)
   if b.wlen + n > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e
+    error("stream buffer overflow");
   end
   if n > 0 then b.wbuf[b.wlen] = b.uv.b[p2_1];  b.wlen = b.wlen + 1; end
   if n > 1 then b.wbuf[b.wlen] = b.uv.b[p2_2];  b.wlen = b.wlen + 1; end
-  return 0;
 end
 
 local loadbyte4p = function(b , n)
   if b.rlen + n > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e
+    error("stream buffer overflow");
   end
   b.uv.i64 = 0;
   if n > 0 then b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
   if n > 1 then b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
   if n > 2 then b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
   if n > 3 then b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  return 0;
 end
 
 local savebyte4p = function(b , n)
   if b.wlen + n > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e
+    error("stream buffer overflow");
   end
   if n > 0 then b.wbuf[b.wlen] = b.uv.b[p4_1];  b.wlen = b.wlen + 1; end
   if n > 1 then b.wbuf[b.wlen] = b.uv.b[p4_2];  b.wlen = b.wlen + 1; end
   if n > 2 then b.wbuf[b.wlen] = b.uv.b[p4_3];  b.wlen = b.wlen + 1; end
   if n > 3 then b.wbuf[b.wlen] = b.uv.b[p4_4];  b.wlen = b.wlen + 1; end
-  return 0;
 end
 
 local loadbyte8p = function(b , n)
   if b.rlen + n > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e
+    error("stream buffer overflow");
   end
   b.uv.i64 = 0;
   if n > 0 then b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
@@ -320,13 +285,12 @@ local loadbyte8p = function(b , n)
   if n > 5 then b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
   if n > 6 then b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
   if n > 7 then b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  return 0;
 end
 
 local savebyte8p = function(b , n)
   if b.wlen + n > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e
+    error("stream buffer overflow");
   end
   if n > 0 then b.wbuf[b.wlen] = b.uv.b[p8_1];  b.wlen = b.wlen + 1; end
   if n > 1 then b.wbuf[b.wlen] = b.uv.b[p8_2];  b.wlen = b.wlen + 1; end
@@ -336,180 +300,203 @@ local savebyte8p = function(b , n)
   if n > 5 then b.wbuf[b.wlen] = b.uv.b[p8_6];  b.wlen = b.wlen + 1; end
   if n > 6 then b.wbuf[b.wlen] = b.uv.b[p8_7];  b.wlen = b.wlen + 1; end
   if n > 7 then b.wbuf[b.wlen] = b.uv.b[p8_8];  b.wlen = b.wlen + 1; end
-  return 0;
 end
 
 local rd_fixi8 = function(b)
   if b.rlen + 1 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0;
+    error("stream buffer overflow");
   end
   b.uv.u8 = b.rbuf[b.rlen];
   b.rlen = b.rlen + 1;
-  return 0 , b.uv.i8;
+  return b.uv.i8;
 end
 
 m.rd_fixi8 = rd_fixi8;
+buf_mt.rd_fixi8 = rd_fixi8;
 
 local rd_fixu8 = function(b)
   if b.rlen + 1 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0;
+    error("stream buffer overflow");
   end
   local v  = b.rbuf[b.rlen];
   b.rlen = b.rlen + 1;
-  return 0 , v;
+  return v;
 end
 
 m.rd_fixu8 = rd_fixu8;
+buf_mt.rd_fixu8 = rd_fixu8;
 
 local wt_fixi8 = function(b , v)
   if b.wlen + 1 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
-  if v < -127 or v > 127 then b.e = ec_error_value_fix_int8; return b.e; end
+  if v < -127 or v > 127 then
+    b.e = ec_error_value_fix_int8;
+    error("error value fix int8");
+  end
   b.uv.i8 = v;
   b.wbuf[b.wlen] = b.uv.u8;
   b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixi8 = wt_fixi8;
+buf_mt.wt_fixi8 = wt_fixi8;
 
 local wt_fixu8 = function(b , v)
   if b.wlen + 1 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");;
   end
-  if v < 0 or v > 256 then b.e = ec_error_value_fix_uint8; return b.e; end
+  if v < 0 or v > 256 then
+    b.e = ec_error_value_fix_uint8;
+    error("error value fix uint8");
+  end
   b.wbuf[b.wlen] = v;
   b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixu8 = wt_fixu8;
+buf_mt.wt_fixu8 = wt_fixu8;
 
 local rd_fixi16 = function(b)
   if b.rlen + 2 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p2_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p2_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return  0 , b.uv.i16;
+  return b.uv.i16;
 end
 
 m.rd_fixi16 = rd_fixi16;
+buf_mt.rd_fixi16 = rd_fixi16;
 
 local rd_fixu16 = function(b)
   if b.rlen + 2 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p2_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p2_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return  0 , b.uv.u16;
+  return b.uv.u16;
 end
  
 m.rd_fixu16 = rd_fixu16;
- 
+buf_mt.rd_fixu16 = rd_fixu16;
+
 local wt_fixi16 = function(b , v)
   if b.wlen + 2 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
-  if v < -32767 or v > 32767 then b.e = ec_error_value_fix_int16; return b.e; end
+  if v < -32767 or v > 32767 then
+    b.e = ec_error_value_fix_int16;
+    error("error value fix int16");
+  end  
   b.uv.i16 = v;
   b.wbuf[b.wlen] = b.uv.b[p2_1];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p2_2];  b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixi16 = wt_fixi16;
+buf_mt.wt_fixi16 = wt_fixi16;
 
 local wt_fixu16 = function(b , v)
   if b.wlen + 2 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
-  if v < 0 or v > 65535 then b.e = ec_error_value_fix_uint16; return b.e; end
+  if v < 0 or v > 65535 then
+    b.e = ec_error_value_fix_uint16;
+    error("error value fix uint16");
+  end
   b.uv.u16 = v;
   b.wbuf[b.wlen] = b.uv.b[p2_1];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p2_2];  b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixu16 = wt_fixu16;
+buf_mt.wt_fixu16 = wt_fixu16;
 
 local rd_fixi32 = function(b)
   if b.rlen + 4 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
   b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return  0 , b.uv.i32;
+  return b.uv.i32;
 end
 
 m.rd_fixi32 = rd_fixi32;
+buf_mt.rd_fixi32 = rd_fixi32;
 
 local rd_fixu32 = function(b)
   if b.rlen + 4 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
   b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return  0 , b.uv.u32;
+  return b.uv.u32;
 end
 
 m.rd_fixu32 = rd_fixu32;
+buf_mt.rd_fixu32 = rd_fixu32;
 
 local wt_fixi32 = function(b , v)
   if b.wlen + 4 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
-  if v < -2147483647 or v > 2147483647 then b.e = ec_error_value_fix_int32; return b.e; end
+  if v < -2147483647 or v > 2147483647 then
+    b.e = ec_error_value_fix_int32;
+    error("error value fix int32;");
+  end
   b.uv.i32 = v;
   b.wbuf[b.wlen] = b.uv.b[p4_1];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p4_2];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p4_3];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p4_4];  b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixi32 = wt_fixi32;
+buf_mt.wt_fixi32 = wt_fixi32;
 
 local wt_fixu32 = function(b , v)
   if b.wlen + 4 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
-  if v < 0 or v > 4294967295 then b.e = ec_error_value_fix_uint32; return; end
+  if v < 0 or v > 4294967295 then
+    b.e = ec_error_value_fix_uint32;
+    error("error_value_fix_uint32");
+  end
   b.uv.u32 = v;
   b.wbuf[b.wlen] = b.uv.b[p4_1];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p4_2];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p4_3];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p4_4];  b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixu32 = wt_fixu32;
+buf_mt.wt_fixu32 = wt_fixu32;
 
 local rd_fixi64 = function(b)
   if b.rlen + 8 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
@@ -520,15 +507,16 @@ local rd_fixi64 = function(b)
   b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
   b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return 0 , b.uv.i64;
+  return b.uv.i64;
 end
 
 m.rd_fixi64 = rd_fixi64;
+buf_mt.rd_fixi64 = rd_fixi64;
 
 local rd_fixu64 = function(b)
   if b.rlen + 8 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
@@ -539,15 +527,16 @@ local rd_fixu64 = function(b)
   b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
   b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return 0 , b.uv.u64;
+  return b.uv.u64;
 end
 
 m.rd_fixu64 = rd_fixu64;
+buf_mt.rd_fixu64 = rd_fixu64;
 
 local wt_fixi64 = function(b , v)
   if b.wlen + 8 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
   b.uv.i64 = v;
   b.wbuf[b.wlen] = b.uv.b[p8_1];  b.wlen = b.wlen + 1;
@@ -558,15 +547,15 @@ local wt_fixi64 = function(b , v)
   b.wbuf[b.wlen] = b.uv.b[p8_6];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p8_7];  b.wlen = b.wlen + 1;
   b.wbuf[b.wlen] = b.uv.b[p8_8];  b.wlen = b.wlen + 1;
-  return 0;
 end
 
 m.wt_fixi64 = wt_fixi64;
+buf_mt.wt_fixi64 = wt_fixi64;
 
 local wt_fixu64 = function(b , v)
   if b.wlen + 8 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
   b.uv.u64 = v;
   b.wbuf[b.wlen] = b.uv.b[p8_1];  b.wlen = b.wlen + 1;
@@ -581,6 +570,7 @@ local wt_fixu64 = function(b , v)
 end
 
 m.wt_fixu64 = wt_fixu64;
+buf_mt.wt_fixu64 = wt_fixu64;
 
 m.szof_fixi8 = function(v)
   return 1;
@@ -590,49 +580,58 @@ m.szof_fixu8 = function(v)
   return 1;
 end
 
+buf_mt.szof_fixu8 = m.szof_fixu8
+
 m.szof_fixi16 = function(v)
   return 2;
 end
+buf_mt.szof_fixi16 = m.szof_fixi16
 
 m.szof_fixu16 = function(v)
   return 2;
 end
+buf_mt.szof_fixu16 = m.szof_fixu16
 
 m.szof_fixi32 = function(v)
   return 4;
 end
+buf_mt.szof_fixi32 = m.szof_fixi32
 
 m.szof_fixu32 = function(v)
   return 4;
 end
+buf_mt.szof_fixu32 = m.szof_fixu32
 
 m.szof_fixi64 = function(v)
   return 8;
 end
+buf_mt.szof_fixi64 = m.szof_fixi64
 
 m.szof_fixu64 = function(v)
   return 8;
 end
+buf_mt.szof_fixu64 = m.szof_fixu64
 
 local rd_f32 = function(b)
   if b.rlen + 4 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0.0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
   b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return  0 , b.uv.f;
+  return b.uv.f;
 end
 
 m.rd_f32 = rd_f32;
+buf_mt.rd_f32 = rd_f32;
 
 local rd_f64 = function(b)
   if b.rlen + 8 > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e , 0
+    error("stream buffer overflow");
   end
   b.i64 = 0;
   b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
@@ -643,15 +642,16 @@ local rd_f64 = function(b)
   b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
   b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
   b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  return 0 , b.uv.d;
+  return b.uv.d;
 end
 
 m.rd_f64 = rd_f64;
+buf_mt.rd_f64 = rd_f64;
 
 local wt_f32 = function(b,v)
   if b.wlen + 4 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
   b.uv.f = v;
   b.wbuf[b.wlen] = b.uv.b[p4_1];  b.wlen = b.wlen + 1;
@@ -662,11 +662,12 @@ local wt_f32 = function(b,v)
 end
 
 m.wt_f32 = wt_f32;
+buf_mt.wt_f32 = wt_f32;
 
 local wt_f64 = function(b,v)
   if b.wlen + 8 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
   b.uv.d = v;
   b.wbuf[b.wlen] = b.uv.b[p8_1];  b.wlen = b.wlen + 1;
@@ -681,191 +682,196 @@ local wt_f64 = function(b,v)
 end
 
 m.wt_f64 = wt_f64;
+buf_mt.wt_f64 = wt_f64;
 
 local rd_i8 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 1 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0;
+    error("value outof ranger to integer number");
   end
   if tag_as_value == false then
-    ec , tag = rd_fixu8(b);
-    if ec > 0 then return ec , 0 ; end;
+    tag = rd_fixu8(b);
     if nbit == true then
       tag = tag * -1;
     end
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_i8 = rd_i8;
+buf_mt.rd_i8 = rd_i8;
 
 local rd_u8 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 1 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if nbit == true then
     b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e , 0
+    error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
-    ec , tag = rd_fixu8(b);    
+    tag = rd_fixu8(b);    
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_u8 = rd_u8;
+buf_mt.rd_u8 = rd_u8;
 
 local rd_i16 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 2 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if tag_as_value == false then
-    ec = loadbyte2p(b,bytes);
+    loadbyte2p(b,bytes);
     tag = b.uv.i16    
     if nbit == true then
       tag = tag * -1;
     end
   end
-  return 0 , tag;
+  return tag;
 end
 
 m.rd_i16 = rd_i16;
+buf_mt.rd_i16 = rd_i16;
 
 local rd_u16 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 2 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if nbit == true then
     b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e , 0
+    error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
-    ec = loadbyte2p(b,bytes);
+    loadbyte2p(b,bytes);
     tag = b.uv.u16    
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_u16 = rd_u16;
+buf_mt.rd_u16 = rd_u16;
 
 local rd_i32 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 4 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if tag_as_value == false then
-    ec = loadbyte4p(b,bytes);
+    loadbyte4p(b,bytes);
     tag = b.uv.i32 
     if nbit == true then
       tag = tag * -1;
     end
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_i32 = rd_i32;
+buf_mt.rd_i32 = rd_i32;
 
 local rd_u32 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 4 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if nbit == true then
     b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e , 0
+    error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
-    ec = loadbyte4p(b,bytes);
+    loadbyte4p(b,bytes);
     tag = b.uv.u32 
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_u32 = rd_u32;
+buf_mt.rd_u32 = rd_u32;
 
 local rd_i64 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 8 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if tag_as_value == false then
-    ec = loadbyte8p(b,bytes);
+    loadbyte8p(b,bytes);
     tag = b.uv.i64
     if nbit == true then
       tag = tag * -1;
     end
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_i64 = rd_i64;
+buf_mt.rd_i64 = rd_i64;
 
 local rd_u64 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec , 0 ; end;
+  local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 8 then
     b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e , 0
+    error("value outof ranger to integer number");
   end
   if nbit == true then
     b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e , 0
+    error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
-    ec = loadbyte8p(b,bytes);
+    loadbyte8p(b,bytes);
     tag = b.uv.u64
   end
-  return ec , tag;
+  return tag;
 end
 
 m.rd_u64 = rd_u64;
+buf_mt.rd_u64 = rd_u64;
 
 local rd_str = function(b , n)
-  local ec , len = rd_u32(b);
-  if ec > 0 then return ec; end
+  local len = rd_u32(b);
   if n ~= nill and n > 0 then
-    if len > n then b.e = ec_sequence_length_overflow; return b.e; end
+    if len > n then 
+      b.e = ec_sequence_length_overflow;
+      error("sequence length overflow");
+    end
   end
-  if b.rlen + len > b.rcap then b.e = ec_stream_buffer_overflow; return b.e; end
+  if b.rlen + len > b.rcap then
+    b.e = ec_stream_buffer_overflow;
+    error("stream buffer overflow");
+  end
   local str = ffi.string(b.rbuf + b.rlen , len);
   b.rlen = b.rlen + len;
-  return  0 , str;
+  return  str;
 end
 
 m.rd_str = rd_str;
+buf_mt.rd_str = rd_str;
 
 local skip_rd = function(b , n)
   if b.rlen + n > b.rcap then
     b.e = ec_stream_buffer_overflow;
-    return b.e;
+    error("stream buffer overflow");
   end
   b.rlen = b.rlen + n;
-  return 0;
 end
 
 local skip_rd_fixi8 = function(b)
@@ -874,6 +880,8 @@ end
 
 m.skip_rd_fixi8 = skip_rd_fixi8;
 m.skip_rd_fixu8 = skip_rd_fixi8;
+buf_mt.skip_rd_fixi8 = skip_rd_fixi8;
+buf_mt.skip_rd_fixu8 = skip_rd_fixi8;
 
 local skip_rd_fixi16 = function(b)
   return skip_rd(b,2);
@@ -881,6 +889,8 @@ end
 
 m.skip_rd_fixi16 = skip_rd_fixi16;
 m.skip_rd_fixu16 = skip_rd_fixi16;
+buf_mt.skip_rd_fixi16 = skip_rd_fixi16;
+buf_mt.skip_rd_fixu16 = skip_rd_fixi16;
 
 local skip_rd_fixi32 = function(b)
   return skip_rd(b,4);
@@ -888,6 +898,8 @@ end
 
 m.skip_rd_fixi32 = skip_rd_fixi32;
 m.skip_rd_fixu32 = skip_rd_fixi32;
+buf_mt.skip_rd_fixi32 = skip_rd_fixi32;
+buf_mt.skip_rd_fixu32 = skip_rd_fixi32;
 
 local skip_rd_fixi64 = function(b)
   return skip_rd(b,8);
@@ -895,201 +907,102 @@ end
 
 m.skip_rd_fixi64 = skip_rd_fixi64;
 m.skip_rd_fixu64 = skip_rd_fixi64;
+buf_mt.skip_rd_fixi64 = skip_rd_fixi64;
+buf_mt.skip_rd_fixu64 = skip_rd_fixi64;
 
 m.skip_rd_f32 = skip_rd_fixi32;
 m.skip_rd_f64 = skip_rd_fixi64;
+buf_mt.skip_rd_f32 = skip_rd_fixi32;
+buf_mt.skip_rd_f64 = skip_rd_fixi64;
 
-local skip_rd_i8 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
+local skip_rd_ints = function(b)
+  local tag = rd_fixu8(b);
   local tag_as_value , _ , bytes = decode_tag(tag);
-  if bytes > 1 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e
-  end
   if tag_as_value == false then
-    ec = skip_rd(b,bytes);
+    skip_rd(b,bytes);
   end
-  return ec;
 end
 
-m.skip_rd_i8 = skip_rd_i8;
+m.skip_rd_i8 = skip_rd_ints;
+buf_mt.skip_rd_i8 = skip_rd_ints;
 
-local skip_rd_u8 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , nbit , bytes = decode_tag(tag);
-  if bytes > 1 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
+m.skip_rd_u8 = skip_rd_ints;
+buf_mt.skip_rd_u8 = skip_rd_ints;
 
-m.skip_rd_u8 = skip_rd_u8;
+m.skip_rd_i16 = skip_rd_ints;
+buf_mt.skip_rd_i16 = skip_rd_ints;
 
-local skip_rd_i16 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , _ , bytes = decode_tag(tag);
-  if bytes > 2 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
+m.skip_rd_u16 = skip_rd_ints;
+buf_mt.skip_rd_u16 = skip_rd_ints;
 
-m.skip_rd_i16 = skip_rd_i16;
+m.skip_rd_i32 = skip_rd_ints;
+buf_mt.skip_rd_i32 = skip_rd_ints;
 
-local skip_rd_u16 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , nbit , bytes = decode_tag(tag);
-  if bytes > 2 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e;
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
+m.skip_rd_u32 = skip_rd_ints;
+buf_mt.skip_rd_u32 = skip_rd_ints;
 
-m.skip_rd_u16 = skip_rd_u16;
+m.skip_rd_i64 = skip_rd_ints;
+buf_mt.skip_rd_i64 = skip_rd_ints;
 
-local skip_rd_i32 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , _ , bytes = decode_tag(tag);
-  if bytes > 4 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
-
-m.skip_rd_i32 = skip_rd_i32;
-
-local skip_rd_u32 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , nbit , bytes = decode_tag(tag);
-  if bytes > 4 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e;
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
-
-m.skip_rd_u32 = skip_rd_u32;
-
-local skip_rd_i64 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , _ , bytes = decode_tag(tag);
-  if bytes > 8 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
-
-m.skip_rd_i64 = skip_rd_i64;
-
-local skip_rd_u64 = function(b)
-  local ec , tag = rd_fixu8(b);
-  if ec > 0 then return ec; end;
-  local tag_as_value , nbit , bytes = decode_tag(tag);
-  if bytes > 8 then
-    b.e = ec_value_outof_ranger_to_integer_number;
-    return b.e;
-  end
-  if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
-    return b.e;
-  end
-  if tag_as_value == false then
-    ec = skip_rd(b,bytes);
-  end
-  return ec;
-end
-
-m.skip_rd_u64 = skip_rd_u64;
+m.skip_rd_u64 = skip_rd_ints;
+buf_mt.skip_rd_u64 = skip_rd_ints;
 
 local skip_rd_str = function(b , n)
-  local ec , len = rd_u32(b);
-  if ec > 0 then return ec; end
+  local len = rd_u32(b);
   if n > 0 then
-    if len > n then b.e = ec_sequence_length_overflow; return b.e; end
+    if len > n then
+      b.e = ec_sequence_length_overflow;
+      error("sequence length overflow");
+    end
   end
-  if b.rlen + len > b.rcap then b.e = ec_stream_buffer_overflow; return b.e; end
+  if b.rlen + len > b.rcap then
+    b.e = ec_stream_buffer_overflow;
+    error("stream buffer overflow");
+  end
   b.rlen = b.rlen + len;
 end
 
 m.skip_rd_str = skip_rd_str;
+buf_mt.skip_rd_str = skip_rd_str;
 
 local wt_i8 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
-    if v > 127 then b.e = ec_error_value_int8; return b.e; end
-    ec = wt_fixu8(b,tag);
-    if ec == 0 then ec = wt_fixu8(b,v); end
+    if v > 127 then
+      b.e = ec_error_value_int8;
+      error("error value int8");
+    end
+    wt_fixu8(b,tag);
+    wt_fixu8(b,v);
   end
-  return ec;
 end
 
 m.wt_i8 = wt_i8;
+buf_mt.wt_i8 = wt_i8;
 
 local wt_u8 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
-    if v > 255 then b.e = ec_error_value_uint8; return; end
-    ec = wt_fixu8(b,tag);
-    if ec == 0 then ec = wt_fixu8(b,v);  end;
+    if v > 255 then
+      b.e = ec_error_value_uint8;
+      error("error value uint8");
+    end
+    wt_fixu8(b,tag);
+    ec = wt_fixu8(b,v);
   end
-  return ec;
 end
 
 m.wt_u8 = wt_u8;
+buf_mt.wt_u8 = wt_u8;
 
 local wt_i16 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
     local bytes = 0;
     if v < 0x100 then
@@ -1097,21 +1010,21 @@ local wt_i16 = function(b , n)
       bytes = 1;
     else
       b.e = ec_error_value_int16;
-      ec = b.e;
+      error("error value int16");
     end
-    ec = wt_fixu8(b,tag+bytes);
-    if ec == 0 then b.uv.i16 = v; ec = savebyte2p(b,bytes+1); end
+    wt_fixu8(b,tag+bytes);
+    b.uv.i16 = v;
+    savebyte2p(b,bytes+1);
   end
-  return ec;
 end
 
 m.wt_i16 = wt_i16;
+buf_mt.wt_i16 = wt_i16;
 
 local wt_u16 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
     local bytes = 0;
     if v < 0x100 then
@@ -1119,21 +1032,21 @@ local wt_u16 = function(b , n)
       bytes = 1;
     else
       b.e = ec_error_value_uint16;
-      ec = b.e;
+      error("error value uint16");
     end
-    ec = wt_fixu8(b,tag+bytes);
-    if ec == 0 then b.uv.u16 = v; ec = savebyte2p(b,bytes+1); end
+    wt_fixu8(b,tag+bytes);
+    b.uv.u16 = v;
+    savebyte2p(b,bytes+1);
   end
-  return ec;
 end
 
 m.wt_u16 = wt_u16;
+buf_mt.wt_u16 = wt_u16;
 
 local wt_i32 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)
+    wt_fixu8(b,v)
   else
     local bytes = 0;
     if v < 0x100 then
@@ -1145,21 +1058,21 @@ local wt_i32 = function(b , n)
       bytes = 3;
     else
       b.e = ec_error_value_int32;
-      ec = b.e;
+      error("error value int32");
     end
-    ec = wt_fixu8(b,tag+bytes);
-    if ec == 0 then b.uv.i32 = v; ec = savebyte4p(b,bytes+1); end
+    wt_fixu8(b,tag+bytes);
+    b.uv.i32 = v;
+    savebyte4p(b,bytes+1);
   end
-  return ec;
 end
 
 m.wt_i32 = wt_i32;
+buf_mt.wt_i32 = wt_i32;
 
 local wt_u32 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
     local bytes = 0;
     if v < 0x100 then
@@ -1171,21 +1084,21 @@ local wt_u32 = function(b , n)
       bytes = 3;
     else
       b.e = ec_error_value_uint32;
-      ec = b.e;
+      error("error value uint32");
     end
-    ec = wt_fixu8(b,tag+bytes);
-    if ec == 0 then b.uv.u32 = v; ec = savebyte4p(b,bytes+1); end
+    wt_fixu8(b,tag+bytes);
+    b.uv.u32 = v;
+    savebyte4p(b,bytes+1);
   end
-  return ec;
 end
 
 m.wt_u32 = wt_u32;
+buf_mt.wt_u32 = wt_u32;
 
 local wt_i64 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
     local bytes = 0;
     if v < 0x100 then
@@ -1205,21 +1118,21 @@ local wt_i64 = function(b , n)
       bytes = 7;
     else
       b.e = ec_error_value_int64;
-      ec = b.e;
+      error("error value int64");
     end
-    ec = wt_fixu8(b,tag+bytes);
-    if ec == 0 then b.uv.i64 = v; ec = savebyte8p(b,bytes+1); end
+    wt_fixu8(b,tag+bytes);
+    b.uv.i64 = v;
+    savebyte8p(b,bytes+1);
   end
-  return ec;
 end
 
 m.wt_i64 = wt_i64;
+buf_mt.wt_i64 = wt_i64;
 
 local wt_u64 = function(b , n)
   local tag_as_value , tag , v = encode_tag(n);
-  local ec = 0;
   if tag_as_value == true then
-    ec = wt_fixu8(b,v)    
+    wt_fixu8(b,v)    
   else
     local bytes = 0;
     if v < 0x100 then
@@ -1238,13 +1151,14 @@ local wt_u64 = function(b , n)
     else
       bytes = 7;
     end
-    ec = wt_fixu8(b,tag+bytes);
-    if ec == 0 then b.uv.u64 = v; ec = savebyte8p(b,bytes+1); end
+    wt_fixu8(b,tag+bytes);
+    b.uv.u64 = v;
+    savebyte8p(b,bytes+1);
   end
-  return ec;
 end
 
 m.wt_u64 = wt_u64;
+buf_mt.wt_u64 = wt_u64;
 
 local szof_i64 = function(n)
   local tag_as_value , tag , v = encode_tag(n);
@@ -1304,33 +1218,51 @@ m.szof_u32 = szof_u64;
 m.szof_i64 = szof_i64;
 m.szof_u64 = szof_u64;
 
+buf_mt.szof_i8 = szof_i64;
+buf_mt.szof_u8 = szof_u64;
+buf_mt.szof_i16 = szof_i64;
+buf_mt.szof_u16 = szof_u64;
+buf_mt.szof_i32 = szof_i64;
+buf_mt.szof_u32 = szof_u64;
+buf_mt.szof_i64 = szof_i64;
+buf_mt.szof_u64 = szof_u64;
+
+
 m.szof_f32 = function(v)
   return 4;
 end
+buf_mt.szof_f32 = m.szof_f32
 
 m.szof_f64 = function(v)
   return 8;
 end
+buf_mt.szof_f64 = m.szof_f64
 
 local wt_str = function(b , s , n)
   local len = #s;
   if n ~= nil and n > 0 then
-    if len > n then b.e = ec_sequence_length_overflow; return b.e; end
+    if len > n then
+      b.e = ec_sequence_length_overflow;
+      error("sequence ength overflow");
+    end
   end
-  local ec = wt_u32(b,len);
-  if ec > 0 then return ec; end
-  if b.wlen + len > b.wcap then b.e = ec_stream_buffer_overflow; return b.e; end
+  wt_u32(b,len);
+  if b.wlen + len > b.wcap then
+    b.e = ec_stream_buffer_overflow;
+    error("stream buffer overflow");
+  end
   ffi.copy(b.wbuf + b.wlen , s);
   b.wlen = b.wlen + len;
-  return ec;
 end
 
 m.szof_str = function( s )
   local len = #s;
   len = len + szof_i64(len);
 end
+buf_mt.szof_str = m.szof_str
 
 m.wt_str = wt_str;
+buf_mt.wt_str = wt_str;
 
 local make_zbuf_with_file = function(filename)
   local fp = io.open(filename,"rb");
@@ -1373,16 +1305,15 @@ local rehash = function( ns_str_pool_idx , idx )
 end
 
 local decode_default_value = function(buf,t,tname)
-  local ec = 0;
   local v = nil;
   if t >= adata_et_fix_int8 and t <= adata_et_int64 then
-    ec , v = rd_i64(buf);
+    v = rd_i64(buf);
   elseif t == adata_et_fix_uint64 then
-    ec , v = rd_u64(buf);
+    v = rd_u64(buf);
   elseif t == adata_et_float32 then
-    ec , v = rd_f32(buf);
+    v = rd_f32(buf);
   elseif t == adata_et_float64 then
-    ec , v = rd_f64(buf);
+    v = rd_f64(buf);
   elseif t == adata_et_string then
     v = "";
   elseif t == adata_et_type then
@@ -1392,14 +1323,14 @@ local decode_default_value = function(buf,t,tname)
 end
 
 local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
-  local ec , ns_name = rd_str(buf,0);
-  local ec , str_pool_count = rd_i32(buf);
+  local ns_name = rd_str(buf,0);
+  local str_pool_count = rd_i32(buf);
   local ns_str_pool_idx = {};
   for i = 1 , str_pool_count do
-    local ec,str = rd_str(buf,0);
+    local str = rd_str(buf,0);
     ns_str_pool_idx[i] = register_str_pool(str,str_pool,str_idx);
   end
-  local ec , type_count = rd_i32(buf);
+  local type_count = rd_i32(buf);
   local ns_types = {};
   for i = 1 , type_count do
     local type_name = nil;
@@ -1410,29 +1341,27 @@ local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
     
     local type_def = {name , type_members};
 
-    local ec , member_count = rd_i32(buf);
+    local member_count = rd_i32(buf);
     type_def.member_count = member_count;
-    local ec , param_type_count = rd_i32(buf);
+    local param_type_count = rd_i32(buf);
     
-    local ec , type_name_sid = rd_i32(buf);
+    local type_name_sid = rd_i32(buf);
     type_name_sid = rehash(ns_str_pool_idx,type_name_sid);
     type_name = str_idx[type_name_sid];
     local process_count = 1;
     for m = 1, member_count do
-      local ec,member_name_sid = rd_i32(buf);
+      local member_name_sid = rd_i32(buf);
       member_name_sid = rehash(ns_str_pool_idx,member_name_sid);     
-      local member_name = str_idx[member_name_sid];
-      
-      local ec,member_type = rd_i32(buf);
-      
+      local member_name = str_idx[member_name_sid];     
+      local member_type = rd_i32(buf);
       local member_type_def = nil;
       local member_type_name = nil;
       
       if member_type == adata_et_type then
-        local ec,member_typename_sid = rd_i32(buf);
+        local member_typename_sid = rd_i32(buf);
         member_typename_sid = rehash(ns_str_pool_idx,member_typename_sid);
         member_typename = str_idx[member_typename_sid];
-        local ec,namespace_idx = rd_i32(buf);
+        local namespace_idx = rd_i32(buf);
         
         if namespace_idx == -1 then
           member_type_def = types[member_typename];
@@ -1441,7 +1370,7 @@ local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
         end        
       end
       
-      local ec , member_del = rd_i32(buf);
+      local member_del = rd_i32(buf);
       if member_del == 0 then
         field_list[process_count] = member_name;
         local construct_value = decode_default_value(buf,member_type,member_type_def);
@@ -1449,22 +1378,22 @@ local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
         process_count = process_count + 1;
       end
       
-      local ec,member_size = rd_i32(buf);
+      local member_size = rd_i32(buf);
       
       member_params = {};
-      local ec,param_count = rd_i32(buf);
+      local param_count = rd_i32(buf);
       for p = 1,param_count do
-        local ec , p_type = rd_i32(buf);
-        local ec , size = rd_i32(buf);
+        local p_type = rd_i32(buf);
+        local size = rd_i32(buf);
         local ptype_type = p_type;
         local ptype_size = size;
         local ptype_typename = nil;
         local ptype_typedef = nil;
         if p_type == adata_et_type then
-          local ec , ptype_typename_sid = rd_i32(buf);
+          local ptype_typename_sid = rd_i32(buf);
           ptype_typename_sid = rehash(ns_str_pool_idx,ptype_typename_sid);
           ptype_typname = str_pool[ptype_typename_sid];
-          local ec , namespace_idx = rd_i32(buf);
+          local namespace_idx = rd_i32(buf);
           if namespace_idx == -1 then
             ptype_type_def = types[ptype.typename];
           else
@@ -1488,7 +1417,7 @@ end
 
 m.load = function(adt_file,str_pool,str_idx,types,mts,mt_list)
   local buf = make_zbuf_with_file(adt_file);
-  local ec,count = rd_i32(buf);
+  local count = rd_i32(buf);
   local nss = {};
   for i = 1, count do
     local ns = load_namespace(buf,str_pool,str_idx,types,mts,mt_list);
@@ -1499,10 +1428,8 @@ end
 
 local skip_rd_type = function(str_idx , mt_list , buf , obj_type , o)
   local offset = get_rd_len(buf);
-  local ec,read_tag = rd_u64(buf);
-  if ec > 0 then return ec; end;
-  local ec,len_tag = rd_i32(buf);
-  if ec > 0 then return ec; end;
+  local read_tag = rd_u64(buf);
+  local len_tag = rd_i32(buf);
   if len_tag >= 0 then
     local read_len = get_rd_len(buf) - offset;
     if len_tag > read_len then skip_rd_len(buf, len_tag - read_len); end;
@@ -1565,48 +1492,36 @@ end
 local read_member = function( buf , mb , o)
   local ty = mb[def_pos_type];
   if ty == adata_et_list then
-    local ec,count = rd_u32(buf);
+    local count = rd_u32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      trace_error(buf,mb[def_pos_name],-1);
-      return ec_sequence_length_overflow;
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
     end;
     local param = mb[def_pos_params][1];
     for i = 1 , count do
       local val = construct_value(param);
-      ec , val = read_value(buf,param , val);
-      if ec > 0 then
-        trace_error(buf,mb[def_pos_name],i-1);
-        return ec;
-      end;
+      val = read_value(buf,param , val);
       o[i] = val;
     end
-    return ec , o;
+    return o;
   elseif ty == adata_et_map then
-    local ec,count = rd_u32(buf);
+    local count = rd_u32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      trace_error(buf,mb.name,-1);
-      return ec_sequence_length_overflow;
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
     for i = 1 , count do
       local kval = construct_value(kparam);
-      ec , kval = read_value(buf,kparam,kval);
-      if ec > 0 then
-        trace_error(buf,mb[def_pos_name],i-1);
-        return ec;
-      end;
+      kval = read_value(buf,kparam,kval);
       local vval = construct_value(vparam);
-      ec , vval = read_value(buf,vparam,vval);
-      if ec > 0 then
-        trace_error(buf,mb[def_pos_name],i-1);
-        return ec;
-      end;
+      vval = read_value(buf,vparam,vval);
       o[kval] = vval;
     end
-    return ec , o;
+    return o;
   else
     return read_value(buf,mb,o);
   end
@@ -1643,10 +1558,8 @@ end
 
 read_type = function(buf,type_def,o)
   local offset = get_rd_len(buf);
-  local ec,read_tag = rd_u64(buf);
-  if ec > 0 then return ec; end;
-  local ec,len_tag = rd_i32(buf);
-  if ec > 0 then return ec; end;
+  local read_tag = rd_u64(buf);
+  local len_tag = rd_i32(buf);
   
   local members = type_def[2];
   for i = 1 , #members do
@@ -1656,8 +1569,7 @@ read_type = function(buf,type_def,o)
         skip_rd();
       else
         local mname = mb[def_pos_name];
-        ec , o[mname] = read_member(buf,mb,o[mname]);        
-        if ec > 0 then return ec; end
+        o[mname] = read_member(buf,mb,o[mname]);        
       end;     
     end  
   end
@@ -1668,7 +1580,7 @@ read_type = function(buf,type_def,o)
       skip_rd_len(buf, len_tag - read_len);
     end;
   end
-  return ec , o;
+  return o;
 end
 
 m.read = function(str_idx , mt_list , buf , type_def , o)
@@ -1822,45 +1734,32 @@ local write_member = function( buf , mb , o , ctx)
     local count = #o;
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      trace_error(buf,mb[def_pos_name],-1);
-      return ec_sequence_length_overflow;
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
     end;
     wt_u32(buf,count);
     local param = mb[def_pos_params][1];
     for i = 1 , count do
       local val = o[i];
-      ec , val = write_value(buf,param , val , ctx);
-      if ec > 0 then
-        trace_error(buf,mb[def_pos_name],i-1);
-        return ec;
-      end;
+      write_value(buf,param , val , ctx);
     end
   elseif ty == adata_et_map then
     local count = tablen(o);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      trace_error(buf,mb[def_pos_name],-1);
-      return ec_sequence_length_overflow;
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
     wt_u32(buf,count);
     for k,v in pairs(o) do
-      ec = write_value(buf,kparam,k,ctx);
-      if ec > 0 then
-        trace_error(buf,mb[def_pos_name],i-1);
-        return ec;
-      end;
-      ec = write_value(buf,vparam,v,ctx);
-      if ec > 0 then
-        trace_error(buf,mb[def_pos_name],i-1);
-        return ec;
-      end;
+      write_value(buf,kparam,k,ctx);
+      write_value(buf,vparam,v,ctx);
     end
   else
     return write_value(buf,mb,o,ctx);
   end
-  return buf.e;
 end
 
 write_type = function(buf,type_def,o,ctx)
@@ -1873,11 +1772,9 @@ write_type = function(buf,type_def,o,ctx)
   for i = 1 , #members do
     local mb = members[i];
     if write_tag % masks[i+1] >= masks[i] then
-      local ec = write_member(buf,mb,o[mb[def_pos_name]],ctx);
-      if ec > 0 then return ec; end
+      write_member(buf,mb,o[mb[def_pos_name]],ctx);
     end  
   end
-  return buf.e;
 end
 
 m.write = function(str_idx , mt_list , buf , type_def , o)
@@ -1886,4 +1783,267 @@ m.write = function(str_idx , mt_list , buf , type_def , o)
   ctx[1] = 1;
   return write_type(buf,type_def,o,ctx);
 end
+
+local raw_read_type;
+
+local raw_read_value = function(buf , def , o)
+  local ty = def[def_pos_type];
+  if ty == adata_et_fix_int8 then
+    return rd_fixi8(buf);
+  elseif ty == adata_et_fix_uint8 then
+    return rd_fixu8(buf);
+  elseif ty == adata_et_fix_int16 then
+    return rd_fixi16(buf);
+  elseif ty == adata_et_fix_uint16 then
+    return rd_fixu16(buf);
+  elseif ty == adata_et_fix_int32 then
+    return rd_fixi32(buf);
+  elseif ty == adata_et_fix_uint32 then
+    return rd_fixu32(buf);
+  elseif ty == adata_et_fix_int64 then
+    return rd_fixi64(buf);
+  elseif ty == adata_et_fix_uint64 then
+    return rd_fixu64(buf);
+  elseif ty == adata_et_int8 then
+    return rd_i8(buf);
+  elseif ty == adata_et_uint8 then
+    return rd_u8(buf);
+  elseif ty == adata_et_int16 then
+    return rd_i16(buf);
+  elseif ty == adata_et_uint16 then
+    return rd_u16(buf);
+  elseif ty == adata_et_int32 then
+    return rd_i32(buf);
+  elseif ty == adata_et_uint32 then
+    return rd_u32(buf);
+  elseif ty == adata_et_int64 then
+    return rd_i64(buf);
+  elseif ty == adata_et_uint64 then
+    return rd_u64(buf);
+  elseif ty == adata_et_float32 then
+    return rd_f32(buf);
+  elseif ty == adata_et_float64 then
+    return rd_f64(buf);
+  elseif ty == adata_et_string then
+    return rd_str(buf,def[def_pos_size]);
+  elseif ty == adata_et_type then
+    return raw_read_type(buf,def[def_pos_type_def],o)
+  end
+end
+
+local raw_read_member = function( buf , mb , o)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local count = rd_u32(buf);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
+    end;
+    local param = mb[def_pos_params][1];
+    for i = 1 , count do
+      local val = construct_value(param);
+      val = raw_read_value(buf,param , val);
+      o[i] = val;
+    end
+    return o;
+  elseif ty == adata_et_map then
+    local count = rd_u32(buf);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
+    end;
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    for i = 1 , count do
+      local kval = construct_value(kparam);
+      kval = raw_read_value(buf,kparam,kval);
+      local vval = construct_value(vparam);
+      vval = raw_read_value(buf,vparam,vval);
+      o[kval] = vval;
+    end
+    return o;
+  else
+    return raw_read_value(buf,mb,o);
+  end
+end
+
+raw_read_type = function(buf,type_def,o) 
+  local members = type_def[2];
+  for i = 1 , #members do
+    local mb = members[i];
+    if mb[def_pos_del] == 0 then
+      local mname = mb[def_pos_name];
+      o[mname] = read_member(buf,mb,o[mname]);        
+    end  
+  end
+  return o;
+end
+
+m.raw_read = function(str_idx , mt_list , buf , type_def , o)
+  return raw_read_type(buf,type_def,o);
+end
+
+local raw_sizeof_type;
+
+local raw_sizeof_value = function(def , o)
+  local ty = def[def_pos_type];
+  if ty >= adata_et_fix_int8 and ty <= adata_et_fix_uint64 then
+    return sizeof_fixs[ty];
+  elseif ty >= adata_et_int8 and ty <= adata_et_int64 then
+    return szof_i64(o);
+  elseif ty == adata_et_uint64 then
+    return szof_u64(o);
+  elseif ty == adata_et_float32 then
+    return 4;
+  elseif ty == adata_et_float64 then
+    return 8;
+  elseif ty == adata_et_string then
+    local len = #o;
+    return szof_i64(len) + len;
+  elseif ty == adata_et_type then
+    return raw_sizeof_type(def[def_pos_type_def],o)
+  end
+end
+
+local raw_sizeof_member = function(mb , o)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local len = #o;
+    if len == 0 then return true,0; end;
+    local sz = szof_u32(len);
+    local param = mb[def_pos_params][1];
+    for i = 1 , len do 
+      sz = sz + raw_sizeof_value(param,o[i]);
+    end;
+    return sz;
+  elseif ty == adata_et_map then
+    local len = tablen(o);
+    if len == 0 then return true,0; end;
+    local sz = szof_u32(len);
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    for k,v in pairs(o) do
+      sz = sz + raw_sizeof_value(kparam,k);
+      sz = sz + raw_sizeof_value(vparam,v);
+    end
+    return sz;
+  else
+    return raw_sizeof_value(mb,o);
+  end
+end
+
+raw_sizeof_type = function(type_def,o) 
+  local sz = 0;
+  local members = type_def[2];
+  for i = 1 , #members do
+    local mb = members[i];
+    if mb[def_pos_del] == 0 then
+      local name = mb[def_pos_name];
+      sz = sz + sizeof_member(mb,o[name],ctx);
+    end
+  end
+  return sz;
+end
+
+m.raw_size_of = function(str_idx , mt_list , type_def , o)
+  return raw_sizeof_type(type_def,o);
+end
+
+local raw_write_type;
+
+local raw_write_value = function(buf , def , o)
+  local ty = def[def_pos_type];
+  if ty == adata_et_fix_int8 then
+    return wt_fixi8(buf,o);
+  elseif ty == adata_et_fix_uint8 then
+    return wt_fixu8(buf,o);
+  elseif ty == adata_et_fix_int16 then
+    return wt_fixi16(buf,o);
+  elseif ty == adata_et_fix_uint16 then
+    return wt_fixu16(buf,o);
+  elseif ty == adata_et_fix_int32 then
+    return wt_fixi32(buf,o);
+  elseif ty == adata_et_fix_uint32 then
+    return wt_fixu32(buf,o);
+  elseif ty == adata_et_fix_int64 then
+    return wt_fixi64(buf,o);
+  elseif ty == adata_et_fix_uint64 then
+    return wt_fixu64(buf,o);
+  elseif ty == adata_et_int8 then
+    return wt_i8(buf,o);
+  elseif ty == adata_et_uint8 then
+    return wt_u8(buf,o);
+  elseif ty == adata_et_int16 then
+    return wt_i16(buf,o);
+  elseif ty == adata_et_uint16 then
+    return wt_u16(buf,o);
+  elseif ty == adata_et_int32 then
+    return wt_i32(buf,o);
+  elseif ty == adata_et_uint32 then
+    return wt_u32(buf,o);
+  elseif ty == adata_et_int64 then
+    return wt_i64(buf,o);
+  elseif ty == adata_et_uint64 then
+    return wt_u64(buf,o);
+  elseif ty == adata_et_float32 then
+    return wt_f32(buf,o);
+  elseif ty == adata_et_float64 then
+    return wt_f64(buf,o);
+  elseif ty == adata_et_string then
+    return wt_str(buf,o,def[def_pos_size]);
+  elseif ty == adata_et_type then
+    return raw_write_type(buf,def[def_pos_type_def],o)
+  end
+end
+
+local raw_write_member = function( buf , mb , o)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local count = #o;
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
+    end;
+    wt_u32(buf,count);
+    local param = mb[def_pos_params][1];
+    for i = 1 , count do
+      local val = o[i];
+      raw_write_value(buf,param , val , ctx);
+    end
+  elseif ty == adata_et_map then
+    local count = tablen(o);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      buf.set_error(ec_sequence_length_overflow);
+      error("sequence length overflow");;
+    end;
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    wt_u32(buf,count);
+    for k,v in pairs(o) do
+      raw_write_value(buf,kparam,k,ctx);
+      raw_write_value(buf,vparam,v,ctx);
+    end
+  else
+    return raw_write_value(buf,mb,o,ctx);
+  end
+end
+
+raw_write_type = function(buf,type_def,o)
+  local members = type_def[2];
+  for i = 1 , #members do
+    local mb = members[i];
+    if mb[def_pos_del] == 0 then
+      raw_write_member(buf,mb,o[mb[def_pos_name]]);
+    end  
+  end
+end
+
+m.raw_write = function(str_idx , mt_list , buf , type_def , o)
+  return raw_write_type(buf,type_def,o);
+end
+
 return m;

@@ -8,11 +8,9 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#ifndef ADATAC_UTIL_H
-#define ADATAC_UTIL_H
+#pragma once
 
 #include "descrip.h"
-#include <boost/predef.h>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -54,18 +52,26 @@ inline const char * type_name(int type, bool fix)
   return data_type_name[0];
 }
 
-#if !BOOST_COMP_MSVC
-inline int fopen_s(FILE **f, const char *name, const char *mode)
+inline std::string replace_all_copy(std::string const& str , std::string const& c1 , std::string const& c2)
 {
-  int ret = 0;
-  assert(f);
-  *f = fopen(name, mode);
-  /* Can't be sure about 1-to-1 mapping of errno and MS' errno_t */
-  if (!*f)
-    ret = errno;
+  std::string ret;
+  size_t start = 0;
+  auto p = str.find(c1, start);
+  if( p == std::string::npos)
+  {
+    ret = str;
+  }
+  else
+  {
+    do
+    {
+      ret += str.substr(start, p - start);
+      ret += c2;
+      start = p + c1.length();
+      p = str.find(c1, start);
+    } while (p != std::string::npos);
+    ret += str.substr(start);
+  }
   return ret;
 }
-#endif
-
-#endif /// ADATAC_UTIL_H
 

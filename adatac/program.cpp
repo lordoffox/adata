@@ -11,7 +11,7 @@
 #include <string>
 #include <iostream>
 
-#include <boost/utility/string_ref.hpp>
+#include "string_view.h"
 
 #include "program.h"
 #include "parser.h"
@@ -52,9 +52,9 @@ void run_program(const options& opt)
     return;
   }
 
-  boost::string_ref input_file(opt.input_file);
-  boost::string_ref input_file_ext = input_file.substr(ext_pos + 1);
-  boost::string_ref output_file_name = input_file.substr(0, ext_pos);
+  std::string_view input_file(opt.input_file);
+  std::string_view input_file_ext = input_file.substr(ext_pos + 1);
+  std::string_view output_file_name = input_file.substr(0, ext_pos);
 
   auto path_pos = ::std::string::npos;
   auto end_pos = path_pos;
@@ -85,10 +85,11 @@ void run_program(const options& opt)
   define.m_filename = std::move(filename);
   define.adata_header = opt.adata_header;
 
-  if (input_file_ext == "adl")
+  static std::string_view adl_str = "adl";
+
+  if (input_file_ext == adl_str)
   {
-    std::string error;
-    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file, error);
+    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file);
     if (ret == false)
     {
       return;

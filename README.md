@@ -1,4 +1,4 @@
-ADATA v1.2
+ADATA v1.3
 =======
 
 ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
@@ -397,11 +397,7 @@ Then serialize:
 
 ```lua
 
-local ec = pv1:write(stream)
-if ec > 0 then 
-  -- some error, print it
-  error(ec, stream:trace_info())
-end
+pv1:write(stream)
 
 -- serialize success, data already write into stream's write buffer
 
@@ -438,11 +434,7 @@ Now deserialize:
 
 ```lua
 
-local ec = pv1_other:read(stream)
-if ec > 0 then 
-  -- some error, print it
-  error(ec, stream:trace_info())
-end
+pv1_other:read(stream)
 
 -- deserialize success, pv1_other should equals with pv1
 
@@ -527,6 +519,11 @@ pv1's value should equals with pv1_other and size_of also as well.
 
 
 Change log:
+*v1.3
+1.change C++ error handler to exception
+2.change lua error handler to exception
+3.add javascript support
+4.add "raw" mode on read , write , size_of interface, run fast but no compatibility.
 
 *v1.2
 1.remove lua code generate,all lua(5.1,5.2,luajit) and add binary format adt files,lua and javascript use adt file dynamic load schema data type.

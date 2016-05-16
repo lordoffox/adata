@@ -9,39 +9,30 @@
 ///
 
 #include <iostream>
-#include <boost/program_options.hpp>
-
+#include "aarg.hpp"
 #include "program.h"
-
-using namespace boost;
-namespace po = boost::program_options;
 
 int main(int ac, char* av[])
 {
   try
   {
     options opt;
+    aarg::argopt ao;
 
-    po::options_description desc("Allowed options");
-    desc.add_options()
-      ("help", "produce help message")
-      ("input_file,I", po::value<std::string>(&opt.input_file), "idl file(json,adl)")
-      ("output_path,O", po::value< std::string >(&opt.output_path)->default_value("./"), "output source path")
-      ("include_paths,P", po::value<std::vector<std::string> >(&opt.include_paths), "include paths for other adl")
-      ("gen,G", po::value<std::vector<std::string> >(&opt.gen), "gen source cpp,csharp,adt,cpp2lua")
-      ("adata_header,H", po::value<std::string>(&opt.adata_header)->default_value(""), "include adata.hpp path")
-      ("pack_file,p", po::value<std::vector<std::string> >(&opt.pack_files), "pack adt file list")
-      ("pack_output_file,o", po::value< std::string >(&opt.pack_output_file)->default_value("pack"), "output source path")
-      ;
+    ao.add('I', "input_file", "adl file", opt.input_file);
+    ao.add('O', "output_path", "output source path", opt.output_path);
+    ao.add('P', "include_paths", "include paths for other adl", opt.include_paths);
+    ao.add('G', "gen", "gen source cpp,csharp,adt,cpp2lua", opt.gen);
+    ao.add('H', "adata_header", "include adata.hpp path", opt.adata_header);
+    ao.add('p', "pack_file", "pack adt files", opt.pack_files);
+    ao.add('o', "pack_output_file", "output package path", opt.pack_output_file);
 
-    po::variables_map vm;
-    po::store(po::command_line_parser(ac, av).options(desc).run(), vm);
-    po::notify(vm);
+    ao.parse(ac, av);
 
-    if (vm.count("help") || ac == 1)
+    if (ac == 1)
     {
       std::cout << "Usage: options_description [options]\n";
-      std::cout << desc;
+      std::cout << ao.desc();
     }
     else
     {

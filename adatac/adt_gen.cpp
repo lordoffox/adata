@@ -11,8 +11,7 @@
 #include "adata.hpp"
 #include "descrip.h"
 #include "util.h"
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/lexical_cast.hpp>
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <set>
@@ -67,7 +66,7 @@ namespace adt_gen
       int64_t value = 0;
       if (mdefine.m_default_value.length() > 0)
       {
-        value = boost::lexical_cast<int64_t>(mdefine.m_default_value);
+        value = std::strtoll(mdefine.m_default_value.c_str(),nullptr,10);
       }
       adata::write(zbuf, value);
       break;
@@ -84,7 +83,7 @@ namespace adt_gen
       uint64_t value = 0;
       if (mdefine.m_default_value.length() > 0)
       {
-        value = boost::lexical_cast<uint64_t>(mdefine.m_default_value);
+        value = std::strtoull(mdefine.m_default_value.c_str(),nullptr,10);
       }
       adata::write(zbuf, value);
       break;
@@ -94,7 +93,7 @@ namespace adt_gen
       float value = 0;
       if (mdefine.m_default_value.length() > 0)
       {
-        value = boost::lexical_cast<float>(mdefine.m_default_value);
+        value = std::strtof(mdefine.m_default_value.c_str(),nullptr);
       }
       adata::write(zbuf, value);
       break;
@@ -104,7 +103,7 @@ namespace adt_gen
       double value = 0;
       if (mdefine.m_default_value.length() > 0)
       {
-        value = boost::lexical_cast<double>(mdefine.m_default_value);
+        value = std::strtod(mdefine.m_default_value.c_str(), nullptr);
       }
       adata::write(zbuf, value);
       break;

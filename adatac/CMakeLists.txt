@@ -32,23 +32,6 @@ include_directories (${PROJECT_SOURCE_DIR})
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/../cpp/)
 
-# Boost libraries search.
-set (Boost_USE_STATIC_LIBS ON)
-set (Boost_USE_MULTITHREADED ON)
-if (BOOST_ROOT)
-  set (Boost_NO_SYSTEM_PATHS ON)
-endif ()
-
-find_package (Boost 1.55.0 REQUIRED program_options)
-
-mark_as_advanced (Boost_DIR)
-if (WIN32)
-  mark_as_advanced (Boost_LIB_DIAGNOSTIC_DEFINITIONS)
-endif ()
-
-include_directories (${Boost_INCLUDE_DIRS})
-link_directories (${Boost_LIBRARY_DIRS})
-
 set (CMAKE_VERBOSE_MAKEFILE true)
 
 if (NOT WIN32)
@@ -70,7 +53,7 @@ add_executable(adatac ${SOURCE_FILES})
 if (ADATAC_COMPILE_PROP)
   set_target_properties (adatac PROPERTIES COMPILE_FLAGS "${ADATAC_COMPILE_PROP}")
 endif ()
-target_link_libraries (adatac ${Boost_LIBRARIES})
+target_link_libraries (adatac)
 
 install (TARGETS adatac RUNTIME DESTINATION bin)
 

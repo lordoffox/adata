@@ -4,6 +4,9 @@ local skip_read_c = core.skip_read;
 local size_of_c = core.size_of;
 local read_c = core.read;
 local write_c = core.write;
+local raw_size_of_c = core.raw_size_of;
+local raw_read_c = core.raw_read;
+local raw_write_c = core.raw_write;
 
 --global string pool
 local str_pool = {};
@@ -71,11 +74,26 @@ local make_type = function(ns,ty)
     return write_c( str_idx , mt_list , buf , type_def , o);
   end
   
+  local raw_size_of = function(o,buf)
+    return raw_size_of_c( str_idx , mt_list , type_def , o);
+  end
+
+  local raw_read = function(o,buf)
+    return raw_read_c( str_idx , mt_list , buf , type_def , o);
+  end
+
+  local raw_write = function(o,buf)
+    return raw_write_c( str_idx , mt_list , buf , type_def , o);
+  end
+  
   mt.adtype = construct;
   mt.skip_read = skip_read;
   mt.size_of = size_of;
   mt.read = read;
   mt.write = write;
+  mt.raw_size_of = raw_size_of;
+  mt.raw_read = raw_read;
+  mt.raw_write = raw_write;
   
   if type(type_def) == 'table' then type_def.constructor = construct; end;
 end

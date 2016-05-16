@@ -10,8 +10,7 @@
 
 #include "descrip.h"
 #include "util.h"
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/assert.hpp>
+#include <assert.h>
 #include <vector>
 #include <fstream>
 #include <ctime>
@@ -30,12 +29,12 @@ namespace cpp2lua_gen
     if (find == map_define.end())
     {
       type_define const* ty = desc_define.find_decl_type(name);
-      BOOST_ASSERT_MSG(ty != nullptr, name.c_str());
+      assert(ty != nullptr);
 
       if (name.find('.') != std::string::npos)
       {
         std::string ty = "::";
-        return ty + boost::algorithm::replace_all_copy(name, ".", "::");
+        return ty + replace_all_copy(name, ".", "::");
       }
       else
       {
@@ -269,7 +268,7 @@ namespace cpp2lua_gen
   {
     for (auto const& inc : desc_define.m_includes)
     {
-      std::string inc_path = boost::algorithm::replace_all_copy(inc.first, ".", "/");
+      std::string inc_path = replace_all_copy(inc.first, ".", "/");
       os << "#include \"" << inc_path << ".adl.c2l.h" << "\"" << std::endl;
     }
     os << std::endl;

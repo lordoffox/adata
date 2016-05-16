@@ -8,8 +8,7 @@
 /// See https://github.com/lordoffox/adata for latest version.
 ///
 
-#ifndef ADATAC_DESCRIP_H
-#define ADATAC_DESCRIP_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -236,5 +235,3 @@ typedef std::map<std::string, std::string> typename_map_type;
 
 typename_map_type& get_cpp_typename_map();
 typename_map_type& get_csharp_typename_map();
-
-#endif /// ADATAC_DESCRIP_H

@@ -12,9 +12,9 @@
 
 #include "parser.h"
 #include "util.h"
-#include <boost/lexical_cast.hpp>
-#include <boost/assert.hpp>
+#include <assert.h>
 #include <cstdio>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 
@@ -80,11 +80,11 @@ namespace
 
 struct parse_execption : std::runtime_error
 {
-  parse_execption(const char * error_info, int line, int col, std::string include)
+  parse_execption(const char * error_info, int line, int col, std::string const& include)
     : std::runtime_error(error_info)
     , m_lines(line)
     , m_cols(col)
-    , m_include(std::move(include))
+    , m_include(include)
   {}
   int m_lines;
   int m_cols;
@@ -109,9 +109,8 @@ typedef std::unique_ptr<char[], std::default_delete<char[]>> file_buffer_ptr;
 class adl_file
 {
 public:
-  explicit adl_file(std::string adl_file)
-    : adl_file_(std::move(adl_file))
-    , f_(nullptr)
+  explicit adl_file(std::string const& adl_file)
+    : adl_file_(adl_file)
   {
   }
 
@@ -126,14 +125,14 @@ public:
 public:
   bool open()
   {
-    BOOST_ASSERT(!f_);
-    f_ = open(adl_file_);
+    assert(!f_);
+    f_ = std::fopen(adl_file_.c_str(), "rb");
     return f_ != nullptr;
   }
 
   std::pair<file_buffer_ptr, int> read()
   {
-    BOOST_ASSERT(f_ != nullptr);
+    assert(f_ != nullptr);
 
     std::fseek(f_, 0, SEEK_END);
 
@@ -146,19 +145,8 @@ public:
   }
 
 private:
-  static FILE* open(std::string const& adl_file)
-  {
-    FILE* fd = nullptr;
-    if (::fopen_s(&fd, adl_file.c_str(), "rb") != 0)
-    {
-      return nullptr;
-    }
-    return fd;
-  }
-
-private:
   std::string const adl_file_;
-  FILE* f_;
+  FILE* f_ = nullptr;
 };
 
 // Noux Xiong: add for both main file and include parsing
@@ -946,7 +934,7 @@ public:
             {
               throw parse_execption("member syntax error ,container size limit option is not an integer", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
             }
-            int vmax = boost::lexical_cast<int>(member.m_size);
+            int vmax = std::strtol(member.m_size.c_str(),nullptr,10);
             if (vmax <= 0)
             {
               throw parse_execption("member syntax error ,container size limit option should > 0", member.m_parser_lines, member.m_parser_cols, member.m_parser_include);
@@ -967,7 +955,7 @@ public:
                 {
                   throw parse_execption("member syntax error ,string size limit option is not an integer", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
                 }
-                int vmax = boost::lexical_cast<int>(ptype.m_size);
+                int vmax = std::strtol(ptype.m_size.c_str(), nullptr, 10);
                 if (vmax <= 0)
                 {
                   throw parse_execption("member syntax error ,string size limit option should > 0", ptype.m_parser_lines, ptype.m_parser_cols, ptype.m_parser_include);
@@ -1122,8 +1110,7 @@ public:
 bool parse_adl_file(
   descrip_define& define,
   std::vector<std::string> const& include_paths,
-  const std::string& file,
-  std::string& error_message
+  const std::string& file
   )
 {
   try

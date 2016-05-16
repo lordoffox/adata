@@ -7,6 +7,7 @@
 #define ADATA_HPP_HEADER_
 
 #include <cstddef>
+#include <exception>
 #ifdef _MSC_VER
 # if _MSC_VER <= 1500
 #   include "stdint.hpp"
@@ -106,35 +107,22 @@ namespace adata
     value_too_large_to_integer_number,
     sequence_length_overflow,
     stream_buffer_overflow,
-    number_of_element_not_macth,
+    number_of_element_not_match,
     undefined_member_protocol_not_compatible,
   };
 
-  struct trace_info
+  class exception : public ::std::exception
   {
-    const char *	m_tag_name;
-    int32_t				m_sub_index;
-    trace_info(const char * tag = "", int32_t sub = -1) :m_tag_name(tag), m_sub_index(sub){}
-  };
+  public:
+    explicit exception( error_code_t ec , char const * message)
+      :ec_(ec), ::std::exception(message)
+    {}
 
-  struct stream_context
-  {
-    enum { max_trace_info_count = 64 };
-    trace_info								m_trace_infos[max_trace_info_count];
-    int32_t										m_trace_info_count;
-    error_code_t							m_error_code;
+    ADATA_INLINE error_code_t error_code() const { return ec_; }
 
-    stream_context() :m_trace_info_count(0), m_error_code(success)
+    static ADATA_INLINE const char * message(error_code_t ec)
     {
-    }
-
-    ADATA_INLINE error_code_t error_code() const { return this->m_error_code; }
-
-    ADATA_INLINE void	set_error_code(error_code_t value)  { this->m_error_code = value; }
-
-    ADATA_INLINE const char * message()
-    {
-      switch (this->m_error_code)
+      switch (ec)
       {
       case success:
         break;
@@ -146,7 +134,7 @@ namespace adata
         return "sequence length overflow";
       case stream_buffer_overflow:
         return "stream buffer overflow";
-      case number_of_element_not_macth:
+      case number_of_element_not_match:
         return "number of element not match";
       default:
         break;
@@ -154,86 +142,14 @@ namespace adata
       return "";
     }
 
-    ADATA_INLINE bool error() const { return this->m_error_code != success; } // true if error
-
-    ADATA_INLINE void clear()
-    {
-      this->m_trace_info_count = 0;
-      this->m_error_code = success;
-    }
-
-    ADATA_INLINE void trace_error(const char * tag, int32_t sub = -1)
-    {
-      if (m_trace_info_count > 64)
-      {
-        return;
-      }
-      this->m_trace_infos[m_trace_info_count].m_tag_name = tag;
-      this->m_trace_infos[m_trace_info_count++].m_sub_index = sub;
-    }
-
-    static ADATA_INLINE void u32toa_naive(uint32_t value, char* buffer)
-    {
-      char temp[10];
-      char *p = temp;
-      do
-      {
-        *p++ = (char)(value % 10) + '0';
-        value /= 10;
-      } while (value > 0);
-
-      do
-      {
-        *buffer++ = *--p;
-      } while (p != temp);
-
-      *buffer = '\0';
-    }
-
-    template<typename string_ty>  //et. std::string
-    void get_trace_error_info(string_ty& info)
-    {
-      std::size_t len = 0;
-      char num_buffer[32];
-      for (int32_t i = 0; i < this->m_trace_info_count; ++i)
-      {
-        len += (strlen(this->m_trace_infos[i].m_tag_name) + 1);
-        if (this->m_trace_infos[i].m_sub_index > -1)
-        {
-          len += 8;
-        }
-      }
-      info.clear();
-      if (info.capacity() < len)
-      {
-        info.reserve(len);
-      }
-      for (int32_t i = 0; i < m_trace_info_count; ++i)
-      {
-        info.append(this->m_trace_infos[i].m_tag_name);
-        if (this->m_trace_infos[i].m_sub_index > -1)
-        {
-          info.append(1, '[');
-          u32toa_naive(this->m_trace_infos[i].m_sub_index, num_buffer);
-          info.append(num_buffer);
-          info.append(1, ']');
-        }
-        if (i < m_trace_info_count - 1)
-        {
-          info.append(1, '.');
-        }
-      }
-    }
+  private:
+    error_code_t ec_;
   };
 
   template<typename stream_ty, typename ty>
   ADATA_INLINE void fix_skip_read(stream_ty& stream, ty *)
   {
-    stream.skip_read(sizeof(ty));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
+    stream.skip_read(sizeof(ty));    
   }
 
   template<typename ty>
@@ -464,29 +380,44 @@ namespace adata
   };
 
   template<typename stream_ty>
-  struct stream_adapter : public stream_context
+  struct stream_adapter
   {
     stream_adapter(stream_ty& stream) :stream_context(), m_stream_(stream)  {}
 
     ADATA_INLINE bool bad()const { return m_stream_.bad(); }
 
-    ADATA_INLINE std::size_t read(char * buffer, std::size_t len) { return m_stream_.read(buffer, len); }
-
-    ADATA_INLINE std::size_t write(const char * buffer, std::size_t len)  { return m_stream_.write(buffer, len); }
-
-    ADATA_INLINE void skip_read(std::size_t len)  { m_stream_.seekg(len); }
-
-    ADATA_INLINE void clear()
-    {
-      stream_context::clear();
-      m_stream_.clear();
+    ADATA_INLINE std::size_t read(char * buffer, std::size_t len)
+    { 
+      std::size_t sz = m_stream_.read(buffer, len); 
+      check_bad();
+      return sz;
     }
+
+    ADATA_INLINE std::size_t write(const char * buffer, std::size_t len)
+    {
+      std::size_t sz = m_stream_.write(buffer, len);
+      check_bad();
+      return sz;
+    }
+
+    ADATA_INLINE void skip_read(std::size_t len)
+    {
+      m_stream_.seekg(len);
+      check_bad();
+    }
+
+    ADATA_INLINE void clear() { m_stream_.clear();}
 
     ADATA_INLINE std::size_t read_size() { return 0; }
     ADATA_INLINE std::size_t write_size() { return 0; }
 
-  private:
-    stream_ty&		m_stream_;
+    ADATA_INLINE void check_bad()
+    {
+      if(bad())
+      {
+        throw exception(stream_buffer_overflow, "stream buffer overflow");
+      }
+    }
   };
 
   template<typename stream_ty>
@@ -500,10 +431,6 @@ namespace adata
   {
     typedef int8_t value_type;
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
   }
 
   template<typename stream_ty>
@@ -511,10 +438,6 @@ namespace adata
   {
     typedef uint8_t value_type;
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
   }
 
   template<typename stream_ty>
@@ -523,19 +446,9 @@ namespace adata
     typedef int16_t value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[2];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS2_0] = bytes[0];
     ptr[ADATA_LEPOS2_1] = bytes[1];
@@ -548,19 +461,9 @@ namespace adata
     typedef uint16_t value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[2];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS2_0] = bytes[0];
     ptr[ADATA_LEPOS2_1] = bytes[1];
@@ -573,19 +476,9 @@ namespace adata
     typedef int32_t value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[4];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS4_0] = bytes[0];
     ptr[ADATA_LEPOS4_1] = bytes[1];
@@ -600,19 +493,9 @@ namespace adata
     typedef uint32_t value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[4];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS4_0] = bytes[0];
     ptr[ADATA_LEPOS4_1] = bytes[1];
@@ -627,19 +510,9 @@ namespace adata
     typedef int64_t value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[8];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS8_0] = bytes[0];
     ptr[ADATA_LEPOS8_1] = bytes[1];
@@ -658,19 +531,9 @@ namespace adata
     typedef uint64_t value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[8];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS8_0] = bytes[0];
     ptr[ADATA_LEPOS8_1] = bytes[1];
@@ -688,10 +551,6 @@ namespace adata
   {
     typedef int8_t value_type;
     stream.write((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
   }
 
   template<typename stream_ty>
@@ -699,10 +558,6 @@ namespace adata
   {
     typedef uint8_t value_type;
     stream.write((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
   }
 
   template<typename stream_ty>
@@ -718,11 +573,6 @@ namespace adata
     bytes[1] = ptr[ADATA_LEPOS2_1];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -738,11 +588,6 @@ namespace adata
     bytes[1] = ptr[ADATA_LEPOS2_1];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -760,11 +605,6 @@ namespace adata
     bytes[3] = ptr[ADATA_LEPOS4_3];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -782,11 +622,6 @@ namespace adata
     bytes[3] = ptr[ADATA_LEPOS4_3];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -808,11 +643,6 @@ namespace adata
     bytes[7] = ptr[ADATA_LEPOS8_7];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -834,17 +664,11 @@ namespace adata
     bytes[7] = ptr[ADATA_LEPOS8_7];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void skip_read(stream_ty& stream, uint8_t * dummy)
+  ADATA_INLINE void skip_read(stream_ty& stream, uint8_t *)
   {
-    (dummy);
     typedef uint8_t value_type;
     uint8_t value = 0;
     const int bytes = sizeof(value_type);
@@ -852,24 +676,13 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void skip_read(stream_ty& stream, int8_t * dummy)
+  ADATA_INLINE void skip_read(stream_ty& stream, int8_t *)
   {
-    (dummy);
     typedef int8_t value_type;
     uint8_t value = 0;
     const int bytes = sizeof(value_type);
@@ -877,17 +690,7 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -901,17 +704,7 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -925,17 +718,7 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -948,18 +731,7 @@ namespace adata
     stream.read((char*)&value, 1);
     if (value > const_tag_as_value)
     {
-      int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -973,17 +745,7 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -997,17 +759,7 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -1021,17 +773,7 @@ namespace adata
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -1040,11 +782,6 @@ namespace adata
   {
     typedef float value_type;
     stream.skip_read(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1052,10 +789,21 @@ namespace adata
   {
     typedef double value_type;
     stream.skip_read(sizeof(value_type));
-    if (stream.bad())
+  }
+
+  ADATA_INLINE void check_negative_assaigned_to_unsined_interger(long value)
+  {
+    if (value & const_negative_bit_value)
     {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
+      throw exception(negative_assign_to_unsigned_integer_number, "negative assign to unsigned integer number");
+    }
+  }
+
+  ADATA_INLINE void check_value_too_large_to_integer_number(int bytes , int read_bytes)
+  {
+    if (bytes < read_bytes)
+    {
+      throw exception(value_too_large_to_integer_number, "value too large to integer number");
     }
   }
 
@@ -1066,30 +814,12 @@ namespace adata
     const int bytes = sizeof(value_type);
     value_type read_value[2] = { 0 };
     stream.read((char*)&value, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (value > const_tag_as_value)
     {
-      if ((long)value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       stream.read((char*)&value, 1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -1100,11 +830,6 @@ namespace adata
     const int bytes = sizeof(value_type);
     value_type read_value[2] = { 0 };
     stream.read((char*)&value, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (value > const_tag_as_value)
     {
       int sign = 1;
@@ -1113,17 +838,8 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       stream.read((char*)&read_value[1], 1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       if (sign < 0)
       {
         value = -read_value[1];
@@ -1142,25 +858,12 @@ namespace adata
     const int bytes = sizeof(value_type);
     uint8_t byte[2];
     stream.read((char*)byte, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value = byte[0];
     if (value > const_tag_as_value)
     {
-      if (value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
 #ifdef __LITTLE_ENDIAN__
       stream.read((char*)&value, read_bytes);
@@ -1170,11 +873,6 @@ namespace adata
       ptr[0] = byte[ADATA_LEPOS2_0];
       ptr[1] = byte[ADATA_LEPOS2_1];
 #endif
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -1185,11 +883,6 @@ namespace adata
     const int bytes = sizeof(value_type);
     uint8_t byte[2];
     stream.read((char*)byte, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value = byte[0];
     if (value > const_tag_as_value)
     {
@@ -1199,11 +892,7 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
 #ifdef __LITTLE_ENDIAN__
       stream.read((char*)&value, read_bytes);
@@ -1213,11 +902,6 @@ namespace adata
       ptr[0] = byts[ADATA_LEPOS2_0];
       ptr[1] = byts[ADATA_LEPOS2_1];
 #endif
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       if (sign < 0)
       {
         value = -value;
@@ -1232,25 +916,12 @@ namespace adata
     const int bytes = sizeof(value_type);
     uint8_t byte[4];
     stream.read((char*)byte, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value = byte[0];
     if (value > const_tag_as_value)
     {
-      if (value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
 #ifdef __LITTLE_ENDIAN__
       stream.read((char*)&value, read_bytes);
@@ -1265,11 +936,6 @@ namespace adata
       case 1:ptr[0] = byte[ADATA_LEPOS4_0];
       }
 #endif
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -1280,11 +946,6 @@ namespace adata
     const int bytes = sizeof(value_type);
     uint8_t byte[4];
     stream.read((char*)byte, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value = byte[0];
     if (value > const_tag_as_value)
     {
@@ -1294,11 +955,7 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
 #ifdef __LITTLE_ENDIAN__
       stream.read((char*)&value, read_bytes);
@@ -1313,11 +970,6 @@ namespace adata
       case 1:ptr[0] = byte[ADATA_LEPOS4_0];
       }
 #endif
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       if (sign < 0)
       {
         value = -value;
@@ -1332,25 +984,12 @@ namespace adata
     const int bytes = sizeof(value_type);
     uint8_t byte[8];
     stream.read((char*)byte, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value = byte[0];
     if (value > const_tag_as_value)
     {
-      if (value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
 #ifdef __LITTLE_ENDIAN__
       stream.read((char*)&value, read_bytes);
@@ -1369,11 +1008,6 @@ namespace adata
       case 1:ptr[0] = byte[ADATA_LEPOS8_0];
       }
 #endif
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -1384,11 +1018,6 @@ namespace adata
     const int bytes = sizeof(value_type);
     uint8_t byte[8];
     stream.read((char*)byte, 1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value = byte[0];
     if (value > const_tag_as_value)
     {
@@ -1398,11 +1027,7 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
 #ifdef __LITTLE_ENDIAN__
       stream.read((char*)&value, read_bytes);
@@ -1421,11 +1046,6 @@ namespace adata
       case 1:ptr[0] = byte[ADATA_LEPOS8_0];
       }
 #endif
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       if (sign < 0)
       {
         value = -value;
@@ -1439,19 +1059,9 @@ namespace adata
     typedef float value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[4];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS4_0] = bytes[0];
     ptr[ADATA_LEPOS4_1] = bytes[1];
@@ -1466,19 +1076,9 @@ namespace adata
     typedef double value_type;
 #ifdef __LITTLE_ENDIAN__
     stream.read((char*)&value, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
 #else
     uint8_t bytes[8];
     stream.read(bytes, sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * ptr = (uint8_t *)&value;
     ptr[ADATA_LEPOS8_0] = bytes[0];
     ptr[ADATA_LEPOS8_1] = bytes[1];
@@ -1509,11 +1109,6 @@ namespace adata
       write_bytes = 2;
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1542,11 +1137,6 @@ namespace adata
       write_bytes = 2;
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1577,11 +1167,6 @@ namespace adata
       bytes[0] = (uint8_t)(const_store_postive_integer_byte_mask + write_bytes);
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1619,11 +1204,6 @@ namespace adata
       bytes[0] = const_store_postive_integer_byte_mask + negative_bit + write_bytes;
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1669,11 +1249,6 @@ namespace adata
       bytes[0] = (uint8_t)(const_store_postive_integer_byte_mask + write_bytes);
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1726,11 +1301,6 @@ namespace adata
       bytes[0] = const_store_postive_integer_byte_mask + negative_bit + write_bytes;
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1818,11 +1388,6 @@ namespace adata
       bytes[0] = (uint8_t)(const_store_postive_integer_byte_mask + write_bytes);
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1917,11 +1482,6 @@ namespace adata
       bytes[0] = const_store_postive_integer_byte_mask + negative_bit + write_bytes;
     }
     stream.write((char*)bytes, write_bytes);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1939,11 +1499,6 @@ namespace adata
     bytes[3] = ptr[ADATA_LEPOS4_3];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
   template<typename stream_ty>
@@ -1965,14 +1520,9 @@ namespace adata
     bytes[7] = ptr[ADATA_LEPOS8_7];
     stream.write((const char*)bytes, sizeof(value_type));
 #endif
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
   }
 
-  struct zero_copy_buffer : stream_context
+  struct zero_copy_buffer
   {
   private:
     unsigned char const* m_read_header_ptr;
@@ -1981,12 +1531,8 @@ namespace adata
     unsigned char* m_write_ptr;
     unsigned char const* m_read_tail_ptr;
     unsigned char const* m_write_tail_ptr;
-    int							m_status;
-
+    bool bad_;
   public:
-
-    enum { good, read_overflow, write_overflow };
-
     zero_copy_buffer()
       :m_read_header_ptr(0),
       m_write_header_ptr(0),
@@ -1994,7 +1540,7 @@ namespace adata
       m_write_ptr(0),
       m_read_tail_ptr(0),
       m_write_tail_ptr(0),
-      m_status(good)
+      bad_(false)
     {
     }
 
@@ -2002,12 +1548,14 @@ namespace adata
     {
     }
 
+    ADATA_INLINE bool bad() const { return bad_; }
+
     ADATA_INLINE void set_read(unsigned char const* buffer, ::std::size_t length)
     {
       this->m_read_header_ptr = buffer;
       this->m_read_ptr = this->m_read_header_ptr;
       this->m_read_tail_ptr = this->m_read_header_ptr + length;
-      this->m_status = good;
+      bad_ = false;
     }
 
     ADATA_INLINE void set_read(char const* buffer, ::std::size_t length)
@@ -2020,7 +1568,7 @@ namespace adata
       this->m_write_header_ptr = buffer;
       this->m_write_ptr = this->m_write_header_ptr;
       this->m_write_tail_ptr = this->m_write_header_ptr + length;
-      this->m_status = good;
+      bad_ = false;
     }
 
     ADATA_INLINE void set_write(char* buffer, ::std::size_t length)
@@ -2032,8 +1580,8 @@ namespace adata
     {
       if (this->m_read_ptr + len > this->m_read_tail_ptr)
       {
-        this->m_status = read_overflow;
-        return 0;
+        bad_ = true;
+        throw exception(stream_buffer_overflow, "stream buffer overflow");
       }
       std::memcpy(buffer, this->m_read_ptr, len);
       this->m_read_ptr += len;
@@ -2044,8 +1592,8 @@ namespace adata
     {
       if (this->m_read_ptr + 1 > this->m_read_tail_ptr)
       {
-        this->m_status = read_overflow;
-        return 0;
+        bad_ = true;
+        throw exception(stream_buffer_overflow, "stream buffer overflow");
       }
       return *m_read_ptr++;
     }
@@ -2054,22 +1602,20 @@ namespace adata
     {
       if (this->m_write_ptr + len > this->m_write_tail_ptr)
       {
-        this->m_status = write_overflow;
-        return 0;
+        bad_ = true;
+        throw exception(stream_buffer_overflow, "stream buffer overflow");
       }
       std::memcpy((void*)this->m_write_ptr, buffer, len);
       this->m_write_ptr += len;
       return len;
     }
 
-    ADATA_INLINE bool bad() const { return this->m_status != good || stream_context::error(); }
-
     ADATA_INLINE unsigned char * append_write(std::size_t len)
     {
       if (this->m_write_ptr + len > this->m_write_tail_ptr)
       {
-        this->m_status = write_overflow;
-        return 0;
+        bad_ = true;
+        throw exception(stream_buffer_overflow, "stream buffer overflow");
       }
       unsigned char * append_ptr = this->m_write_ptr;
       this->m_write_ptr += len;
@@ -2080,8 +1626,8 @@ namespace adata
     {
       if (this->m_read_ptr + len > this->m_read_tail_ptr)
       {
-        this->m_status = read_overflow;
-        return 0;
+        bad_ = true;
+        throw exception(stream_buffer_overflow, "stream buffer overflow");
       }
       unsigned char const* ptr = this->m_read_ptr;
       this->m_read_ptr += len;
@@ -2091,21 +1637,19 @@ namespace adata
     ADATA_INLINE void clear_read()
     {
       this->m_read_ptr = this->m_read_header_ptr;
-      stream_context::clear();
+      bad_ = false;
     }
 
     ADATA_INLINE void clear_write()
     {
       this->m_write_ptr = this->m_write_header_ptr;
-      stream_context::clear();
+      bad_ = false;
     }
 
     ADATA_INLINE void clear()
     {
       this->m_read_ptr = this->m_read_header_ptr;
       this->m_write_ptr = this->m_write_header_ptr;
-      stream_context::clear();
-      this->m_status = good;
     }
 
     ADATA_INLINE unsigned char const* read_ptr() const
@@ -2141,19 +1685,11 @@ namespace adata
   ADATA_INLINE void fix_read(zero_copy_buffer& stream, int8_t& value)
   {
     value = (int8_t)stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
   }
 
   ADATA_INLINE void fix_read(zero_copy_buffer& stream, uint8_t& value)
   {
     value = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-    }
   }
 
   ADATA_INLINE void fix_read(zero_copy_buffer& stream, int16_t& value)
@@ -2161,11 +1697,6 @@ namespace adata
     typedef int16_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS2_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS2_1] = read_ptr[1];
   }
@@ -2175,11 +1706,6 @@ namespace adata
     typedef uint16_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS2_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS2_1] = read_ptr[1];
   }
@@ -2189,11 +1715,6 @@ namespace adata
     typedef int32_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS4_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS4_1] = read_ptr[1];
     value_ptr[ADATA_LEPOS4_2] = read_ptr[2];
@@ -2205,11 +1726,6 @@ namespace adata
     typedef uint32_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS4_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS4_1] = read_ptr[1];
     value_ptr[ADATA_LEPOS4_2] = read_ptr[2];
@@ -2221,11 +1737,6 @@ namespace adata
     typedef int64_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS8_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS8_1] = read_ptr[1];
     value_ptr[ADATA_LEPOS8_2] = read_ptr[2];
@@ -2241,11 +1752,6 @@ namespace adata
     typedef uint64_t value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS8_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS8_1] = read_ptr[1];
     value_ptr[ADATA_LEPOS8_2] = read_ptr[2];
@@ -2259,22 +1765,12 @@ namespace adata
   ADATA_INLINE void fix_write(zero_copy_buffer& stream, const int8_t& value)
   {
     uint8_t * ptr = stream.append_write(1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     *ptr = (uint8_t)value;
   }
 
   ADATA_INLINE void fix_write(zero_copy_buffer& stream, const uint8_t& value)
   {
     uint8_t * ptr = stream.append_write(1);
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     *ptr = value;
   }
 
@@ -2282,11 +1778,6 @@ namespace adata
   {
     typedef int16_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS2_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS2_1] = value_ptr[1];
@@ -2296,11 +1787,6 @@ namespace adata
   {
     typedef uint16_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS2_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS2_1] = value_ptr[1];
@@ -2310,11 +1796,6 @@ namespace adata
   {
     typedef int32_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS4_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS4_1] = value_ptr[1];
@@ -2326,11 +1807,6 @@ namespace adata
   {
     typedef uint32_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS4_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS4_1] = value_ptr[1];
@@ -2342,11 +1818,6 @@ namespace adata
   {
     typedef int64_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS8_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS8_1] = value_ptr[1];
@@ -2362,11 +1833,6 @@ namespace adata
   {
     typedef uint64_t value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS8_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS8_1] = value_ptr[1];
@@ -2378,51 +1844,27 @@ namespace adata
     write_ptr[ADATA_LEPOS8_7] = value_ptr[7];
   }
 
-  ADATA_INLINE void skip_read(zero_copy_buffer& stream, uint8_t * dummy)
+  ADATA_INLINE void skip_read(zero_copy_buffer& stream, uint8_t *)
   {
-    (dummy);
     typedef uint8_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
-  ADATA_INLINE void skip_read(zero_copy_buffer& stream, int8_t * dummy)
+  ADATA_INLINE void skip_read(zero_copy_buffer& stream, int8_t *)
   {
-    (dummy);
     typedef int8_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = (int8_t)stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2430,22 +1872,11 @@ namespace adata
   {
     typedef uint16_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2453,22 +1884,11 @@ namespace adata
   {
     typedef int16_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2476,22 +1896,11 @@ namespace adata
   {
     typedef uint32_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2499,22 +1908,11 @@ namespace adata
   {
     typedef int32_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2522,22 +1920,11 @@ namespace adata
   {
     typedef uint64_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2545,22 +1932,11 @@ namespace adata
   {
     typedef int64_t value_type;
     uint8_t value = 0;
-    const int bytes = sizeof(value_type);
     value = stream.get_char();
     if (value > const_tag_as_value)
     {
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
       stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2569,30 +1945,12 @@ namespace adata
     typedef uint8_t value_type;
     const int bytes = sizeof(value_type);
     value = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (value > const_tag_as_value)
     {
-      if ((long)value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
       int read_bytes = (value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = stream.get_char();
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
     }
   }
 
@@ -2601,11 +1959,6 @@ namespace adata
     typedef int8_t value_type;
     const int bytes = sizeof(value_type);
     uint8_t tag = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (tag > const_tag_as_value)
     {
       int sign = 1;
@@ -2614,17 +1967,8 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (int(tag) & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = stream.get_char();
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       if (sign < 0)
       {
         value = -value;
@@ -2641,30 +1985,12 @@ namespace adata
     typedef uint16_t value_type;
     const int bytes = sizeof(value_type);
     value = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (value > const_tag_as_value)
     {
-      if ((long)value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
       int read_bytes = (int(value) & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       uint8_t const* read_ptr = stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t * value_ptr = (uint8_t *)&value;
       value = 0;
       switch (read_bytes)
@@ -2680,11 +2006,6 @@ namespace adata
     typedef int16_t value_type;
     const int bytes = sizeof(value_type);
     uint8_t tag = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (tag > const_tag_as_value)
     {
       int sign = 1;
@@ -2693,23 +2014,9 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (int(tag) & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t const* read_ptr = stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t * value_ptr = (uint8_t *)&value;
       value = 0;
       switch (read_bytes)
@@ -2733,30 +2040,12 @@ namespace adata
     typedef uint32_t value_type;
     const ::std::size_t bytes = sizeof(value_type);
     value = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (value > const_tag_as_value)
     {
-      if ((long)value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
-      ::std::size_t read_bytes = (::std::size_t)(value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger(value);
+      int read_bytes = (int)(value & const_interger_byte_msak) + 1;
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       uint8_t const* read_ptr = stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t * value_ptr = (uint8_t *)&value;
       value = 0;
       switch (read_bytes)
@@ -2774,11 +2063,6 @@ namespace adata
     typedef int32_t value_type;
     const int bytes = sizeof(value_type);
     uint8_t tag = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (tag > const_tag_as_value)
     {
       int sign = 1;
@@ -2787,18 +2071,9 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (int(tag) & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
       uint8_t const* read_ptr = stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t * value_ptr = (uint8_t *)&value;
       value = 0;
       switch (read_bytes)
@@ -2824,30 +2099,12 @@ namespace adata
     typedef uint64_t value_type;
     const int bytes = sizeof(value_type);
     value = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (value > const_tag_as_value)
     {
-      if ((long)value & const_negative_bit_value)
-      {
-        stream.m_error_code = negative_assign_to_unsigned_integer_number;
-        return;
-      }
+      check_negative_assaigned_to_unsined_interger((long)value);
       int read_bytes = (int)(value & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       uint8_t const* read_ptr = stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t * value_ptr = (uint8_t *)&value;
       value = 0;
       switch (read_bytes)
@@ -2869,11 +2126,6 @@ namespace adata
     typedef int64_t value_type;
     const int bytes = sizeof(value_type);
     uint8_t tag = stream.get_char();
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     if (tag > const_tag_as_value)
     {
       int sign = 1;
@@ -2882,18 +2134,9 @@ namespace adata
         sign = -1;
       }
       int read_bytes = (int(tag) & const_interger_byte_msak) + 1;
-      if (bytes < read_bytes)
-      {
-        stream.m_error_code = value_too_large_to_integer_number;
-        return;
-      }
+      check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
       uint8_t const* read_ptr = stream.skip_read(read_bytes);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       uint8_t * value_ptr = (uint8_t *)&value;
       value = 0;
       switch (read_bytes)
@@ -2924,21 +2167,11 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = value;
     }
     else
     {
       uint8_t * ptr = stream.append_write(2);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       ptr[0] = 0x80;
       ptr[1] = value;
     }
@@ -2950,11 +2183,6 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = value;
     }
     else
@@ -2967,11 +2195,6 @@ namespace adata
         temp = -value;
       }
       uint8_t * ptr = stream.append_write(2);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       ptr[0] = 0x80 | negative_bit;
       ptr[1] = temp;
     }
@@ -2983,11 +2206,6 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = (uint8_t)value;
     }
     else
@@ -2996,22 +2214,12 @@ namespace adata
       if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x80;
         wptr[1] = ptr[ADATA_LEPOS2_0];
       }
       else
       {
         uint8_t * wptr = stream.append_write(3);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x81;
         wptr[1] = ptr[ADATA_LEPOS2_0];
         wptr[2] = ptr[ADATA_LEPOS2_1];
@@ -3025,11 +2233,6 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3045,31 +2248,16 @@ namespace adata
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS2_0];
       }
       else
       {
         uint8_t * wptr = stream.append_write(3);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS2_0];
         wptr[2] = ptr[ADATA_LEPOS2_1];
       }
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
@@ -3079,11 +2267,6 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3092,22 +2275,12 @@ namespace adata
       if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x80;
         wptr[1] = ptr[ADATA_LEPOS4_0];
       }
       else if (value < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x81;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3115,11 +2288,6 @@ namespace adata
       else if (value < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x82;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3128,11 +2296,6 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(5);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x83;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3148,11 +2311,6 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3168,22 +2326,12 @@ namespace adata
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
       }
       else if (temp < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3191,11 +2339,6 @@ namespace adata
       else if (temp < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x82 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
@@ -3204,22 +2347,12 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(5);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x83 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
         wptr[3] = ptr[ADATA_LEPOS4_2];
         wptr[4] = ptr[ADATA_LEPOS4_3];
       }
-    }
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
     }
   }
 
@@ -3229,11 +2362,6 @@ namespace adata
     if (value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3242,22 +2370,12 @@ namespace adata
       if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x80;
         wptr[1] = ptr[ADATA_LEPOS8_0];
       }
       else if (value < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x81;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3265,11 +2383,6 @@ namespace adata
       else if (value < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x82;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3278,11 +2391,6 @@ namespace adata
       else if (value < 0x100000000)
       {
         uint8_t * wptr = stream.append_write(5);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x83;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3292,11 +2400,6 @@ namespace adata
       else if (value < 0x10000000000LL)
       {
         uint8_t * wptr = stream.append_write(6);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x84;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3307,11 +2410,6 @@ namespace adata
       else if (value < 0x1000000000000LL)
       {
         uint8_t * wptr = stream.append_write(7);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x85;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3323,11 +2421,6 @@ namespace adata
       else if (value < 0x100000000000000LL)
       {
         uint8_t * wptr = stream.append_write(8);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x86;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3340,11 +2433,6 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(9);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x87;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3364,11 +2452,6 @@ namespace adata
     if (0 <= value && value < const_tag_as_type)
     {
       uint8_t * ptr = stream.append_write(1);
-      if (stream.bad())
-      {
-        stream.m_error_code = stream_buffer_overflow;
-        return;
-      }
       *ptr = (uint8_t)value;
     }
     else
@@ -3384,22 +2467,12 @@ namespace adata
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
       }
       else if (temp < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3407,11 +2480,6 @@ namespace adata
       else if (temp < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x82 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3420,11 +2488,6 @@ namespace adata
       else if (temp < 0x100000000)
       {
         uint8_t * wptr = stream.append_write(5);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x83 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3434,11 +2497,6 @@ namespace adata
       else if (temp < 0x10000000000LL)
       {
         uint8_t * wptr = stream.append_write(6);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x84 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3449,11 +2507,6 @@ namespace adata
       else if (temp < 0x1000000000000LL)
       {
         uint8_t * wptr = stream.append_write(7);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x85 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3465,11 +2518,6 @@ namespace adata
       else if (temp < 0x100000000000000LL)
       {
         uint8_t * wptr = stream.append_write(8);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x86 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3482,11 +2530,6 @@ namespace adata
       else
       {
         uint8_t * wptr = stream.append_write(9);
-        if (stream.bad())
-        {
-          stream.m_error_code = stream_buffer_overflow;
-          return;
-        }
         wptr[0] = 0x87 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
@@ -3504,11 +2547,6 @@ namespace adata
   {
     typedef float value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS4_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS4_1] = value_ptr[1];
@@ -3520,11 +2558,6 @@ namespace adata
   {
     typedef double value_type;
     uint8_t * write_ptr = stream.append_write(sizeof(value_type));
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     uint8_t * value_ptr = (uint8_t *)&value;
     write_ptr[ADATA_LEPOS8_0] = value_ptr[0];
     write_ptr[ADATA_LEPOS8_1] = value_ptr[1];
@@ -3541,11 +2574,6 @@ namespace adata
     typedef float value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS4_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS4_1] = read_ptr[1];
     value_ptr[ADATA_LEPOS4_2] = read_ptr[2];
@@ -3557,11 +2585,6 @@ namespace adata
     typedef double value_type;
     uint8_t const* read_ptr = stream.skip_read(sizeof(value_type));
     uint8_t * value_ptr = (uint8_t *)&value;
-    if (stream.bad())
-    {
-      stream.m_error_code = stream_buffer_overflow;
-      return;
-    }
     value_ptr[ADATA_LEPOS8_0] = read_ptr[0];
     value_ptr[ADATA_LEPOS8_1] = read_ptr[1];
     value_ptr[ADATA_LEPOS8_2] = read_ptr[2];
@@ -3577,11 +2600,8 @@ namespace adata
   {
     uint32_t len;
     read(stream, len);
-    if (!stream.error())
-    {
-      str.resize(len);
-      stream.read((char *)str.data(), len);
-    }
+    str.resize(len);
+    stream.read((char *)str.data(), len);
   }
 
   template<typename stream_ty, typename alloc_type>
@@ -3589,10 +2609,7 @@ namespace adata
   {
     uint32_t len = (uint32_t)str.length();
     write(stream, len);
-    if (!stream.error())
-    {
-      stream.write(str.data(), len);
-    }
+    stream.write(str.data(), len);
   }
 
   template<typename stream_ty>
@@ -3600,15 +2617,9 @@ namespace adata
   {
     uint32_t len;
     read(stream, len);
-    if (stream.error())
-    {
-      stream.m_error_code = sequence_length_overflow;
-      return 0;
-    }
     if (size > 0 && len > size)
     {
-      stream.m_error_code = number_of_element_not_macth;
-      return 0;
+      throw exception(number_of_element_not_match,"number of element not match");
     }
     return len;
   }
@@ -3619,16 +2630,67 @@ namespace adata
     ::std::size_t offset = stream.read_length();
     uint64_t tag = 0;
     read(stream, tag);
-    if (stream.error()){ return; }
     int32_t len_tag = 0;
     read(stream, len_tag);
-    if (stream.error()){ return; }
 
     if (len_tag >= 0)
     {
       ::std::size_t read_len = stream.read_length() - offset;
       ::std::size_t len = (::std::size_t)len_tag;
       if (len > read_len) stream.skip_read(len - read_len);
+    }
+  }
+
+  template<typename stream_ty , typename ty>
+  ADATA_INLINE void read_ec(stream_ty& stream , ty& value , error_code_t& ec)
+  {
+    try
+    {
+      read(stream, value);
+    }
+    catch(exception& e)
+    {
+      ec = e.error_code();
+    }
+  }
+
+
+  template<typename stream_ty, typename ty>
+  ADATA_INLINE void fix_read_ec(stream_ty& stream, ty& value, error_code_t& ec)
+  {
+    try
+    {
+      fix_read(stream, value);
+    }
+    catch (exception& e)
+    {
+      ec = e.error_code();
+    }
+  }
+
+  template<typename stream_ty, typename ty>
+  ADATA_INLINE void write_ec(stream_ty& stream, ty& value, error_code_t& ec)
+  {
+    try
+    {
+      write(stream, value);
+    }
+    catch (exception& e)
+    {
+      ec = e.error_code();
+    }
+  }
+
+  template<typename stream_ty, typename ty>
+  ADATA_INLINE void fix_write_ec(stream_ty& stream, ty& value, error_code_t& ec)
+  {
+    try
+    {
+      fix_write(stream, value);
+    }
+    catch (exception& e)
+    {
+      ec = e.error_code();
     }
   }
 
