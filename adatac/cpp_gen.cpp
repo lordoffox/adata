@@ -14,6 +14,7 @@
 #include <vector>
 #include <fstream>
 #include <ctime>
+#include "boost/algorithm/string/replace.hpp"
 
 using namespace std;
 
@@ -34,7 +35,7 @@ namespace cpp_gen
       if (name.find('.') != std::string::npos)
       {
         std::string ty = "::";
-        return ty + replace_all_copy(name, ".", "::");
+        return ty + boost::algorithm::replace_all_copy(name, ".", "::");
       }
       else
       {
@@ -328,7 +329,7 @@ namespace cpp_gen
 
   inline std::string gen_inline_code(const type_define& define)
   {
-    return "ADATA_INLINE ";
+    return "inline ";
   }
 
   void gen_adata_len_tag_jump(std::ofstream& os, int tab_indent)
@@ -833,7 +834,7 @@ namespace cpp_gen
   {
     for (auto const& inc : desc_define.m_includes)
     {
-      std::string inc_path = replace_all_copy(inc.first, ".", "/");
+      std::string inc_path = boost::algorithm::replace_all_copy(inc.first, ".", "/");
       inc_path += ".adl.h";
       os << "#include \"" << inc_path << "\"" << std::endl;
     }
