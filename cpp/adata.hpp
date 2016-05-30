@@ -1169,6 +1169,7 @@ namespace adata
     stream.write((char*)bytes, write_bytes);
   }
 
+//todo:intxx_t系列可以把入参改成值参，去掉temp
   template<typename stream_ty>
   ADATA_INLINE void write(stream_ty& stream, const int16_t& value)
   {
