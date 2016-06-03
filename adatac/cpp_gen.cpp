@@ -220,7 +220,7 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{";
       os << std::endl << tabs(tab_indent + 1)
-        << "uint32_t len = check_read_size(stream";
+        << "int32_t len = check_read_size(stream";
       if (mdefine.m_size.length())
       {
         os << "," << mdefine.m_size;
@@ -271,7 +271,7 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{";
       os << std::endl << tabs(tab_indent + 1)
-        << "uint32_t len = check_read_size(stream";
+        << "int32_t len = check_read_size(stream";
       if (mdefine.m_size.length())
       {
         os << "," << mdefine.m_size;
@@ -326,8 +326,12 @@ namespace cpp_gen
     }
   }
 
-  inline std::string gen_inline_code(const type_define&)
+  inline std::string gen_inline_code(const type_define& def)
   {
+    if(def.m_cpp_opt.force_inline)
+    {
+      return "ADATA_INLINE ";
+    }
     return "inline ";
   }
 
@@ -344,7 +348,7 @@ namespace cpp_gen
   void gen_adata_read_tag(std::ofstream& os, int tab_indent)
   {
     os << tabs(tab_indent) << "::std::size_t offset = stream.read_length();" << std::endl;
-    os << tabs(tab_indent) << "uint64_t tag = 0;" << std::endl;
+    os << tabs(tab_indent) << "int64_t tag = 0;" << std::endl;
     os << tabs(tab_indent) << "read(stream,tag);" << std::endl;
     os << tabs(tab_indent) << "int32_t len_tag = 0;" << std::endl;
     os << tabs(tab_indent) << "read(stream,len_tag);" << std::endl;
@@ -364,7 +368,7 @@ namespace cpp_gen
     uint64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
     {
-      os << tabs(2) << "if(tag&" << tag_mask << "ULL)";
+      os << tabs(2) << "if(tag&" << tag_mask << "LL)";
       gen_adata_read_member_code(desc_define, tdefine, member, os, 2);
       total_mask |= tag_mask;
       tag_mask <<= 1;
@@ -406,12 +410,12 @@ namespace cpp_gen
       tag_mask <<= 1;
     }
     tag_mask = 1;
-    os << tabs(tab_indent) << "uint64_t tag = " << tag << "ULL;" << std::endl;
+    os << tabs(tab_indent) << "int64_t tag = " << tag << "LL;" << std::endl;
     for (const auto& member : tdefine.m_members)
     {
       if (member.is_multi() && (!member.m_deleted))
       {
-        os << tabs(tab_indent) << "if(!value." << member.m_name << ".empty()){tag|=" << tag_mask << "ULL;}" << std::endl;
+        os << tabs(tab_indent) << "if(!value." << member.m_name << ".empty()){tag|=" << tag_mask << "LL;}" << std::endl;
       }
       tag_mask <<= 1;
     }
@@ -421,9 +425,9 @@ namespace cpp_gen
   {
     if (mdefine.is_multi())
     {
-      os << tabs(tab_indent) << "{";
+      os << tabs(tab_indent) << "{" << std::endl;
       ++tab_indent;
-      os << tabs(tab_indent) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
@@ -447,7 +451,8 @@ namespace cpp_gen
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
-      os << tabs(tab_indent) << "}";
+      --tab_indent;
+      os << tabs(tab_indent) << "}" << std::endl;
     }
     else
     {
@@ -479,7 +484,7 @@ namespace cpp_gen
       {
         if (member.is_multi())
         {
-          os << tabs(2) << "if(tag&" << tag_mask << "ULL)" << std::endl;
+          os << tabs(2) << "if(tag&" << tag_mask << "LL)" << std::endl;
         }
         os << tabs(2) << "{" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, member, os, 3, var_name);
@@ -501,9 +506,8 @@ namespace cpp_gen
   {
     if (mdefine.is_multi())
     {
-      os << tabs(tab_indent) << "{";
-      os << std::endl;
-      os << tabs(tab_indent + 1) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent) << "{" << std::endl;
+      os << tabs(tab_indent + 1) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent + 1) << "write(stream,len);" << std::endl;
 
       if (mdefine.m_type == e_base_type::string)
@@ -512,8 +516,7 @@ namespace cpp_gen
       }
       else if (mdefine.m_type == e_base_type::list)
       {
-        os << tabs(tab_indent + 1) << "int32_t count = 0;" << std::endl;
-        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i, ++count)" << std::endl;
+        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
         gen_member_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "*i");
         os << std::endl;
@@ -521,8 +524,7 @@ namespace cpp_gen
       }
       else if (mdefine.m_type == e_base_type::map)
       {
-        os << tabs(tab_indent + 1) << "int32_t count = 0;" << std::endl;
-        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i, ++count)" << std::endl;
+        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
         gen_member_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "i->first");
         os << std::endl;
@@ -564,7 +566,7 @@ namespace cpp_gen
       {
         if (member.is_multi())
         {
-          os << tabs(2) << "if(tag&" << tag_mask << "ULL)";
+          os << tabs(2) << "if(tag&" << tag_mask << "LL)";
         }
         gen_member_write_type_code(desc_define, tdefine, member, os, 2, var_name);
         os << std::endl;
@@ -585,7 +587,7 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{";
       os << std::endl << tabs(tab_indent + 1)
-        << "uint32_t len = check_read_size(stream";
+        << "int32_t len = check_read_size(stream";
       if (mdefine.m_size.length())
       {
         os << "," << mdefine.m_size;
@@ -667,7 +669,9 @@ namespace cpp_gen
   {
     if (mdefine.is_multi())
     {
-      os << tabs(tab_indent) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent) << "{" << std::endl;
+      ++tab_indent;
+      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
@@ -691,6 +695,8 @@ namespace cpp_gen
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
+      --tab_indent;
+      os << tabs(tab_indent) << "}" << std::endl;
     }
     else
     {
@@ -740,7 +746,7 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{";
       os << std::endl;
-      os << tabs(tab_indent + 1) << "uint32_t len = (uint32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent + 1) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent + 1) << "write(stream,len);" << std::endl;
 
       if (mdefine.m_type == e_base_type::string)
@@ -749,8 +755,7 @@ namespace cpp_gen
       }
       else if (mdefine.m_type == e_base_type::list)
       {
-        os << tabs(tab_indent + 1) << "int32_t count = 0;" << std::endl;
-        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i, ++count)" << std::endl;
+        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "*i");
         os << std::endl;
@@ -758,8 +763,7 @@ namespace cpp_gen
       }
       else if (mdefine.m_type == e_base_type::map)
       {
-        os << tabs(tab_indent + 1) << "int32_t count = 0;" << std::endl;
-        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i, ++count)" << std::endl;
+        os << tabs(tab_indent + 1) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "i->first");
         os << std::endl;
@@ -814,9 +818,9 @@ namespace cpp_gen
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
     gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
-//    gen_adata_operator_raw_read_type_code(desc_define, tdefine, os);
-//    gen_adata_operator_raw_size_of_type_code(desc_define, tdefine, os);
-//    gen_adata_operator_raw_write_type_code(desc_define, tdefine, os);
+    gen_adata_operator_raw_read_type_code(desc_define, tdefine, os);
+    gen_adata_operator_raw_size_of_type_code(desc_define, tdefine, os);
+    gen_adata_operator_raw_write_type_code(desc_define, tdefine, os);
   }
 
   void gen_adata_operator_code(const descrip_define& desc_define, std::ofstream& os)

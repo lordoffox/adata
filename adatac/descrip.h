@@ -168,9 +168,11 @@ struct type_define
   std::string                   m_parser_include;
   int                           m_index;
   bool                          m_ismulti;
-  // Nous Xiong: add filename
   std::string                   m_filename;
-
+  struct cpp_opt
+  {
+    bool force_inline = true;
+  }m_cpp_opt;
   type_define()
     : m_parser_lines(0)
     , m_parser_cols(0)
@@ -235,3 +237,4 @@ typedef std::map<std::string, std::string> typename_map_type;
 
 typename_map_type& get_cpp_typename_map();
 typename_map_type& get_csharp_typename_map();
+typename_map_type& get_java_typename_map();

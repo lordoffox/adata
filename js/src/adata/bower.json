@@ -1,0 +1,9 @@
+{
+    "name": "adata",
+    "version": "1.2.0",
+    "author": "lordoffox <lordoffox@gmail.com>",
+    "description": "The adata implement in JavaScript.",
+    "main": "adata.js",
+    "keywords": ["math"],
+    "license": "Boost Software License - Version 1.0"
+}

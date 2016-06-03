@@ -927,6 +927,10 @@ public:
         }
         if (member.is_container())
         {
+          if(member.m_type == map)
+          {
+            tdefine.m_cpp_opt.force_inline = false;
+          }
           tdefine.m_ismulti = true;
           if (member.m_size.length())
           {

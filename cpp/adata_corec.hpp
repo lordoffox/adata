@@ -328,7 +328,7 @@ namespace adata {
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       lua_Integer len = lua_tointeger(L, 2);
-      uint32_t slen = adata::check_read_size(*zbuf, len);
+      int32_t slen = adata::check_read_size(*zbuf, len);
       const char * str = core_adata_buffer_skip_read(L, zbuf, slen);
       lua_pushlstring(L, str, slen);
       return 1;
@@ -1193,7 +1193,7 @@ namespace adata {
 
     static inline int read_string(lua_State *L, zero_copy_buffer * buf, int sz)
     {
-      uint32_t len = adata::check_read_size(*buf,sz);
+      int32_t len = adata::check_read_size(*buf,sz);
       char * str = (char*)buf->skip_read(len);
       lua_pushlstring(L, str, len);
       return 1;
@@ -1287,8 +1287,8 @@ namespace adata {
         lua_rawgeti(L, 2, type->mt_idx);
         lua_setmetatable(L, -2);
       }
-      uint64_t data_tag = 0;
-      uint32_t data_len = 0;
+      int64_t data_tag = 0;
+      int32_t data_len = 0;
       ::std::size_t offset = buf->read_length();
       read(*buf, data_tag);
       read(*buf, data_len);
@@ -1690,7 +1690,7 @@ namespace adata {
           return 0;
         }
       }
-      uint32_t str_len = (uint32_t)slen;
+      int32_t str_len = (int32_t)slen;
       adata::write(*buf, str_len);
       buf->write(str, slen);
       return 1;
@@ -2106,11 +2106,11 @@ namespace adata {
     static int write_type(lua_State *L, zero_copy_buffer * buf, adata_type * type, sizeof_cache_contex& ctx)
     {
       type_sizeof_info& info = ctx.list[ctx.write_idx++];
-      uint64_t data_tag = info.tag;
+      int64_t data_tag = info.tag;
       int32_t  data_len = info.size;
       adata::write(*buf, data_tag);
       adata::write(*buf, data_len);
-      uint64_t mask = 1;
+      int64_t mask = 1;
       for (size_t i = 0; i < type->member_count; ++i)
       {
         if (data_tag&mask)

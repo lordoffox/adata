@@ -120,12 +120,10 @@ namespace adata
 
     ADATA_INLINE error_code_t error_code() const { return ec_; }
 
-    static ADATA_INLINE const char * message(error_code_t ec)
+    ADATA_INLINE static const char * to_message(error_code_t ec)
     {
       switch (ec)
       {
-      case success:
-        break;
       case negative_assign_to_unsigned_integer_number:
         return "can't assign negative number to unsigned integer number.";
       case value_too_large_to_integer_number:
@@ -142,6 +140,10 @@ namespace adata
       return "";
     }
 
+    ADATA_INLINE const char * message()
+    {
+      return to_message(ec_);
+    }
   private:
     error_code_t ec_;
   };
@@ -160,213 +162,75 @@ namespace adata
 
   ADATA_INLINE int32_t size_of(const uint8_t& value)
   {
-    if (value & const_tag_as_type)
-    {
-      return 2;
-    }
-    else
-    {
-      return 1;
-    }
+    if (value & const_tag_as_type)return 2;
+    return 1;
   }
 
   ADATA_INLINE int32_t size_of(const int8_t& value)
   {
-    if (value & const_tag_as_type)
-    {
-      return 2;
-    }
-    else
-    {
-      return 1;
-    }
+    if (value & const_tag_as_type)return 2;
+    return 1;
   }
 
   ADATA_INLINE int32_t size_of(const uint16_t& value)
   {
-    if (value < const_tag_as_type)
-    {
-      return 1;
-    }
-    else if (value < 0x100)
-    {
-      return 2;
-    }
-    else
-    {
-      return 3;
-    }
+    if (value < const_tag_as_type) return 1;
+    else if (value < 0x100) return 2;
+    return 3;
   }
 
-  ADATA_INLINE int32_t size_of(const int16_t& value)
+  ADATA_INLINE int32_t size_of(int16_t value)
   {
-    typedef int16_t value_type;
-    if (0 <= value && value < const_tag_as_type)
-    {
-      return 1;
-    }
-    else
-    {
-      value_type temp = value;
-      if (value < 0)
-      {
-        temp = -value;
-      }
-      if (temp < 0x100)
-      {
-        return 2;
-      }
-      else
-      {
-        return 3;
-      }
-    }
+    if (0 <= value && value < const_tag_as_type) return 1;
+    if (value < 0) value = -value;
+    if (value < 0x100) return 2;
+    return 3;
   }
 
   ADATA_INLINE int32_t size_of(const uint32_t& value)
   {
-    if (value < const_tag_as_type)
-    {
-      return 1;
-    }
-    else if (value < 0x100)
-    {
-      return 2;
-    }
-    else if (value < 0x10000)
-    {
-      return 3;
-    }
-    else if (value < 0x1000000)
-    {
-      return 4;
-    }
-    else
-    {
-      return 5;
-    }
+    if (value < const_tag_as_type) return 1;
+    else if (value < 0x100) return 2;
+    else if (value < 0x10000) return 3;
+    else if (value < 0x1000000) return 4;
+    return 5;
   }
 
-  ADATA_INLINE int32_t size_of(const int32_t& value)
+  ADATA_INLINE int32_t size_of(int32_t value)
   {
-    typedef int32_t value_type;
-    if (0 <= value && value < const_tag_as_type)
-    {
-      return 1;
-    }
-    else
-    {
-      value_type temp = value;
-      if (value < 0)
-      {
-        temp = -value;
-      }
-      if (temp < 0x100)
-      {
-        return 2;
-      }
-      else if (temp < 0x10000)
-      {
-        return 3;
-      }
-      else if (temp < 0x1000000)
-      {
-        return 4;
-      }
-      else
-      {
-        return 5;
-      }
-    }
+    if (0 <= value && value < const_tag_as_type) return 1;
+    if (value < 0) value = -value;
+    if (value < 0x100) return 2;
+    else if (value < 0x10000) return 3;
+    else if (value < 0x1000000) return 4;
+    return 5;
   }
 
   ADATA_INLINE int32_t size_of(const uint64_t& value)
   {
-    if (value < const_tag_as_type)
-    {
-      return 1;
-    }
-    else if (value < 0x100)
-    {
-      return 2;
-    }
-    else if (value < 0x10000)
-    {
-      return 3;
-    }
-    else if (value < 0x1000000)
-    {
-      return 4;
-    }
-    else if (value < 0x100000000)
-    {
-      return 5;
-    }
-    else if (value < 0x10000000000LL)
-    {
-      return 6;
-    }
-    else if (value < 0x1000000000000LL)
-    {
-      return 7;
-    }
-    else if (value < 0x100000000000000LL)
-    {
-      return 8;
-    }
-    else
-    {
-      return 9;
-    }
+    if (value < const_tag_as_type) return 1;
+    else if (value < 0x100) return 2;
+    else if (value < 0x10000) return 3;
+    else if (value < 0x1000000) return 4;
+    else if (value < 0x100000000) return 5;
+    else if (value < 0x10000000000LL) return 6;
+    else if (value < 0x1000000000000LL) return 7;
+    else if (value < 0x100000000000000LL) return 8;
+    return 9;
   }
 
-  ADATA_INLINE int32_t size_of(const int64_t& value)
+  ADATA_INLINE int32_t size_of(int64_t value)
   {
-    typedef int64_t value_type;
-    if (0 <= value && value < const_tag_as_type)
-    {
-      return 1;
-    }
-    else
-    {
-      value_type temp = value;
-      if (value < 0)
-      {
-        temp = -value;
-      }
-      if (temp < 0x100)
-      {
-        return 2;
-      }
-      else if (temp < 0x10000)
-      {
-        return 3;
-      }
-      else if (temp < 0x1000000)
-      {
-        return 4;
-      }
-      else if (temp < 0x100000000)
-      {
-        return 5;
-      }
-      else if (temp < 0x10000000000LL)
-      {
-        return 6;
-      }
-      else if (temp < 0x1000000000000LL)
-      {
-        return 7;
-      }
-      else if (temp < 0x100000000000000LL)
-      {
-        return 8;
-      }
-      else
-      {
-        return 9;
-      }
-    }
+    if (0 <= value && value < const_tag_as_type) return 1;
+    if (value < 0) value = -value;
+    if (value < 0x100) return 2;
+    else if (value < 0x10000) return 3;
+    else if (value < 0x1000000) return 4;
+    else if (value < 0x100000000) return 5;
+    else if (value < 0x10000000000LL) return 6;
+    else if (value < 0x1000000000000LL) return 7;
+    else if (value < 0x100000000000000LL) return 8;
+    return 9;
   }
 
   ADATA_INLINE int32_t size_of(const float&)
@@ -1132,7 +996,7 @@ namespace adata
       else
       {
         bytes[0] = 0x80;
-        bytes[1] = (uint8_t)-value;
+        bytes[1] = (uint8_t)value;
       }
       write_bytes = 2;
     }
@@ -1169,9 +1033,8 @@ namespace adata
     stream.write((char*)bytes, write_bytes);
   }
 
-//todo:intxx_t系列可以把入参改成值参，去掉temp
   template<typename stream_ty>
-  ADATA_INLINE void write(stream_ty& stream, const int16_t& value)
+  ADATA_INLINE void write(stream_ty& stream, int16_t value)
   {
     typedef int16_t value_type;
     int write_bytes = 0;
@@ -1184,14 +1047,13 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
-      uint8_t * ptr = (uint8_t *)&temp;
-      if (temp < 0x100)
+      uint8_t * ptr = (uint8_t *)&value;
+      if (value < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS2_0];
         write_bytes = 2;
@@ -1253,7 +1115,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void write(stream_ty& stream, const int32_t& value)
+  ADATA_INLINE void write(stream_ty& stream, int32_t value)
   {
     typedef int32_t value_type;
     int write_bytes = 0;
@@ -1266,25 +1128,24 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
-      uint8_t * ptr = (uint8_t *)&temp;
-      if (temp < 0x100)
+      uint8_t * ptr = (uint8_t *)&value;
+      if (value < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS4_0];
         write_bytes = 2;
       }
-      else if (temp < 0x10000)
+      else if (value < 0x10000)
       {
         bytes[1] = ptr[ADATA_LEPOS4_0];
         bytes[2] = ptr[ADATA_LEPOS4_1];
         write_bytes = 3;
       }
-      else if (temp < 0x1000000)
+      else if (value < 0x1000000)
       {
         bytes[1] = ptr[ADATA_LEPOS4_0];
         bytes[2] = ptr[ADATA_LEPOS4_1];
@@ -1392,7 +1253,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void write(stream_ty& stream, const int64_t& value)
+  ADATA_INLINE void write(stream_ty& stream, int64_t value)
   {
     typedef int64_t value_type;
     int write_bytes = 0;
@@ -1405,32 +1266,31 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
-      uint8_t * ptr = (uint8_t *)&temp;
-      if (temp < 0x100)
+      uint8_t * ptr = (uint8_t *)&value;
+      if (value < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         write_bytes = 2;
       }
-      else if (temp < 0x10000)
+      else if (value < 0x10000)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
         write_bytes = 3;
       }
-      else if (temp < 0x1000000)
+      else if (value < 0x1000000)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
         bytes[3] = ptr[ADATA_LEPOS8_2];
         write_bytes = 4;
       }
-      else if (temp < 0x100000000)
+      else if (value < 0x100000000)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1438,7 +1298,7 @@ namespace adata
         bytes[4] = ptr[ADATA_LEPOS8_3];
         write_bytes = 5;
       }
-      else if (temp < 0x10000000000LL)
+      else if (value < 0x10000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1447,7 +1307,7 @@ namespace adata
         bytes[5] = ptr[ADATA_LEPOS8_4];
         write_bytes = 6;
       }
-      else if (temp < 0x1000000000000LL)
+      else if (value < 0x1000000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -1457,7 +1317,7 @@ namespace adata
         bytes[6] = ptr[ADATA_LEPOS8_5];
         write_bytes = 7;
       }
-      else if (temp < 0x100000000000000LL)
+      else if (value < 0x100000000000000LL)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
         bytes[2] = ptr[ADATA_LEPOS8_1];
@@ -2178,7 +2038,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void write(zero_copy_buffer& stream, const int8_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, int8_t value)
   {
     typedef int8_t value_type;
     if (0 <= value && value < const_tag_as_type)
@@ -2189,15 +2049,14 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
       uint8_t * ptr = stream.append_write(2);
       ptr[0] = 0x80 | negative_bit;
-      ptr[1] = temp;
+      ptr[1] = value;
     }
   }
 
@@ -2228,7 +2087,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void write(zero_copy_buffer& stream, const int16_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, int16_t value)
   {
     typedef int16_t value_type;
     if (0 <= value && value < const_tag_as_type)
@@ -2239,14 +2098,13 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
-      uint8_t * ptr = (uint8_t *)(&temp);
-      if (temp < 0x100)
+      uint8_t * ptr = (uint8_t *)(&value);
+      if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
         wptr[0] = 0x80 + negative_bit;
@@ -2306,7 +2164,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void write(zero_copy_buffer& stream, const int32_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, int32_t value)
   {
     typedef int32_t value_type;
     if (0 <= value && value < const_tag_as_type)
@@ -2317,27 +2175,26 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
-      uint8_t * ptr = (uint8_t *)(&temp);
-      if (temp < 0x100)
+      uint8_t * ptr = (uint8_t *)(&value);
+      if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
       }
-      else if (temp < 0x10000)
+      else if (value < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS4_0];
         wptr[2] = ptr[ADATA_LEPOS4_1];
       }
-      else if (temp < 0x1000000)
+      else if (value < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
         wptr[0] = 0x82 + negative_bit;
@@ -2447,7 +2304,7 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void write(zero_copy_buffer& stream, const int64_t& value)
+  ADATA_INLINE void write(zero_copy_buffer& stream, int64_t value)
   {
     typedef int64_t value_type;
     if (0 <= value && value < const_tag_as_type)
@@ -2458,27 +2315,26 @@ namespace adata
     else
     {
       uint8_t negative_bit = 0;
-      value_type temp = value;
       if (value < 0)
       {
         negative_bit = const_negative_bit_value;
-        temp = -value;
+        value = -value;
       }
-      uint8_t * ptr = (uint8_t *)(&temp);
-      if (temp < 0x100)
+      uint8_t * ptr = (uint8_t *)(&value);
+      if (value < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
         wptr[0] = 0x80 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
       }
-      else if (temp < 0x10000)
+      else if (value < 0x10000)
       {
         uint8_t * wptr = stream.append_write(3);
         wptr[0] = 0x81 + negative_bit;
         wptr[1] = ptr[ADATA_LEPOS8_0];
         wptr[2] = ptr[ADATA_LEPOS8_1];
       }
-      else if (temp < 0x1000000)
+      else if (value < 0x1000000)
       {
         uint8_t * wptr = stream.append_write(4);
         wptr[0] = 0x82 + negative_bit;
@@ -2486,7 +2342,7 @@ namespace adata
         wptr[2] = ptr[ADATA_LEPOS8_1];
         wptr[3] = ptr[ADATA_LEPOS8_2];
       }
-      else if (temp < 0x100000000)
+      else if (value < 0x100000000)
       {
         uint8_t * wptr = stream.append_write(5);
         wptr[0] = 0x83 + negative_bit;
@@ -2495,7 +2351,7 @@ namespace adata
         wptr[3] = ptr[ADATA_LEPOS8_2];
         wptr[4] = ptr[ADATA_LEPOS8_3];
       }
-      else if (temp < 0x10000000000LL)
+      else if (value < 0x10000000000LL)
       {
         uint8_t * wptr = stream.append_write(6);
         wptr[0] = 0x84 + negative_bit;
@@ -2505,7 +2361,7 @@ namespace adata
         wptr[4] = ptr[ADATA_LEPOS8_3];
         wptr[5] = ptr[ADATA_LEPOS8_4];
       }
-      else if (temp < 0x1000000000000LL)
+      else if (value < 0x1000000000000LL)
       {
         uint8_t * wptr = stream.append_write(7);
         wptr[0] = 0x85 + negative_bit;
@@ -2516,7 +2372,7 @@ namespace adata
         wptr[5] = ptr[ADATA_LEPOS8_4];
         wptr[6] = ptr[ADATA_LEPOS8_5];
       }
-      else if (temp < 0x100000000000000LL)
+      else if (value < 0x100000000000000LL)
       {
         uint8_t * wptr = stream.append_write(8);
         wptr[0] = 0x86 + negative_bit;
@@ -2599,7 +2455,7 @@ namespace adata
   template<typename stream_ty , typename alloc_type>
   ADATA_INLINE void read(stream_ty& stream, std::basic_string<char, std::char_traits<char>, alloc_type>& str)
   {
-    uint32_t len;
+    int32_t len;
     read(stream, len);
     str.resize(len);
     stream.read((char *)str.data(), len);
@@ -2608,15 +2464,15 @@ namespace adata
   template<typename stream_ty, typename alloc_type>
   ADATA_INLINE void write(stream_ty& stream, const std::basic_string<char, std::char_traits<char>, alloc_type>& str)
   {
-    uint32_t len = (uint32_t)str.length();
+    int32_t len = (int32_t)str.length();
     write(stream, len);
     stream.write(str.data(), len);
   }
 
   template<typename stream_ty>
-  ADATA_INLINE uint32_t check_read_size(stream_ty& stream, ::std::size_t size = 0)
+  ADATA_INLINE int32_t check_read_size(stream_ty& stream, ::std::size_t size = 0)
   {
-    uint32_t len;
+    int32_t len;
     read(stream, len);
     if (size > 0 && len > size)
     {
@@ -2629,7 +2485,7 @@ namespace adata
   ADATA_INLINE void skip_read_compatible(stream_ty& stream)
   {
     ::std::size_t offset = stream.read_length();
-    uint64_t tag = 0;
+    int64_t tag = 0;
     read(stream, tag);
     int32_t len_tag = 0;
     read(stream, len_tag);

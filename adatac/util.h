@@ -75,3 +75,4 @@ inline std::string replace_all_copy(std::string const& str , std::string const& 
   return ret;
 }
 
+void mkdirs(std::string path);

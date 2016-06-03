@@ -31,6 +31,11 @@ namespace csharp_gen
   void gen_code(const descrip_define&, const std::string&);
 }
 
+namespace java_gen
+{
+  void gen_code(const descrip_define&, const std::string&);
+}
+
 namespace adt_gen
 {
   void gen_code(const descrip_define&, const std::string&);
@@ -74,11 +79,13 @@ void run_program(const options& opt)
   std::string filename = output_file_name.to_string();
 
   std::string outputfile = opt.output_path;
+  
   // Nous Xiong: add '/','\' and none of them compatibility
   if (outputfile.back() != '/' && outputfile.back() != '\\')
   {
     outputfile += '/';
   }
+  std::string outputpath = outputfile;
   outputfile.append(filename);
 
   descrip_define define;
@@ -114,6 +121,10 @@ void run_program(const options& opt)
     else if (gen_type == "csharp")
     {
       csharp_gen::gen_code(define, outputfile + ".adl.cs");
+    }
+    else if (gen_type == "java")
+    {
+      java_gen::gen_code(define, outputpath + "java/");
     }
     else if (gen_type == "adt")
     {

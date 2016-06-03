@@ -93,3 +93,13 @@ const char * data_type_name[] = {
   "f64",
   "str",
 };
+
+void mkdirs(std::string path)
+{
+  path.append('\0');
+  size_t len = path.length();
+  for (size_t i = 0; i < len; ++i)
+  {
+
+  }
+}
