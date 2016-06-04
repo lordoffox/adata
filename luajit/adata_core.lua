@@ -847,7 +847,7 @@ m.rd_u64 = rd_u64;
 buf_mt.rd_u64 = rd_u64;
 
 local rd_str = function(b , n)
-  local len = rd_u32(b);
+  local len = rd_i32(b);
   if n ~= nill and n > 0 then
     if len > n then 
       b.e = ec_sequence_length_overflow;
@@ -948,7 +948,7 @@ m.skip_rd_u64 = skip_rd_ints;
 buf_mt.skip_rd_u64 = skip_rd_ints;
 
 local skip_rd_str = function(b , n)
-  local len = rd_u32(b);
+  local len = rd_i32(b);
   if n > 0 then
     if len > n then
       b.e = ec_sequence_length_overflow;
@@ -1246,7 +1246,7 @@ local wt_str = function(b , s , n)
       error("sequence ength overflow");
     end
   end
-  wt_u32(b,len);
+  wt_i32(b,len);
   if b.wlen + len > b.wcap then
     b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
@@ -1428,7 +1428,7 @@ end
 
 local skip_rd_type = function(str_idx , mt_list , buf , obj_type , o)
   local offset = get_rd_len(buf);
-  local read_tag = rd_u64(buf);
+  local read_tag = rd_i64(buf);
   local len_tag = rd_i32(buf);
   if len_tag >= 0 then
     local read_len = get_rd_len(buf) - offset;
@@ -1492,7 +1492,7 @@ end
 local read_member = function( buf , mb , o)
   local ty = mb[def_pos_type];
   if ty == adata_et_list then
-    local count = rd_u32(buf);
+    local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
@@ -1506,7 +1506,7 @@ local read_member = function( buf , mb , o)
     end
     return o;
   elseif ty == adata_et_map then
-    local count = rd_u32(buf);
+    local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
@@ -1534,12 +1534,12 @@ local masks = {
   1073741824 , 2147483648 , 4294967296 , 8589934592 , 17179869184 , 34359738368 ,
   68719476736 , 137438953472 , 274877906944 , 549755813888 , 1099511627776 ,
   2199023255552 , 4398046511104 , 8796093022208 , 17592186044416 , 35184372088832 ,
-  70368744177664 , 140737488355328ull , 281474976710656ull , 562949953421312ull ,
-  1125899906842624ull , 2251799813685248ull , 4503599627370496ull ,
-  9007199254740992ull , 18014398509481984ull , 36028797018963968ull ,
-  72057594037927936ull , 144115188075855872ull , 288230376151711744ull ,
-  576460752303423488ull , 1152921504606846976ull , 2305843009213693952ull ,
-  4611686018427387904ull , 9223372036854775808ull , 0
+  70368744177664 , 140737488355328ll , 281474976710656ll , 562949953421312ll ,
+  1125899906842624ll , 2251799813685248ll , 4503599627370496ll ,
+  9007199254740992ll , 18014398509481984ll , 36028797018963968ll ,
+  72057594037927936ll , 144115188075855872ll , 288230376151711744ll ,
+  576460752303423488ll , 1152921504606846976ll , 2305843009213693952ll ,
+  4611686018427387904ll , 9223372036854775808ll , 0
 };
 
 local get_rd_len = function(buf)
@@ -1558,7 +1558,7 @@ end
 
 read_type = function(buf,type_def,o)
   local offset = get_rd_len(buf);
-  local read_tag = rd_u64(buf);
+  local read_tag = rd_i64(buf);
   local len_tag = rd_i32(buf);
   
   local members = type_def[2];
@@ -1737,7 +1737,7 @@ local write_member = function( buf , mb , o , ctx)
       buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");;
     end;
-    wt_u32(buf,count);
+    wt_i32(buf,count);
     local param = mb[def_pos_params][1];
     for i = 1 , count do
       local val = o[i];
@@ -1752,7 +1752,7 @@ local write_member = function( buf , mb , o , ctx)
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
-    wt_u32(buf,count);
+    wt_i32(buf,count);
     for k,v in pairs(o) do
       write_value(buf,kparam,k,ctx);
       write_value(buf,vparam,v,ctx);
@@ -1766,8 +1766,8 @@ write_type = function(buf,type_def,o,ctx)
   local info = pop_ctx(ctx);
   local write_tag = info[1];
   local len_tag = info[2];
-  wt_u64(buf,write_tag);
-  wt_u32(buf,len_tag);
+  wt_i64(buf,write_tag);
+  wt_i32(buf,len_tag);
   local members = type_def[2];
   for i = 1 , #members do
     local mb = members[i];
@@ -1834,7 +1834,7 @@ end
 local raw_read_member = function( buf , mb , o)
   local ty = mb[def_pos_type];
   if ty == adata_et_list then
-    local count = rd_u32(buf);
+    local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
@@ -1848,7 +1848,7 @@ local raw_read_member = function( buf , mb , o)
     end
     return o;
   elseif ty == adata_et_map then
-    local count = rd_u32(buf);
+    local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
@@ -2007,7 +2007,7 @@ local raw_write_member = function( buf , mb , o)
       buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");;
     end;
-    wt_u32(buf,count);
+    wt_i32(buf,count);
     local param = mb[def_pos_params][1];
     for i = 1 , count do
       local val = o[i];
@@ -2022,7 +2022,7 @@ local raw_write_member = function( buf , mb , o)
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
-    wt_u32(buf,count);
+    wt_i32(buf,count);
     for k,v in pairs(o) do
       raw_write_value(buf,kparam,k,ctx);
       raw_write_value(buf,vparam,v,ctx);
