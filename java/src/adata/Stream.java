@@ -1,6 +1,5 @@
 package adata;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -10,11 +9,11 @@ public class Stream {
   ByteBuffer m_write_buf;
   byte[] m_datas = new byte[9];
   
-  static int const_tag_as_value = 0x7f;
-  static int const_tag_as_type = 0x80;
-  static int const_interger_byte_msak = 0x1f;
-  static int const_negative_bit_value = 0x20;
-  static int const_store_postive_integer_byte_mask = 0x80 - 2;
+  final static int const_tag_as_value = 0x7f;
+  final static int const_tag_as_type = 0x80;
+  final static int const_interger_byte_msak = 0x1f;
+  final static int const_negative_bit_value = 0x20;
+  final static int const_store_postive_integer_byte_mask = 0x80 - 2;
 
   public ByteBuffer get_read_buffer(){
 	return m_read_buf;
@@ -385,7 +384,7 @@ public class Stream {
   }
   
   public static int sizeof_string(String str){
-	int len = str.length();
+	int len = str.getBytes(cs_utf8).length;
 	len += sizeof_int32(len);	
 	return len;
   }

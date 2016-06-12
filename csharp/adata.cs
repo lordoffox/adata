@@ -5,7 +5,6 @@
 
 using System;
 using System.Text;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace adata
@@ -58,11 +57,32 @@ namespace adata
     undefined_member_protocol_not_compatible,
   }
 
-  internal struct trace_info
+  public class exception : SystemException
   {
-    public string m_tag_name;
-    public int m_sub_index;
-  }
+    error_code_t m_error;
+    public error_code_t ErrorCode
+    {
+      get { return m_error; }
+    }
+    public exception(error_code_t ec):base(to_message(ec))
+    {
+      m_error = ec;
+    }
+    static public string to_message(error_code_t ec)
+    {
+      switch(ec)
+      {
+        case error_code_t.negative_assign_to_unsigned_integer_number: return "assign negative value to unsigned.";
+        case error_code_t.value_too_large_to_integer_number:return "integer value out of range.";
+        case error_code_t.sequence_length_overflow:return "size out of range.";
+        case error_code_t.stream_buffer_overflow:return "buffer overflow.";
+        case error_code_t.number_of_element_not_macth:return "length too large.";
+        case error_code_t.undefined_member_protocol_not_compatible:return "undefined member, protocol not compatible.";
+        default:
+          return "";
+      }
+    }
+  };
 
   public class zero_copy_buffer
   {
@@ -71,21 +91,7 @@ namespace adata
     public int read_len;
     public int write_len;
     internal UType value;
-
-    private trace_info[] trace_infos;
-    private int trace_info_count;
-    private StringBuilder trace_build;
     public error_code_t error_code;
-
-    static private String[] err_msgs = {"",
-                                         "assign negative value to unsigned.",
-                                         "integer value out of range.",
-                                         "size out of range.",
-                                         "buffer overflow.",
-                                         "size too large.",
-                                         "undefined member, protocol not compatible.",
-  };
-
     public zero_copy_buffer()
     {
       buffer = new byte[65536];
@@ -93,9 +99,6 @@ namespace adata
       read_len = 0;
       write_len = 0;
       value = new UType();
-      this.trace_info_count = 64;
-      trace_infos = new trace_info[64];
-      trace_build = new StringBuilder();
       error_code = error_code_t.success;
     }
 
@@ -121,8 +124,6 @@ namespace adata
       read_len = 0;
       write_len = 0;
       value = new UType();
-      this.trace_info_count = 0;
-      trace_infos = new trace_info[64];
       error_code = error_code_t.success;
     }
     public void reset(byte[] the_buffer , int size = -1)
@@ -141,52 +142,22 @@ namespace adata
     {
       this.read_len = 0;
       this.write_len = 0;
-      trace_info_count = 0;
       error_code = error_code_t.success;
     }
 
     public void trace_error(string tag)
     {
-      trace_error(tag, -1);
     }
 
     public void trace_error(string tag, int sub)
     {
-      if (trace_info_count > 63)
-      {
-        return;
-      }
-      trace_infos[trace_info_count].m_tag_name = tag;
-      trace_infos[trace_info_count++].m_sub_index = sub;
     }
 
     public string get_trace_info()
     {
-      if (error_code == error_code_t.success)
-      {
-        return "";
-      }
-      trace_build.Length = 0;
-      for (int i = 0; i < trace_info_count; ++i)
-      {
-        trace_build.Append(trace_infos[i].m_tag_name);
-        if (trace_infos[i].m_sub_index != -1)
-        {
-          trace_build.Append("[");
-          trace_build.Append(trace_infos[i].m_sub_index);
-          trace_build.Append("]");
-        }
-        trace_build.Append(".");
-      }
-      trace_build.Append(" :");
-      trace_build.Append(get_error_msg());
-      return trace_build.ToString();
+      return "";
     }
 
-    public String get_error_msg()
-    {
-      return err_msgs[(int)error_code];
-    }
     public error_code_t get_error_code() { return error_code; }
     public void set_error_code(error_code_t ec) { error_code = ec; }
 
@@ -197,10 +168,9 @@ namespace adata
       if (read_len + len > data_len)
       {
         error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(error_code);
       }
       read_len += (int)len;
-      return;
     }
 
     public int read_length()
@@ -229,7 +199,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 1;
     }
@@ -239,7 +209,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 1;
     }
@@ -249,7 +219,7 @@ namespace adata
       if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 2;
     }
@@ -259,7 +229,7 @@ namespace adata
       if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 2;
     }
@@ -269,7 +239,7 @@ namespace adata
       if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 4;
     }
@@ -279,7 +249,7 @@ namespace adata
       if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 4;
     }
@@ -289,7 +259,7 @@ namespace adata
       if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 8;
     }
@@ -299,47 +269,47 @@ namespace adata
       if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 8;
     }
 
-    public static UInt32 fix_size_of(sbyte value)
+    public static Int32 fix_size_of(sbyte value)
     {
       return 1;
     }
 
-    public static UInt32 fix_size_of(byte value)
+    public static Int32 fix_size_of(byte value)
     {
       return 1;
     }
 
-    public static UInt32 fix_size_of(Int16 value)
+    public static Int32 fix_size_of(Int16 value)
     {
       return 2;
     }
 
-    public static UInt32 fix_size_of(UInt16 value)
+    public static Int32 fix_size_of(UInt16 value)
     {
       return 2;
     }
 
-    public static UInt32 fix_size_of(Int32 value)
+    public static Int32 fix_size_of(Int32 value)
     {
       return 4;
     }
 
-    public static UInt32 fix_size_of(UInt32 value)
+    public static Int32 fix_size_of(UInt32 value)
     {
       return 4;
     }
 
-    public static UInt32 fix_size_of(Int64 value)
+    public static Int32 fix_size_of(Int64 value)
     {
       return 8;
     }
 
-    public static UInt32 fix_size_of(UInt64 value)
+    public static Int32 fix_size_of(UInt64 value)
     {
       return 8;
     }
@@ -349,7 +319,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -360,12 +330,12 @@ namespace adata
       if (read_bytes > 1)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -375,7 +345,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -386,12 +356,12 @@ namespace adata
       if (read_bytes > 1)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -401,7 +371,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -412,12 +382,12 @@ namespace adata
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -427,7 +397,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -438,12 +408,12 @@ namespace adata
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -453,7 +423,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -464,12 +434,12 @@ namespace adata
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -479,7 +449,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -490,12 +460,12 @@ namespace adata
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -505,7 +475,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -516,12 +486,12 @@ namespace adata
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -531,7 +501,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
@@ -542,12 +512,12 @@ namespace adata
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += read_bytes;
     }
@@ -557,7 +527,7 @@ namespace adata
       if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 4;
     }
@@ -567,230 +537,97 @@ namespace adata
       if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += 8;
     }
 
     public static UInt32 size_of(sbyte value)
     {
-      if ((value & const_tag_as_type) > 0)
-      {
-        return 2;
-      }
-      else
-      {
-        return 1;
-      }
+      if ((value & const_tag_as_type) > 0) return 2;
+      else return 1;
     }
 
-    public static UInt32 size_of(byte value)
+    public static Int32 size_of(byte value)
     {
-      if (value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else
-      {
-        return 2;
-      }
+      if (value < const_tag_as_type) return 1;
+      else return 2;
     }
 
-    public static UInt32 size_of(UInt16 value)
+    public static Int32 size_of(UInt16 value)
     {
-      if (value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else if (value < 0x100)
-      {
-        return 2;
-      }
-      else
-      {
-        return 3;
-      }
+      if (value < const_tag_as_type) return 1;
+      else if (value < 0x100) return 2;
+      return 3;
     }
 
-    public static UInt32 size_of(Int16 value)
+    public static Int32 size_of(Int16 value)
     {
-      if (0 <= value && value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else
-      {
-        if (value < 0)
-        {
-          value = (Int16)(-value);
-        }
-        if (value < 0x100)
-        {
-          return 2;
-        }
-        else
-        {
-          return 3;
-        }
-      }
+      if (0 <= value && value < const_tag_as_type) return 1;
+      if (value < 0) value = (Int16)(-value);
+      if (value < 0x100) return 2;
+      return 3;
     }
 
-    public static UInt32 size_of(UInt32 value)
+    public static Int32 size_of(UInt32 value)
     {
-      if (value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else if (value < 0x100)
-      {
-        return 2;
-      }
-      else if (value < 0x10000)
-      {
-        return 3;
-      }
-      else if (value < 0x1000000)
-      {
-        return 4;
-      }
-      else
-      {
-        return 5;
-      }
+      if (value < const_tag_as_type) return 1;
+      else if (value < 0x100) return 2;
+      else if (value < 0x10000) return 3;
+      else if (value < 0x1000000) return 4;
+      return 5;
     }
 
-    public static UInt32 size_of(Int32 value)
+    public static Int32 size_of(Int32 value)
     {
-      if (0 <= value && value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else
-      {
-        if (value < 0)
-        {
-          value = (Int32)(-value);
-        }
-        if (value < 0x100)
-        {
-          return 2;
-        }
-        if (value < 0x10000)
-        {
-          return 3;
-        }
-        if (value < 0x1000000)
-        {
-          return 4;
-        }
-        else
-        {
-          return 5;
-        }
-      }
+      if (0 <= value && value < const_tag_as_type) return 1;
+      if (value < 0) value = (Int32)(-value);
+      if (value < 0x100) return 2;
+      if (value < 0x10000) return 3;
+      if (value < 0x1000000) return 4;
+      return 5;
     }
 
-    public static UInt32 size_of(UInt64 value)
+    public static Int32 size_of(UInt64 value)
     {
-      if (value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else if (value < 0x100)
-      {
-        return 2;
-      }
-      else if (value < 0x10000)
-      {
-        return 3;
-      }
-      else if (value < 0x1000000)
-      {
-        return 4;
-      }
-      else if (value < 0x100000000UL)
-      {
-        return 5;
-      }
-      else if (value < 0x10000000000UL)
-      {
-        return 6;
-      }
-      else if (value < 0x1000000000000UL)
-      {
-        return 7;
-      }
-      else if (value < 0x100000000000000UL)
-      {
-        return 8;
-      }
-      else
-      {
-        return 9;
-      }
+      if (value < const_tag_as_type) return 1;
+      else if (value < 0x100) return 2;
+      else if (value < 0x10000) return 3;
+      else if (value < 0x1000000) return 4;
+      else if (value < 0x100000000UL) return 5;
+      else if (value < 0x10000000000UL) return 6;
+      else if (value < 0x1000000000000UL) return 7;
+      else if (value < 0x100000000000000UL) return 8;
+      return 9;
     }
 
-    public static UInt32 size_of(Int64 value)
+    public static Int32 size_of(Int64 value)
     {
-      if (0 <= value && value < const_tag_as_type)
-      {
-        return 1;
-      }
-      else
-      {
-        if (value < 0)
-        {
-          value = (Int64)(-value);
-        }
-        if (value < 0x100)
-        {
-          return 2;
-        }
-        if (value < 0x10000)
-        {
-          return 3;
-        }
-        if (value < 0x1000000)
-        {
-          return 4;
-        }
-        if (value < 0x100000000L)
-        {
-          return 5;
-        }
-        if (value < 0x10000000000L)
-        {
-          return 6;
-        }
-        if (value < 0x1000000000000L)
-        {
-          return 7;
-        }
-        if (value < 0x100000000000000L)
-        {
-          return 8;
-        }
-        else
-        {
-          return 9;
-        }
-      }
+      if (0 <= value && value < const_tag_as_type) return 1;
+      if (value < 0) value = (Int64)(-value);
+      if (value < 0x100) return 2;
+      else if (value < 0x10000) return 3;
+      else if (value < 0x1000000) return 4;
+      else if (value < 0x100000000L) return 5;
+      else if (value < 0x10000000000L) return 6;
+      else if (value < 0x1000000000000L) return 7;
+      else if (value < 0x100000000000000L) return 8;
+      return 9;
     }
 
-    public static UInt32 size_of(float value)
+    public static Int32 size_of(float value)
     {
       return 4;
     }
 
-    public static UInt32 size_of(double value)
+    public static Int32 size_of(double value)
     {
       return 8;
     }
 
-    public static UInt32 size_of(string value)
+    public static Int32 size_of(string value)
     {
-        UInt32 len = (UInt32)System.Text.Encoding.UTF8.GetByteCount(value);
-
+      Int32 len = System.Text.Encoding.UTF8.GetByteCount(value);
       len += adata.stream.size_of(len);
       return len;
     }
@@ -800,7 +637,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (sbyte)stream.buffer[stream.read_len++];
     }
@@ -810,7 +647,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = stream.buffer[stream.read_len++];
     }
@@ -820,7 +657,7 @@ namespace adata
       if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -841,7 +678,7 @@ namespace adata
       if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -862,7 +699,7 @@ namespace adata
       if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -887,7 +724,7 @@ namespace adata
       if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -912,7 +749,7 @@ namespace adata
       if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -945,7 +782,7 @@ namespace adata
       if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -978,7 +815,7 @@ namespace adata
       if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -1003,7 +840,7 @@ namespace adata
       if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       if (IsLittleEndian)
@@ -1036,7 +873,7 @@ namespace adata
       if (stream.write_len + 1 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.buffer[stream.write_len++] = (byte)value;
     }
@@ -1046,7 +883,7 @@ namespace adata
       if (stream.write_len + 1 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.buffer[stream.write_len++] = (byte)value;
     }
@@ -1056,7 +893,7 @@ namespace adata
       if (stream.write_len + 2 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VI16 = value;
@@ -1077,7 +914,7 @@ namespace adata
       if (stream.write_len + 2 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VU16 = value;
@@ -1098,7 +935,7 @@ namespace adata
       if (stream.write_len + 4 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VI32 = value;
@@ -1123,7 +960,7 @@ namespace adata
       if (stream.write_len + 4 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VU32 = value;
@@ -1148,7 +985,7 @@ namespace adata
       if (stream.write_len + 8 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VI64 = value;
@@ -1181,7 +1018,7 @@ namespace adata
       if (stream.write_len + 8 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VU64 = value;
@@ -1214,7 +1051,7 @@ namespace adata
       if (stream.write_len + 4 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VF32 = value;
@@ -1239,7 +1076,7 @@ namespace adata
       if (stream.write_len + 8 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
 
       stream.value.VF64 = value;
@@ -1272,7 +1109,7 @@ namespace adata
       if (stream.read_len + 1 >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (sbyte)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1283,13 +1120,13 @@ namespace adata
       if (read_bytes > 1)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       bool signed = (value & const_negative_bit_value) > 0;
       if (stream.read_len + read_bytes >= stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (sbyte)stream.buffer[stream.read_len++];
       if (signed)
@@ -1303,7 +1140,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1314,12 +1151,12 @@ namespace adata
       if (read_bytes > 1)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = stream.buffer[stream.read_len++];
     }
@@ -1329,7 +1166,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (Int16)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1340,12 +1177,12 @@ namespace adata
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
@@ -1398,7 +1235,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (UInt16)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1409,12 +1246,12 @@ namespace adata
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.value.VU64 = 0;
       if (IsLittleEndian)
@@ -1459,7 +1296,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (Int32)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1470,12 +1307,12 @@ namespace adata
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
@@ -1558,7 +1395,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (UInt32)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1569,12 +1406,12 @@ namespace adata
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.value.VU64 = 0;
       if (IsLittleEndian)
@@ -1649,7 +1486,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (Int64)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1660,12 +1497,12 @@ namespace adata
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.value.VU64 = 0;
       bool signed = (value & const_negative_bit_value) > 0;
@@ -1832,7 +1669,7 @@ namespace adata
       if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = (UInt64)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
@@ -1843,12 +1680,12 @@ namespace adata
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
-        return;
+        throw new exception(stream.error_code);
       }
       if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.value.VU64 = 0;
       if (IsLittleEndian)
@@ -2009,7 +1846,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2024,7 +1861,7 @@ namespace adata
         if (stream.write_len + 2 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = tag;
         stream.buffer[stream.write_len++] = (byte)value;
@@ -2038,7 +1875,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = value;
       }
@@ -2048,7 +1885,7 @@ namespace adata
         if (stream.write_len + 2 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = tag;
         stream.buffer[stream.write_len++] = value;
@@ -2062,7 +1899,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2079,7 +1916,7 @@ namespace adata
           if (stream.write_len + 2 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = tag;
           stream.buffer[stream.write_len++] = (byte)value;
@@ -2089,7 +1926,7 @@ namespace adata
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI16 = value;
           ++tag;
@@ -2115,7 +1952,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2126,7 +1963,7 @@ namespace adata
           if (stream.write_len + 2 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = 0x80;
           stream.buffer[stream.write_len++] = (byte)value;
@@ -2136,7 +1973,7 @@ namespace adata
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU16 = value;
           stream.buffer[stream.write_len++] = 0x81;
@@ -2161,7 +1998,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2178,7 +2015,7 @@ namespace adata
           if (stream.write_len + 2 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = tag;
           stream.buffer[stream.write_len++] = (byte)value;
@@ -2188,7 +2025,7 @@ namespace adata
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI32 = value;
           ++tag;
@@ -2209,7 +2046,7 @@ namespace adata
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI32 = value;
           tag += 2;
@@ -2232,7 +2069,7 @@ namespace adata
           if (stream.write_len + 5 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI32 = value;
           tag += 3;
@@ -2262,7 +2099,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2273,7 +2110,7 @@ namespace adata
           if (stream.write_len + 2 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = 0x80;
           stream.buffer[stream.write_len++] = (byte)value;
@@ -2283,7 +2120,7 @@ namespace adata
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU32 = value;
           stream.buffer[stream.write_len++] = 0x81;
@@ -2303,7 +2140,7 @@ namespace adata
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU32 = value;
           stream.buffer[stream.write_len++] = 0x82;
@@ -2325,7 +2162,7 @@ namespace adata
           if (stream.write_len + 5 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU32 = value;
           stream.buffer[stream.write_len++] = 0x83;
@@ -2354,7 +2191,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2371,7 +2208,7 @@ namespace adata
           if (stream.write_len + 2 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = tag;
           stream.buffer[stream.write_len++] = (byte)value;
@@ -2381,7 +2218,7 @@ namespace adata
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           ++tag;
@@ -2402,7 +2239,7 @@ namespace adata
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           tag += 2;
@@ -2425,7 +2262,7 @@ namespace adata
           if (stream.write_len + 5 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           tag += 3;
@@ -2450,7 +2287,7 @@ namespace adata
           if (stream.write_len + 6 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           tag += 4;
@@ -2477,7 +2314,7 @@ namespace adata
           if (stream.write_len + 7 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           tag += 5;
@@ -2506,7 +2343,7 @@ namespace adata
           if (stream.write_len + 8 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           tag += 6;
@@ -2537,7 +2374,7 @@ namespace adata
           if (stream.write_len + 9 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VI64 = value;
           tag += 7;
@@ -2575,7 +2412,7 @@ namespace adata
         if (stream.write_len + 1 >= stream.data_len)
         {
           stream.error_code = error_code_t.stream_buffer_overflow;
-          return;
+          throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = (byte)value;
       }
@@ -2586,7 +2423,7 @@ namespace adata
           if (stream.write_len + 2 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = 0x80;
           stream.buffer[stream.write_len++] = (byte)value;
@@ -2596,7 +2433,7 @@ namespace adata
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x81;
@@ -2616,7 +2453,7 @@ namespace adata
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x82;
@@ -2638,7 +2475,7 @@ namespace adata
           if (stream.write_len + 5 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x83;
@@ -2662,7 +2499,7 @@ namespace adata
           if (stream.write_len + 6 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x84;
@@ -2688,7 +2525,7 @@ namespace adata
           if (stream.write_len + 7 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x85;
@@ -2716,7 +2553,7 @@ namespace adata
           if (stream.write_len + 8 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x86;
@@ -2746,7 +2583,7 @@ namespace adata
           if (stream.write_len + 9 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
-            return;
+            throw new exception(stream.error_code);
           }
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x87;
@@ -2776,70 +2613,64 @@ namespace adata
       }
     }
 
-    public static UInt32 check_read_size(zero_copy_buffer stream)
+    public static Int32 check_read_size(zero_copy_buffer stream)
     {
       return check_read_size(stream, 0);
     }
 
-    public static UInt32 check_read_size(zero_copy_buffer stream, int size)
+    public static Int32 check_read_size(zero_copy_buffer stream, int size)
     {
-      UInt32 len = 0;
+      Int32 len = 0;
       read(stream, ref len);
-      if (stream.error())
-      {
-        return 0;
-      }
       if (size > 0 && len > size)
       {
         stream.error_code = error_code_t.number_of_element_not_macth;
-        return 0;
+        throw new exception(stream.error_code);
       }
       return len;
     }
 
-    public static void read(zero_copy_buffer stream, ref string value, UInt32 len)
+    public static void read(zero_copy_buffer stream, ref string value, Int32 len)
     {
       if (stream.read_len + len > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       value = Encoding.UTF8.GetString(stream.buffer, stream.read_len, (int)len);
       stream.read_len += (int)len;
-      return;
     }
 
-    public static void write(zero_copy_buffer stream, string value, UInt32 len)
+    public static void write(zero_copy_buffer stream, string value, Int32 len)
     {
       if (stream.write_len + len > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       byte[] buff = Encoding.UTF8.GetBytes(value);
       for (int i = 0; i < len; ++i)
       {
         stream.buffer[stream.write_len++] = buff[i];
       }
-      return;
     }
 
     public static void read(zero_copy_buffer stream, ref string value)
     {
-      UInt32 len = 0;
+      Int32 len = 0;
       read(stream, ref len);
       read(stream, ref value, len);
     }
 
     public static void write(zero_copy_buffer stream, string value)
     {
-        byte[] buff = Encoding.UTF8.GetBytes(value);
+      byte[] buff = Encoding.UTF8.GetBytes(value);
 
-      UInt32 len = (UInt32)buff.Length;
+      Int32 len = buff.Length;
       if (stream.write_len + len > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       write(stream, len);
       for (int i = 0; i < len; ++i)
@@ -2853,31 +2684,36 @@ namespace adata
       if (stream.read_len + len > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
-        return;
+        throw new exception(stream.error_code);
       }
       stream.read_len += (int)len;
-      return;
     }
 
     public static void skip_read_compatible(zero_copy_buffer stream)
     {
       int offset = stream.read_len;
-      UInt64 tag = 0;
+      Int64 tag = 0;
       read(stream, ref tag);
-      if (stream.error()) { return; }
       Int32 len_tag = 0;
       read(stream, ref len_tag);
-      if (stream.error()) { return; }
-      UInt32 read_len = (UInt32)(stream.read_len - offset);
-      UInt32 len = (UInt32)len_tag;
-      if (len > read_len) stream.skip_read(len - read_len);
+      Int32 read_len = stream.read_len - offset;
+      if (len_tag > read_len) stream.skip_read((UInt32)(len_tag - read_len));
     }
   }
 
   public abstract class base_obj
   {
     public abstract void read(adata.zero_copy_buffer stream);
-    public abstract UInt32 size_of();
+    public abstract Int32 size_of();
     public abstract void write(adata.zero_copy_buffer stream);
+    public abstract void raw_read(adata.zero_copy_buffer stream);
+    public abstract Int32 raw_size_of();
+    public abstract void raw_write(adata.zero_copy_buffer stream);
+
+    public void skip_read(adata.zero_copy_buffer stream)
+    {
+      adata.stream.skip_read_compatible(stream);
+    }
+
   }
 }

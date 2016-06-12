@@ -2470,7 +2470,7 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE int32_t check_read_size(stream_ty& stream, ::std::size_t size = 0)
+  ADATA_INLINE int32_t check_read_size(stream_ty& stream, int size = 0)
   {
     int32_t len;
     read(stream, len);
