@@ -80,7 +80,7 @@ namespace
 
 struct parse_execption : std::runtime_error
 {
-  parse_execption(const char * error_info, int line, int col, std::string const& include)
+  parse_execption(std::string const& error_info, int line, int col, std::string const& include)
     : std::runtime_error(error_info)
     , m_lines(line)
     , m_cols(col)
@@ -837,7 +837,7 @@ public:
         }
         else
         {
-          throw parse_execption("type syntax error ,unknow member type declaration", m_lines, m_cols, m_include);
+          throw parse_execption("type syntax error ,unknow member type declaration£º" + member_type_name, m_lines, m_cols, m_include);
         }
       }
     } while (!m_eof);

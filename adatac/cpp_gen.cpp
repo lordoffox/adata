@@ -390,9 +390,8 @@ namespace cpp_gen
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
     os << tabs(1) << "template <typename stream_ty>" << std::endl;
-    os << tabs(1) << gen_inline_code(tdefine) << "void skip_read(stream_ty& stream, " << full_type_name << "* value)" << std::endl;
+    os << tabs(1) << gen_inline_code(tdefine) << "void skip_read(stream_ty& stream, " << full_type_name << "* )" << std::endl;
     os << tabs(1) << "{" << std::endl;
-    os << tabs(2) << "(value);" << std::endl;
     os << tabs(2) << "skip_read_compatible(stream);" << std::endl;
     os << tabs(1) << "}" << std::endl << std::endl;
   }
