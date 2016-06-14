@@ -32,13 +32,7 @@ Build the compiler
 To build adatac, we need:
 
 * CMake 2.8 and newer
-* Boost 1.55.0 and newer (Headers and Boost.Program Options)
 * GCC >= 4.9 or VC >= 12.0
-
-Build Boost.Program Options:
-
-* Please ref Boost's doc - http://www.boost.org/doc/libs/1_57_0/more/getting_started/ 
-* Note: please build boost using stage mode.
 
 Build adatac:
 
@@ -46,7 +40,7 @@ Build adatac:
 * cd adata
 * Make a dir named build
 * cd build
-* cmake -G "Visual Studio 12 2013"(or on unix-like platform: "Unix MakeFiles") -DBOOST_ROOT=[your_boost_root_dir]
+* cmake -G "Visual Studio 12 2013"(or on unix-like platform: "Unix MakeFiles")
 * Build whatever generated
 * If success, will get a exe named adatac
 
@@ -524,6 +518,9 @@ Change log:
 2.change lua error handler to exception
 3.add javascript support
 4.add "raw" mode on read , write , size_of interface, run fast but no compatibility.
+5.remove boost require for compiler.
+6.add java support
+7.add move error hint
 
 *v1.2
 1.remove lua code generate,all lua(5.1,5.2,luajit) and add binary format adt files,lua and javascript use adt file dynamic load schema data type.
