@@ -1523,7 +1523,7 @@ namespace adata
     int write_bytes = 0;
     uint8_t bytes[12];
     write_bytes = 1;
-    if (0 <= value && value < const_tag_as_type)
+    if (0 <= value)
     {
       bytes[0] = (uint8_t)value;
     }
@@ -1562,7 +1562,7 @@ namespace adata
     }
     else
     {
-      uint8_t * ptr = (uint8_t*)value;
+      uint8_t * ptr = (uint8_t*)&value;
       if (value < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS2_0];
@@ -1635,11 +1635,11 @@ namespace adata
     write_bytes = 1;
     if (value < const_tag_as_type)
     {
-      bytes[0] = (uint8_t)value;
+      bytes[0] = (uint8_t)&value;
     }
     else
     {
-      uint8_t * ptr = (uint8_t*)value;
+      uint8_t * ptr = (uint8_t*)&value;
       if (value < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS4_0];
@@ -1746,7 +1746,7 @@ namespace adata
     }
     else
     {
-      uint8_t * ptr = (uint8_t*)value;
+      uint8_t * ptr = (uint8_t*)&value;
       if (value < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
@@ -2947,7 +2947,7 @@ namespace adata
   ADATA_INLINE void write(zero_copy_buffer& stream, const int8_t& value)
   {
     typedef int8_t value_type;
-    if (0 <= value && value < const_tag_as_type)
+    if (0 <= value)
     {
       uint8_t * ptr = stream.append_write(1);
       if (stream.bad())
