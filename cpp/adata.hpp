@@ -259,9 +259,9 @@ namespace adata
 
     ADATA_INLINE std::size_t write(const char * buffer, std::size_t len)
     {
-      std::size_t sz = m_stream_.write(buffer, len);
+      m_stream_.write(buffer, len);
       check_bad();
-      return sz;
+      return len;
     }
 
     ADATA_INLINE void skip_read(std::size_t len)
@@ -292,6 +292,8 @@ namespace adata
         throw exception(stream_buffer_overflow, "stream buffer overflow");
       }
     }
+  private:
+    stream_ty m_stream_;
   };
 
   template<typename stream_ty>
