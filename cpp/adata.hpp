@@ -470,9 +470,13 @@ namespace adata
 
     ADATA_INLINE bool bad()const { return m_stream_.bad(); }
 
-    ADATA_INLINE std::size_t read(char * buffer, std::size_t len) { return m_stream_.read(buffer, len); }
+    ADATA_INLINE std::size_t read(char * buffer, std::size_t len) { return m_stream_.read(buffer, len).gcount(); }
 
-    ADATA_INLINE std::size_t write(const char * buffer, std::size_t len)  { return m_stream_.write(buffer, len); }
+    ADATA_INLINE std::size_t write(const char * buffer, std::size_t len)  { return m_stream_.write(buffer, len) , len; }
+
+    ADATA_INLINE::std::size_t read_length() const { return m_stream_.tellg(); }
+
+    ADATA_INLINE::std::size_t write_length() const{ return m_stream_.tellp(); }
 
     ADATA_INLINE void skip_read(std::size_t len)  { m_stream_.seekg(len); }
 
