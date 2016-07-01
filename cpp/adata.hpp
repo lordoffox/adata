@@ -846,9 +846,8 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void skip_read(stream_ty& stream, uint8_t * dummy)
+  ADATA_INLINE void skip_read(stream_ty& stream, uint8_t *)
   {
-    (dummy);
     typedef uint8_t value_type;
     uint8_t value = 0;
     const int bytes = sizeof(value_type);
@@ -871,9 +870,8 @@ namespace adata
   }
 
   template<typename stream_ty>
-  ADATA_INLINE void skip_read(stream_ty& stream, int8_t * dummy)
+  ADATA_INLINE void skip_read(stream_ty& stream, int8_t *)
   {
-    (dummy);
     typedef int8_t value_type;
     uint8_t value = 0;
     const int bytes = sizeof(value_type);
@@ -1068,7 +1066,6 @@ namespace adata
   {
     typedef uint8_t value_type;
     const int bytes = sizeof(value_type);
-    value_type read_value[2] = { 0 };
     stream.read((char*)&value, 1);
     if (stream.bad())
     {
@@ -1639,7 +1636,7 @@ namespace adata
     write_bytes = 1;
     if (value < const_tag_as_type)
     {
-      bytes[0] = (uint8_t)&value;
+      bytes[0] = (uint8_t)value;
     }
     else
     {
@@ -2382,9 +2379,8 @@ namespace adata
     write_ptr[ADATA_LEPOS8_7] = value_ptr[7];
   }
 
-  ADATA_INLINE void skip_read(zero_copy_buffer& stream, uint8_t * dummy)
+  ADATA_INLINE void skip_read(zero_copy_buffer& stream, uint8_t *)
   {
-    (dummy);
     typedef uint8_t value_type;
     uint8_t value = 0;
     const int bytes = sizeof(value_type);
@@ -2406,9 +2402,8 @@ namespace adata
     }
   }
 
-  ADATA_INLINE void skip_read(zero_copy_buffer& stream, int8_t * dummy)
+  ADATA_INLINE void skip_read(zero_copy_buffer& stream, int8_t *)
   {
-    (dummy);
     typedef int8_t value_type;
     uint8_t value = 0;
     const int bytes = sizeof(value_type);
