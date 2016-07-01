@@ -103,7 +103,7 @@ namespace aarg
     inline typename ::std::enable_if<::std::is_floating_point<value_type>::value, void>::type
       convert(std::string const& str, value_type& v)
     {
-      v = (value_type)std::strtod(arg.c_str(), nullptr, 10);
+      v = (value_type)std::strtod(str.c_str(), nullptr);
     }
 
     void convert(std::string const& str, std::string& v)
@@ -215,7 +215,8 @@ namespace aarg
               {
                 current_opt = p->second;
                 current_opt->set = true;
-                current_opt->args.push_back(ptr);
+                if(*ptr != 0)
+                  current_opt->args.push_back(ptr);
               }
             }
             break;
