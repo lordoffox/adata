@@ -246,13 +246,13 @@ namespace adata
   template<typename stream_ty>
   struct stream_adapter
   {
-    stream_adapter(stream_ty& stream) :stream_context(), m_stream_(stream)  {}
+    stream_adapter(stream_ty& stream) :m_stream_(stream)  {}
 
     ADATA_INLINE bool bad()const { return m_stream_.bad(); }
 
     ADATA_INLINE std::size_t read(char * buffer, std::size_t len)
     { 
-      std::size_t sz = m_stream_.read(buffer, len); 
+      std::size_t sz = m_stream_.read(buffer, len).gcount(); 
       check_bad();
       return sz;
     }
@@ -274,6 +274,16 @@ namespace adata
 
     ADATA_INLINE std::size_t read_size() { return 0; }
     ADATA_INLINE std::size_t write_size() { return 0; }
+
+    ADATA_INLINE::std::size_t read_length() const
+    {
+      return this->m_stream_.tellg();
+    }
+
+    ADATA_INLINE::std::size_t write_length() const
+    {
+      return this->m_stream_.tellp();
+    }
 
     ADATA_INLINE void check_bad()
     {
