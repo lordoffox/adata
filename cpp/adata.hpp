@@ -468,7 +468,7 @@ namespace adata
   {
     stream_adapter(stream_ty& stream) :stream_context(), m_stream_(stream)  {}
 
-    ADATA_INLINE bool bad()const { return m_stream_.bad(); }
+    ADATA_INLINE bool bad()const { return !m_stream_.good(); }
 
     ADATA_INLINE std::size_t read(char * buffer, std::size_t len) { return m_stream_.read(buffer, len).gcount(); }
 
