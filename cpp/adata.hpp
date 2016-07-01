@@ -248,7 +248,7 @@ namespace adata
   {
     stream_adapter(stream_ty& stream) :m_stream_(stream)  {}
 
-    ADATA_INLINE bool bad()const { return m_stream_.bad(); }
+    ADATA_INLINE bool bad()const { return !m_stream_.good(); }
 
     ADATA_INLINE std::size_t read(char * buffer, std::size_t len)
     { 
