@@ -275,12 +275,12 @@ namespace adata
     ADATA_INLINE std::size_t read_size() { return 0; }
     ADATA_INLINE std::size_t write_size() { return 0; }
 
-    ADATA_INLINE::std::size_t read_length() const
+    ADATA_INLINE std::size_t read_length() const
     {
       return this->m_stream_.tellg();
     }
 
-    ADATA_INLINE::std::size_t write_length() const
+    ADATA_INLINE std::size_t write_length() const
     {
       return this->m_stream_.tellp();
     }
@@ -1540,12 +1540,12 @@ namespace adata
       return (const char *)this->m_write_header_ptr;
     }
 
-    ADATA_INLINE::std::size_t read_length() const
+    ADATA_INLINE std::size_t read_length() const
     {
       return this->m_read_ptr - this->m_read_header_ptr;
     }
 
-    ADATA_INLINE::std::size_t write_length() const
+    ADATA_INLINE std::size_t write_length() const
     {
       return this->m_write_ptr - this->m_write_header_ptr;
     }
