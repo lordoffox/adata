@@ -277,12 +277,12 @@ namespace adata
 
     ADATA_INLINE std::size_t read_length() const
     {
-      return this->m_stream_.tellg();
+      (std::size_t)return this->m_stream_.tellg();
     }
 
     ADATA_INLINE std::size_t write_length() const
     {
-      return this->m_stream_.tellp();
+      (std::size_t)return this->m_stream_.tellp();
     }
 
     ADATA_INLINE void check_bad()
