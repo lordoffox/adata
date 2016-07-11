@@ -3631,6 +3631,11 @@ namespace adata
     }
   }
 
+  template<typename T>
+  struct is_adata
+  {
+    static const bool value = false;
+  };
 }
 
 #undef ADATA_LEPOS2_0

@@ -734,6 +734,17 @@ namespace cpp_gen
     os << std::endl;
   }
 
+  
+  void gen_traits_type(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
+  {
+    os << "template<>\nstruct is_adata<";
+    for (const auto& name : desc_define.m_namespace.m_names)
+    {
+      os<< name << "::";
+    }
+    os << tdefine.m_name << ">\n{\n  static const bool value = true;\n};\n\n";
+  }
+
   void gen_type_code(const descrip_define& desc_define, std::ofstream& os)
   {
     for (const auto& name : desc_define.m_namespace.m_names)
@@ -752,6 +763,12 @@ namespace cpp_gen
       os << "}";
     }
     os << std::endl << std::endl;
+    os << "namespace adata\n{\n";
+    for (auto& t_define : desc_define.m_types)
+    {
+      gen_traits_type(desc_define, t_define, os);
+    }
+    os << "}\n";
   }
 
   void	gen_code(const descrip_define& define, const std::string& cpp_file)
