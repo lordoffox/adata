@@ -2183,17 +2183,17 @@ var FileReader = require('filereader');
   var decode_default_value = function (buf, member) {
     var t = member.type;
     var v = null;
-    if (t >= adata_et_fix_int8 && t <= adata_et_int64) {
-      v = buf.rd_i64();
-    }
-    else if (t === adata_et_fix_uint64) {
+    if (t === adata_et_fix_uint64 || t === adata_et_uint64) {
       v = buf.rd_u64();
+    }
+    else if (t >= adata_et_fix_int8 && t <= adata_et_int64) {
+      v = buf.rd_i64();
     }
     else if (t === adata_et_float32) {
       v = buf.rd_f32();
     }
     else if (t === adata_et_float64) {
-      v = buf.rd_f64();
+      v = buf.rd_d64();
     }
     else if (t === adata_et_string) {
       v = "";
