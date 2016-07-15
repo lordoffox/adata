@@ -443,26 +443,9 @@ namespace cpp_gen
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
     os << tabs(1) << "template <typename stream_ty>" << std::endl;
-    os << tabs(1) << gen_inline_code(tdefine) << "void skip_read(stream_ty& stream, " << full_type_name << "* value)" << std::endl;
+    os << tabs(1) << gen_inline_code(tdefine) << "void skip_read(stream_ty& stream, " << full_type_name << "*)" << std::endl;
     os << tabs(1) << "{" << std::endl;
-
-    os << tabs(2) << "(value);" << std::endl;
     os << tabs(2) << "skip_read_compatible(stream);" << std::endl;
-    /*
-    gen_adata_read_tag(os, 2);
-
-    uint64_t tag_mask = 1;
-    uint64_t total_mask = 0;
-    for (const auto& member : tdefine.m_members)
-    {
-      os << tabs(2) << "if(tag&" << tag_mask << "ULL)";
-      gen_adata_skip_read_member_code(desc_define, tdefine, member, os, 2);
-      total_mask |= tag_mask;
-      tag_mask <<= 1;
-    }
-    gen_adata_len_tag_jump(os, 2);
-    */
-
     os << tabs(1) << "}" << std::endl << std::endl;
   }
 
