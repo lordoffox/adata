@@ -1,6 +1,6 @@
 package adata;
 
-public interface base {
+public interface Base {
     public abstract void read(adata.Stream stream) throws Exception;
     public default void skip_read(adata.Stream stream) throws Exception{
     	stream.skip_read_compatible();

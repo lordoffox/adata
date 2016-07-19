@@ -817,7 +817,7 @@ namespace java_gen
   {
     for (auto& t_define : desc_define.m_types)
     {
-      os << "public class " << t_define.m_name << " extends " << t_define.m_name << "_basic implements adata.base {" << std::endl << std::endl;
+      os << "public class " << t_define.m_name << " extends " << t_define.m_name << "_basic implements adata.Base {" << std::endl << std::endl;
 
       os << tabs(1) << "public void read(adata.Stream stream)" << std::endl;
       os << tabs(1) << "{" << std::endl;
