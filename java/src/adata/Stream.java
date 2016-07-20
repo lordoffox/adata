@@ -372,8 +372,6 @@ public class Stream {
   }
   
   static Charset cs_utf8 = java.nio.charset.StandardCharsets.UTF_8;
-  static CharsetDecoder dc_utf8 = cs_utf8.newDecoder();
-  static CharsetEncoder ec_utf8 = cs_utf8.newEncoder();
   
   public int check_read_size(int len) throws Exception{
 	long slen = read_int64();
