@@ -780,6 +780,7 @@ namespace cpp_gen
     }
 
     header_id += "_adata_header_define";
+    header_id = define.m_namespace.m_lua_fullname + header_id;
 
     os << "#ifndef " << header_id << std::endl;
     os << "#define " << header_id << std::endl << std::endl;
