@@ -824,11 +824,6 @@ namespace java_gen
       gen_adata_operator_read_type_code(desc_define, t_define, os);
       os << tabs(1) << "}" << std::endl << std::endl;
 
-//       os << tabs(1) << "public void skip_read(adata.Stream stream)" << std::endl;
-//       os << tabs(1) << "{" << std::endl;
-//       gen_adata_operator_skip_read_type_code(desc_define, t_define, os);
-//       os << tabs(1) << "}" << std::endl << std::endl;
-// 
       os << tabs(1) << "public int size_of()" << std::endl;
       os << tabs(1) << "{" << std::endl;
       gen_adata_operator_size_of_type_code(desc_define, t_define, os);
