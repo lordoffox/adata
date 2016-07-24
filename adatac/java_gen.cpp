@@ -866,7 +866,7 @@ import adata.Stream;
     os << using_define;
 
     os << tabs(1) << "@SuppressWarnings(\"unused\")" << std::endl;
-    os << tabs(1) << "public class " << tdefine.m_name << " implements adata.base  {" << std::endl;
+    os << tabs(1) << "public class " << tdefine.m_name << " implements adata.Base  {" << std::endl;
 
     std::vector<member_define*> mb_list;
 

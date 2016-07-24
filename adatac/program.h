@@ -22,6 +22,7 @@ struct options
   std::vector<std::string> pack_files;
   std::string pack_output_file = "pack";
   std::string adata_header;
+  bool low_case = false;
 };
 
 void run_program(const options& opt);

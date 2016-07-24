@@ -96,7 +96,7 @@ void run_program(const options& opt)
 
   if (input_file_ext == adl_str)
   {
-    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file);
+    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file,opt.low_case);
     if (ret == false)
     {
       return;

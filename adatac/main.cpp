@@ -26,6 +26,7 @@ int main(int ac, char* av[])
     ao.add('H', "adata_header", "include adata.hpp path", opt.adata_header);
     ao.add('p', "pack_file", "pack adt files", opt.pack_files);
     ao.add('o', "pack_output_file", "output package path", opt.pack_output_file);
+    ao.add('C', "lower_case", "class name and file name lower_case", opt.low_case);
 
     ao.parse(ac, av);
 

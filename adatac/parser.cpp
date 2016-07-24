@@ -161,6 +161,7 @@ class parser
   int m_lines;
   std::string m_include;
   bool m_eof;
+  bool lower_case;
 
   bool is_include_;
   namespace_type include_namespace_;
@@ -174,6 +175,7 @@ public:
     std::vector<std::string> const& include_paths,
     char * doc,
     int len,
+    bool is_low_case = false,
     bool is_include = false
     )
     : m_define(define)
@@ -184,6 +186,7 @@ public:
     , m_lines(0)
     , m_eof(false)
     , is_include_(is_include)
+    , lower_case(is_low_case)
     , namespace_(is_include_ ? include_namespace_ : m_define.m_namespace)
   {
   }
@@ -275,7 +278,7 @@ public:
     --m_cols;
   }
 
-  std::string parser_string(bool lower_case = true)
+  std::string parser_string()
   {
     char c = skip_ws();
     char indetify[256] = { 0 };
@@ -527,6 +530,7 @@ public:
             m_include_paths,
             r.first.get(),
             r.second,
+            this->lower_case,
             true
             )
             );
@@ -1114,7 +1118,8 @@ public:
 bool parse_adl_file(
   descrip_define& define,
   std::vector<std::string> const& include_paths,
-  const std::string& file
+  const std::string& file,
+  bool low_case
   )
 {
   try
