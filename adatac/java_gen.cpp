@@ -10,6 +10,7 @@
 
 #include "descrip.h"
 #include "util.h"
+#include "program.h"
 #include <assert.h>
 #include <iostream>
 #include <set>
@@ -58,13 +59,14 @@ namespace java_gen
 
   inline std::string make_typename(const descrip_define& desc_define, const std::string& name)
   {
+    const options& opt = get_options();
     typename_map_type& map_define = get_java_typename_map();
     auto find = map_define.find(name);
     if (find == map_define.end())
     {
       type_define const* ty = desc_define.find_decl_type(name);
       assert(ty != nullptr);
-      return name;
+      return camel_case_str(name,opt.camel_case,true);
     }
     return find->second;
   }
@@ -328,8 +330,10 @@ namespace java_gen
 
   inline void gen_adata_read_member_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent)
   {
+    const options& opt = get_options();
+    std::string member_name = camel_case_str(mdefine.m_name, opt.camel_case, false);
     std::string var_name = "this.";
-    var_name += mdefine.m_name;
+    var_name += member_name;
 
     if (mdefine.m_deleted)
     {
@@ -377,8 +381,10 @@ namespace java_gen
 
   inline void gen_adata_skip_read_member_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent)
   {
+    const options& opt = get_options();
+    std::string member_name = camel_case_str(mdefine.m_name, opt.camel_case, false);
     std::string var_name = "this.";
-    var_name += mdefine.m_name;
+    var_name += member_name;
     gen_adata_operator_read_skip_member_code(desc_define, tdefine, mdefine, os, tab_indent, var_name);
   }
 
@@ -398,7 +404,8 @@ namespace java_gen
 
   void gen_adata_operator_write_tag_code(const descrip_define&, const type_define& tdefine, std::ofstream& os, int tab_indent)
   {
-    int64_t tag = 0;
+       const options& opt = get_options();
+   int64_t tag = 0;
     int64_t tag_mask = 1;
     for (const auto& member : tdefine.m_members)
     {
@@ -412,15 +419,16 @@ namespace java_gen
     os << tabs(tab_indent) << "long tag = " << tag << "L;" << std::endl;
     for (const auto& member : tdefine.m_members)
     {
+      std::string member_name = camel_case_str(member.m_name, opt.camel_case, false);
       if (member.m_deleted == 0)
       {
         if (member.is_container())
         {
-          os << tabs(tab_indent) << "if(this." << member.m_name << ".size() > 0){tag|=" << tag_mask << "L;}" << std::endl;
+          os << tabs(tab_indent) << "if(this." << member_name << ".size() > 0){tag|=" << tag_mask << "L;}" << std::endl;
         }
         else if (member.m_type == e_base_type::string)
         {
-          os << tabs(tab_indent) << "if(this." << member.m_name << ".length() > 0){tag|=" << tag_mask << "L;}" << std::endl;
+          os << tabs(tab_indent) << "if(this." << member_name << ".length() > 0){tag|=" << tag_mask << "L;}" << std::endl;
         }
       }
       tag_mask <<= 1;
@@ -475,14 +483,16 @@ namespace java_gen
 
   void gen_adata_operator_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
+    const options& opt = get_options();
     os << tabs(3) << "int size = 0;" << std::endl;
 
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     int64_t tag_mask = 1;
     for (const auto& member : tdefine.m_members)
     {
+      std::string member_name = camel_case_str(member.m_name, opt.camel_case, false);
       std::string var_name = "this.";
-      var_name += member.m_name;
+      var_name += member_name;
       if (!member.m_deleted)
       {
         if (member.is_multi())
@@ -564,6 +574,7 @@ namespace java_gen
 
   void gen_adata_operator_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
+    const options& opt = get_options();
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
     os << tabs(3) << "stream.write_int64(tag);" << std::endl;
     os << tabs(3) << "stream.write_int32(this.size_of());" << std::endl;
@@ -572,8 +583,9 @@ namespace java_gen
     int64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
     {
+      std::string member_name = camel_case_str(member.m_name, opt.camel_case, false);
       std::string var_name = "this.";
-      var_name += member.m_name;
+      var_name += member_name;
       if (!member.m_deleted)
       {
         if (member.is_multi())
@@ -663,8 +675,10 @@ namespace java_gen
 
   inline void gen_adata_raw_read_member_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent)
   {
+    const options& opt = get_options();
+    std::string member_name = camel_case_str(mdefine.m_name, opt.camel_case, false);
     std::string var_name = "this.";
-    var_name += mdefine.m_name;
+    var_name += member_name;
 
     if (mdefine.m_deleted == false)
     {
@@ -728,12 +742,14 @@ namespace java_gen
 
   void gen_adata_operator_raw_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
+    const options& opt = get_options();
     os << tabs(3) << "int size = 0;" << std::endl;
 
     for (const auto& member : tdefine.m_members)
     {
+      std::string member_name = camel_case_str(member.m_name, opt.camel_case, false);
       std::string var_name = "this.";
-      var_name += member.m_name;
+      var_name += member_name;
       if (member.m_deleted == false)
       {
         gen_member_raw_size_of_type_code(desc_define, tdefine, member, os, 3, var_name);
@@ -804,8 +820,10 @@ namespace java_gen
   {
     for (const auto& member : tdefine.m_members)
     {
+      const options& opt = get_options();
+      std::string member_name = camel_case_str(member.m_name, opt.camel_case, false);
       std::string var_name = "this.";
-      var_name += member.m_name;
+      var_name += member_name;
       if (!member.m_deleted)
       {
         gen_member_raw_write_type_code(desc_define, tdefine, member, os, 3, var_name);
@@ -815,9 +833,10 @@ namespace java_gen
 
   void gen_adata_operator_code(const descrip_define& desc_define, std::ofstream& os)
   {
+    const options& opt = get_options();
     for (auto& t_define : desc_define.m_types)
     {
-      os << "public class " << t_define.m_name << " extends " << t_define.m_name << "_basic implements adata.Base {" << std::endl << std::endl;
+      os << "public class " << camel_case_str(t_define.m_name,true,true) << " extends " << t_define.m_name << "_basic implements adata.Base {" << std::endl << std::endl;
 
       os << tabs(1) << "public void read(adata.Stream stream)" << std::endl;
       os << tabs(1) << "{" << std::endl;
@@ -861,12 +880,14 @@ import adata.Stream;
 
   void gen_code_type(const descrip_define& desc_define, const type_define& tdefine, std::string const& path)
   {
-    std::ofstream os(path + tdefine.m_name + ".java");
+    const options& opt = get_options();
+    std::string type_name = camel_case_str(tdefine.m_name, opt.camel_case, true);
+    std::ofstream os(path + type_name + ".java");
     os << "package " << desc_define.m_namespace.m_fullname << ";" << std::endl;
     os << using_define;
 
     os << tabs(1) << "@SuppressWarnings(\"unused\")" << std::endl;
-    os << tabs(1) << "public class " << tdefine.m_name << " implements adata.Base  {" << std::endl;
+    os << tabs(1) << "public class " << type_name << " implements adata.Base  {" << std::endl;
 
     std::vector<member_define*> mb_list;
 
@@ -888,13 +909,14 @@ import adata.Stream;
     for (const auto& mb : mb_list)
     {
       const member_define& member = *mb;
+      std::string member_name = camel_case_str(member.m_name, opt.camel_case, false);
       if (member.m_deleted)
       {
-        os << tabs(2) << "//" << member.m_name << " deleted , skip define." << std::endl;
+        os << tabs(2) << "//" << member_name << " deleted , skip define." << std::endl;
         continue;
       }
       std::string type_name = make_type_desc(desc_define, member);
-      os << tabs(2) << "public " << type_name << " " << member.m_name;
+      os << tabs(2) << "public " << type_name << " " << member_name;
       if (member.is_initable())
       {
         os << " = " << make_type_default(desc_define, member);

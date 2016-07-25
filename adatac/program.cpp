@@ -16,6 +16,11 @@
 #include "program.h"
 #include "parser.h"
 
+options opt;
+options& get_options()
+{
+  return opt;
+}
 namespace cpp_gen
 {
   void gen_code(const descrip_define&, const std::string&);
@@ -42,8 +47,9 @@ namespace adt_gen
   void pack_adt(const std::vector<std::string>& adt_list, const std::string& adp_file);
 }
 
-void run_program(const options& opt)
+void run_program()
 {
+  const options& opt = get_options();
   if (!opt.pack_files.empty())
   {
     adt_gen::pack_adt(opt.pack_files, opt.output_path + opt.pack_output_file);
@@ -96,7 +102,7 @@ void run_program(const options& opt)
 
   if (input_file_ext == adl_str)
   {
-    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file,opt.low_case);
+    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file,opt.camel_case);
     if (ret == false)
     {
       return;

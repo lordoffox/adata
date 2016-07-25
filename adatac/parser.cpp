@@ -61,21 +61,6 @@ namespace
     return is_digest(v) || v == '-';
   }
 
-  const char lower_case_delta = 'a' - 'A';
-
-  inline char lower_case_char(char v)
-  {
-    if (v >= 'A' && v <= 'Z')
-    {
-      return v + lower_case_delta;
-    }
-    return v;
-  }
-
-  inline bool is_ws(char v)
-  {
-    return v == ' ' || v == '\t';
-  }
 }
 
 struct parse_execption : std::runtime_error
@@ -161,7 +146,7 @@ class parser
   int m_lines;
   std::string m_include;
   bool m_eof;
-  bool lower_case;
+  bool camel_case;
 
   bool is_include_;
   namespace_type include_namespace_;
@@ -186,7 +171,7 @@ public:
     , m_lines(0)
     , m_eof(false)
     , is_include_(is_include)
-    , lower_case(is_low_case)
+    , camel_case(is_low_case)
     , namespace_(is_include_ ? include_namespace_ : m_define.m_namespace)
   {
   }
@@ -262,7 +247,7 @@ public:
     return c;
   }
 
-  void parser_string_body(char * pos, bool lower_case = true)
+  void parser_string_body(char * pos)
   {
     char c;
     while ((c = read_char()) != 0)
@@ -271,7 +256,7 @@ public:
       {
         break;
       }
-      *pos++ = lower_case ? lower_case_char(c) : c;
+      *pos++ = c;
     }
     *pos = 0;
     --m_doc;
@@ -287,8 +272,8 @@ public:
       throw parse_execption("unknow identity", m_lines, m_cols, m_include);
     }
     int len = 0;
-    indetify[len++] = lower_case ? lower_case_char(c) : c;
-    parser_string_body(indetify + 1, lower_case);
+    indetify[len++] = c;
+    parser_string_body(indetify + 1);
     return std::string(indetify);
   }
 
@@ -375,7 +360,7 @@ public:
     if (is_string_header(c))
     {
       indetify[len++] = c;
-      parser_string_body(indetify + 1, false);
+      parser_string_body(indetify + 1);
     }
     else if (is_number_header(c))
     {
@@ -428,7 +413,7 @@ public:
     bool has_dot = false;
     do
     {
-      std::string identity = parser_string();
+      std::string identity = camel_case_str(parser_string(),false);
       if (identity.empty())
       {
         throw parse_execption("typename syntax error , usage data.xyz;", m_lines, m_cols, m_include);
@@ -530,7 +515,7 @@ public:
             m_include_paths,
             r.first.get(),
             r.second,
-            this->lower_case,
+            this->camel_case,
             true
             )
             );
@@ -727,7 +712,7 @@ public:
     char c = read_char();
     if (is_ws(c))
     {
-      std::string member_name = parser_string();
+      std::string member_name = camel_case_str(parser_string(),false);
       if (member_name.empty())
       {
         throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
@@ -1095,7 +1080,7 @@ public:
           t_define.m_parser_lines = m_lines;
           t_define.m_parser_cols = m_cols;
           t_define.m_parser_include = m_include;
-          t_define.m_name = identity;
+          t_define.m_name = camel_case_str(identity, false);
           t_define.m_filename = filename;
           if (identity.find('.') != std::string::npos)
           {
@@ -1119,7 +1104,7 @@ bool parse_adl_file(
   descrip_define& define,
   std::vector<std::string> const& include_paths,
   const std::string& file,
-  bool low_case
+  bool camel_case
   )
 {
   try
@@ -1130,7 +1115,7 @@ bool parse_adl_file(
       return false;
     }
     std::pair<file_buffer_ptr, int> r = adl.read();
-    parser p(define, include_paths, r.first.get(), r.second);
+    parser p(define, include_paths, r.first.get(), r.second,camel_case);
     p.parse();
     p.valid();
   }

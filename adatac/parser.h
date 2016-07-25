@@ -17,6 +17,6 @@ bool parse_adl_file(
   descrip_define& define,
   std::vector<std::string> const& include_paths,
   const std::string& file,
-  bool low_case
+  bool camel_case
   );
 

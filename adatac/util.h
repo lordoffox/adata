@@ -75,4 +75,66 @@ inline std::string replace_all_copy(std::string const& str , std::string const& 
   return ret;
 }
 
+inline char lower_case_char(char v)
+{
+  const char lower_case_delta = 'a' - 'A';
+  if (v >= 'A' && v <= 'Z')
+  {
+    return v + lower_case_delta;
+  }
+  return v;
+}
+
+inline char upper_case_char(char v)
+{
+  const char lower_case_delta = 'a' - 'A';
+  if (v >= 'a' && v <= 'z')
+  {
+    return v - lower_case_delta;
+  }
+  return v;
+}
+
+inline std::string camel_case_str(std::string const& str, bool camel_case = false, bool fisrt_upper_case = true)
+{
+  std::string val;
+  val.reserve(str.length());
+  if (camel_case)
+  {
+    bool uppercase = fisrt_upper_case;
+    for (char c : str)
+    {
+      if (uppercase)
+      {
+        val += upper_case_char(c);
+        uppercase = false;
+      }
+      else
+      {
+        if (c == '_')
+        {
+          uppercase = true;
+          continue;
+        }
+        else
+        {
+          val += c;
+        }
+      }
+    }
+  }
+  else
+  {
+    for (char c : str)
+    {
+      val += lower_case_char(c);
+    }
+  }
+  return val;
+}
+
+inline bool is_ws(char v)
+{
+  return v == ' ' || v == '\t';
+}
 void mkdirs(std::string path);

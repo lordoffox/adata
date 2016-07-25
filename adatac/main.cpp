@@ -16,7 +16,7 @@ int main(int ac, char* av[])
 {
   try
   {
-    options opt;
+    options& opt = get_options();
     aarg::argopt ao;
 
     ao.add('I', "input_file", "adl file", opt.input_file);
@@ -26,7 +26,7 @@ int main(int ac, char* av[])
     ao.add('H', "adata_header", "include adata.hpp path", opt.adata_header);
     ao.add('p', "pack_file", "pack adt files", opt.pack_files);
     ao.add('o', "pack_output_file", "output package path", opt.pack_output_file);
-    ao.add('C', "lower_case", "class name and file name lower_case", opt.low_case);
+    ao.add('C', "camel_case", "class name and file name use Camel-Case", opt.camel_case);
 
     ao.parse(ac, av);
 
@@ -39,7 +39,7 @@ int main(int ac, char* av[])
     {
       // default include path is curr dir
       opt.include_paths.push_back(".");
-      run_program(opt);
+      run_program();
     }
   }
   catch (std::exception& e)
