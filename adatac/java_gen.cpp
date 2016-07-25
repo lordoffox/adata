@@ -455,7 +455,7 @@ namespace java_gen
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "it.getKey()", false);
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "it.getValue()", false);
-        os << tabs(tab_indent) << "});" << std::endl;
+        os << tabs(tab_indent) << "}" << std::endl;
       }
       --tab_indent;
       os << tabs(tab_indent) << "}" << std::endl;
@@ -782,7 +782,7 @@ namespace java_gen
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "it.getKey()", false);
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "it.getValue()", false);
-        os << tabs(tab_indent) << "});" << std::endl;
+        os << tabs(tab_indent) << "}" << std::endl;
       }
       --tab_indent;
       os << tabs(tab_indent) << "}" << std::endl;
