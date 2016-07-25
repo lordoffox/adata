@@ -257,6 +257,5 @@ e_base_type get_type(std::string const& type_)
   {
     return type;
   }
-  type_ = ltype;
   return i->second;
 }
