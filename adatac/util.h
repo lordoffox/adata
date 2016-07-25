@@ -95,39 +95,45 @@ inline char upper_case_char(char v)
   return v;
 }
 
-inline std::string camel_case_str(std::string const& str, bool camel_case = false, bool fisrt_upper_case = true)
+inline std::string lower_case_str(std::string const& str)
 {
   std::string val;
   val.reserve(str.length());
-  if (camel_case)
+  for (char c : str)
   {
-    bool uppercase = fisrt_upper_case;
-    for (char c : str)
+    val += lower_case_char(c);
+  }
+  return val;
+}
+
+std::string is_base_type(std::string const& type);
+
+inline std::string camel_case_str(std::string const& str, bool fisrt_upper_case)
+{
+  std::string base_type = is_base_type(str);
+  if (!base_type.empty())
+    return base_type;
+  std::string val;
+  val.reserve(str.length());
+  bool uppercase = fisrt_upper_case;
+  for (char c : str)
+  {
+    if (uppercase)
     {
-      if (uppercase)
+      val += upper_case_char(c);
+      uppercase = false;
+    }
+    else
+    {
+      if (c == '_')
       {
-        val += upper_case_char(c);
-        uppercase = false;
+        uppercase = true;
+        continue;
       }
       else
       {
-        if (c == '_')
-        {
-          uppercase = true;
-          continue;
-        }
-        else
-        {
-          val += c;
-        }
+        val += c;
       }
-    }
-  }
-  else
-  {
-    for (char c : str)
-    {
-      val += lower_case_char(c);
     }
   }
   return val;

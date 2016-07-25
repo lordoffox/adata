@@ -9,6 +9,7 @@
 ///
 
 #include "descrip.h"
+#include "util.h"
 #include <algorithm>
 
 bool type_define::has_member(const std::string& member_name) const
@@ -235,13 +236,27 @@ typename_map_type& get_java_typename_map()
   return define;
 }
 
-e_base_type get_type(const std::string& type_)
+std::string is_base_type(std::string const& type)
 {
   type_map_type& define = get_bast_type();
-  type_map_type::const_iterator i = define.find(type_);
+  std::string ltype = lower_case_str(type);
+  type_map_type::const_iterator i = define.find(ltype);
+  if (i == define.end())
+  {
+    return "";
+  }
+  return ltype;
+}
+
+e_base_type get_type(std::string const& type_)
+{
+  type_map_type& define = get_bast_type();
+  std::string ltype = lower_case_str(type_);
+  type_map_type::const_iterator i = define.find(ltype);
   if (i == define.end())
   {
     return type;
   }
+  type_ = ltype;
   return i->second;
 }

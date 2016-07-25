@@ -61,7 +61,7 @@ enum e_base_type
   max_count
 };
 
-e_base_type get_type(const std::string& type);
+e_base_type get_type(std::string const& type);
 
 inline bool is_container(e_base_type type)
 {

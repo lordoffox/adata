@@ -9,7 +9,7 @@
 ///
 
 #include <iostream>
-
+#include "program.h"
 #include "parser.h"
 #include "util.h"
 #include <assert.h>
@@ -146,7 +146,6 @@ class parser
   int m_lines;
   std::string m_include;
   bool m_eof;
-  bool camel_case;
 
   bool is_include_;
   namespace_type include_namespace_;
@@ -160,7 +159,6 @@ public:
     std::vector<std::string> const& include_paths,
     char * doc,
     int len,
-    bool is_low_case = false,
     bool is_include = false
     )
     : m_define(define)
@@ -171,7 +169,6 @@ public:
     , m_lines(0)
     , m_eof(false)
     , is_include_(is_include)
-    , camel_case(is_low_case)
     , namespace_(is_include_ ? include_namespace_ : m_define.m_namespace)
   {
   }
@@ -247,7 +244,7 @@ public:
     return c;
   }
 
-  void parser_string_body(char * pos)
+  void parser_string_body(char * pos, bool lower_case = true)
   {
     char c;
     while ((c = read_char()) != 0)
@@ -256,14 +253,14 @@ public:
       {
         break;
       }
-      *pos++ = c;
+      *pos++ = lower_case ? lower_case_char(c) : c;
     }
     *pos = 0;
     --m_doc;
     --m_cols;
   }
 
-  std::string parser_string()
+  std::string parser_string(bool lower_case = true)
   {
     char c = skip_ws();
     char indetify[256] = { 0 };
@@ -272,8 +269,8 @@ public:
       throw parse_execption("unknow identity", m_lines, m_cols, m_include);
     }
     int len = 0;
-    indetify[len++] = c;
-    parser_string_body(indetify + 1);
+    indetify[len++] = lower_case ? lower_case_char(c) : c;
+    parser_string_body(indetify + 1, lower_case);
     return std::string(indetify);
   }
 
@@ -360,7 +357,7 @@ public:
     if (is_string_header(c))
     {
       indetify[len++] = c;
-      parser_string_body(indetify + 1);
+      parser_string_body(indetify + 1, false);
     }
     else if (is_number_header(c))
     {
@@ -409,25 +406,29 @@ public:
 
   std::string parser_typename()
   {
+    const options& opt = get_options();
     std::string type_name;
     bool has_dot = false;
     do
     {
-      std::string identity = camel_case_str(parser_string(),false);
+      std::string identity = parser_string();
       if (identity.empty())
       {
         throw parse_execption("typename syntax error , usage data.xyz;", m_lines, m_cols, m_include);
       }
-      type_name += identity;
 
       char c = parser_typename_delim();
       if (c == '.')
       {
         has_dot = true;
+        type_name += identity;
         type_name += ".";
       }
       else
       {
+        if (opt.camel_case)
+          identity = camel_case_str(identity, true);
+        type_name += identity;
         break;
       }
     } while (!m_eof);
@@ -515,7 +516,6 @@ public:
             m_include_paths,
             r.first.get(),
             r.second,
-            this->camel_case,
             true
             )
             );
@@ -696,6 +696,7 @@ public:
 
   void parser_member(type_define& t_define, member_define& f_define)
   {
+    const options& opt = get_options();
     f_define.m_type = get_type(f_define.m_typename);
     int parmeter_count = 0;
     switch (f_define.m_type)
@@ -712,7 +713,11 @@ public:
     char c = read_char();
     if (is_ws(c))
     {
-      std::string member_name = camel_case_str(parser_string(),false);
+      std::string member_name = parser_string();
+      if(opt.camel_case)
+      {
+        member_name = camel_case_str(member_name, false);
+      }
       if (member_name.empty())
       {
         throw parse_execption("type syntax error ,member type declaration , usage int32 value = 1;", m_lines, m_cols, m_include);
@@ -1040,6 +1045,7 @@ public:
 
   void parse(std::string const& filename = "")
   {
+    const options& opt = get_options();
     while (!m_eof)
     {
       std::string identity = parser_string();
@@ -1064,6 +1070,8 @@ public:
       }
       else
       {
+        if (opt.camel_case)
+          identity = camel_case_str(identity, true);
         if (is_include_)
         {
           // Noux Xiong: using namespace to change to full name
@@ -1080,7 +1088,7 @@ public:
           t_define.m_parser_lines = m_lines;
           t_define.m_parser_cols = m_cols;
           t_define.m_parser_include = m_include;
-          t_define.m_name = camel_case_str(identity, false);
+          t_define.m_name = identity;
           t_define.m_filename = filename;
           if (identity.find('.') != std::string::npos)
           {
@@ -1103,8 +1111,7 @@ public:
 bool parse_adl_file(
   descrip_define& define,
   std::vector<std::string> const& include_paths,
-  const std::string& file,
-  bool camel_case
+  const std::string& file
   )
 {
   try
@@ -1115,7 +1122,7 @@ bool parse_adl_file(
       return false;
     }
     std::pair<file_buffer_ptr, int> r = adl.read();
-    parser p(define, include_paths, r.first.get(), r.second,camel_case);
+    parser p(define, include_paths, r.first.get(), r.second);
     p.parse();
     p.valid();
   }

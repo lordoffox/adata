@@ -102,7 +102,7 @@ void run_program()
 
   if (input_file_ext == adl_str)
   {
-    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file,opt.camel_case);
+    bool ret = parse_adl_file(define, opt.include_paths, opt.input_file);
     if (ret == false)
     {
       return;
