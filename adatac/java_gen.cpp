@@ -171,16 +171,17 @@ namespace java_gen
     
     if (mdefine.m_fixed)
     {
-      prefix = "fix_" + prefix;
+      prefix[0] = upper_case_char(prefix[0]);
+      prefix = "fix" + prefix;
     }
     switch (mdefine.m_type)
     {
-    case e_base_type::int8: return prefix + "_int8"; 
-    case e_base_type::int16:return prefix + "_int16";
-    case e_base_type::int32:return prefix + "_int32";
-    case e_base_type::int64:return prefix + "_int64";
-    case e_base_type::float32:return prefix + "_float";
-    case e_base_type::float64:return prefix + "_double";
+    case e_base_type::int8: return prefix + "Int8"; 
+    case e_base_type::int16:return prefix + "Int16";
+    case e_base_type::int32:return prefix + "Int32";
+    case e_base_type::int64:return prefix + "Int64";
+    case e_base_type::float32:return prefix + "Float";
+    case e_base_type::float64:return prefix + "Double";
     default:
     {
       break;
@@ -191,7 +192,7 @@ namespace java_gen
 
   std::string gen_check_read_size(const member_define& mdefine)
   {
-    std::string str = "= stream.check_read_size(";
+    std::string str = "= stream.checkReadSize(";
     if (mdefine.m_size.length())
     {
       str += mdefine.m_size;
@@ -213,7 +214,7 @@ namespace java_gen
         << "int len" << tab_indent << gen_check_read_size(mdefine) << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent + 1) << var_name << " = stream.read_string(len"<< tab_indent << ");";
+        os << tabs(tab_indent + 1) << var_name << " = stream.readString(len"<< tab_indent << ");";
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -283,7 +284,7 @@ namespace java_gen
         << "int len" << tab_indent << gen_check_read_size(mdefine) << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent + 1) << "stream.skip_read(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "stream.skipRead(len" << tab_indent << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -316,11 +317,11 @@ namespace java_gen
       os << ";";
       if (mdefine.m_type != e_base_type::type)
       {
-        os << tabs(tab_indent) << "stream." << gen_java_opt_name(mdefine, "skip_read") << "();" << std::endl;;
+        os << tabs(tab_indent) << "stream." << gen_java_opt_name(mdefine, "skipRead") << "();" << std::endl;;
       }
       else
       {
-        os << "stream.skip_read_compatible();";
+        os << "stream.skipReadCompatible();";
       }
       os << "}" << std::endl;
     }
@@ -345,16 +346,16 @@ namespace java_gen
   {
     os << tabs(tab_indent) << "if(len_tag >= 0)" << std::endl;
     os << tabs(tab_indent) << "{" << std::endl;
-    os << tabs(tab_indent + 1) << "int read_len = (int)(stream.read_length() - offset);" << std::endl;
-    os << tabs(tab_indent + 1) << "if(len_tag > read_len) stream.skip_read(len_tag - read_len);" << std::endl;
+    os << tabs(tab_indent + 1) << "int read_len = (int)(stream.readLength() - offset);" << std::endl;
+    os << tabs(tab_indent + 1) << "if(len_tag > read_len) stream.skipRead(len_tag - read_len);" << std::endl;
     os << tabs(tab_indent) << "}" << std::endl;
   }
 
   void gen_adata_read_tag(std::ofstream& os, int tab_indent)
   {
-    os << tabs(tab_indent) << "int offset = stream.read_length();" << std::endl;
-    os << tabs(tab_indent) << "long tag = stream.read_int64();" << std::endl;
-    os << tabs(tab_indent) << "int len_tag = stream.read_int32();" << std::endl;
+    os << tabs(tab_indent) << "int offset = stream.readLength();" << std::endl;
+    os << tabs(tab_indent) << "long tag = stream.readInt64();" << std::endl;
+    os << tabs(tab_indent) << "int len_tag = stream.readInt32();" << std::endl;
     os << std::endl;
   }
 
@@ -384,7 +385,7 @@ namespace java_gen
 
   void gen_adata_operator_skip_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    os << tabs(3) << "stream.skip_read_compatible();" << std::endl;
+    os << tabs(3) << "stream.skipReadCompatible();" << std::endl;
   }
 
   inline void gen_size_check_write_member_code(const descrip_define&, const type_define&, const member_define& mdefine, std::ofstream& os, int tab_indent, bool trace_error = true)
@@ -435,12 +436,12 @@ namespace java_gen
       ++tab_indent;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "size += Stream.sizeof_string(" << var_name << ");" << std::endl;
+        os << tabs(tab_indent) << "size += Stream.sizeOfString(" << var_name << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeof_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " <<var_name << ") {" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
@@ -449,7 +450,7 @@ namespace java_gen
       else if (mdefine.m_type == e_base_type::map)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.size_of(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += Stream.sizeOf(len" << tab_indent << ");" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
@@ -464,11 +465,11 @@ namespace java_gen
     {
       if (mdefine.m_type != e_base_type::type)
       {
-        os << tabs(tab_indent) << "size += Stream." << gen_java_opt_name(mdefine, "sizeof") << "(" << var_name << ");" << std::endl;;
+        os << tabs(tab_indent) << "size += Stream." << gen_java_opt_name(mdefine, "sizeOf") << "(" << var_name << ");" << std::endl;;
       }
       else
       {
-        os << tabs(tab_indent) << "size += "<< var_name << ".size_of();" << std::endl;;
+        os << tabs(tab_indent) << "size += "<< var_name << ".sizeOf();" << std::endl;;
       }
     }
   }
@@ -497,9 +498,9 @@ namespace java_gen
       }
       tag_mask <<= 1;
     }
-    os << tabs(3) << "size += Stream.sizeof_int64(tag);" << std::endl;
+    os << tabs(3) << "size += Stream.sizeOfInt64(tag);" << std::endl;
 
-    os << tabs(3) << "size += Stream.sizeof_int32(size + Stream.sizeof_int32(size));" << std::endl;
+    os << tabs(3) << "size += Stream.sizeOfInt32(size + Stream.sizeOfInt32(size));" << std::endl;
 
     os << tabs(3) << "return size;" << std::endl;
   }
@@ -513,7 +514,7 @@ namespace java_gen
 
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent + 1) << "stream.write_string(" << var_name;
+        os << tabs(tab_indent + 1) << "stream.writeString(" << var_name;
         if(mdefine.m_size.length() > 0)
         {
           os << "," << mdefine.m_size;
@@ -528,7 +529,7 @@ namespace java_gen
       {
         os << tabs(tab_indent + 1) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
-        os << tabs(tab_indent + 1) << "stream.write_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent + 1) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "v", false);
@@ -538,7 +539,7 @@ namespace java_gen
       {
         os << tabs(tab_indent + 1) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
-        os << tabs(tab_indent + 1) << "stream.write_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent + 1) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
         os << tabs(tab_indent + 1) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
@@ -565,8 +566,8 @@ namespace java_gen
   void gen_adata_operator_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
-    os << tabs(3) << "stream.write_int64(tag);" << std::endl;
-    os << tabs(3) << "stream.write_int32(this.size_of());" << std::endl;
+    os << tabs(3) << "stream.writeInt64(tag);" << std::endl;
+    os << tabs(3) << "stream.writeInt32(this.sizeOf());" << std::endl;
 
     int64_t tag_mask = 1;
     int64_t total_mask = 0;
@@ -600,7 +601,7 @@ namespace java_gen
         << "int len" << tab_indent << gen_check_read_size(mdefine) << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent + 1) << var_name << " = stream.read_string(len" << tab_indent << ");";
+        os << tabs(tab_indent + 1) << var_name << " = stream.readString(len" << tab_indent << ");";
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -652,7 +653,7 @@ namespace java_gen
     {
       if (mdefine.m_type == e_base_type::type)
       {
-        os << tabs(tab_indent) << var_name << ".raw_read(stream);" << std::endl;;
+        os << tabs(tab_indent) << var_name << ".rawRead(stream);" << std::endl;;
       }
       else
       {
@@ -688,12 +689,12 @@ namespace java_gen
       ++tab_indent;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "size += Stream.sizeof_string(" << var_name << ");" << std::endl;
+        os << tabs(tab_indent) << "size += Stream.sizeOfString(" << var_name << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeof_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
@@ -702,7 +703,7 @@ namespace java_gen
       else if (mdefine.m_type == e_base_type::map)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeof_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
@@ -717,11 +718,11 @@ namespace java_gen
     {
       if (mdefine.m_type != e_base_type::type)
       {
-        os << tabs(tab_indent) << "size += Stream." << gen_java_opt_name(mdefine, "sizeof") << "(" << var_name << ");" << std::endl;;
+        os << tabs(tab_indent) << "size += Stream." << gen_java_opt_name(mdefine, "sizeOf") << "(" << var_name << ");" << std::endl;;
       }
       else
       {
-        os << tabs(tab_indent) << "size += " << var_name << ".raw_size_of();" << std::endl;;
+        os << tabs(tab_indent) << "size += " << var_name << ".rawSizeOf();" << std::endl;;
       }
     }
   }
@@ -751,7 +752,7 @@ namespace java_gen
 
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "stream.write_string(" << var_name;
+        os << tabs(tab_indent) << "stream.writeString(" << var_name;
         if (mdefine.m_size.length() > 0)
         {
           os << "," << mdefine.m_size;
@@ -766,7 +767,7 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
-        os << tabs(tab_indent) << "stream.write_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
@@ -776,7 +777,7 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
-        os << tabs(tab_indent) << "stream.write_int32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
@@ -795,7 +796,7 @@ namespace java_gen
       }
       else
       {
-        os << tabs(tab_indent) << var_name << ".raw_write(stream);" << std::endl;;
+        os << tabs(tab_indent) << var_name << ".rawWrite(stream);" << std::endl;;
       }
     }
   }
@@ -875,12 +876,12 @@ import adata.Stream;
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void skip_read(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void skipRead(adata.Stream stream)throws Exception" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public int size_of()" << std::endl;
+    os << tabs(2) << "public int sizeOf()" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
@@ -890,17 +891,17 @@ import adata.Stream;
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void raw_read(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void rawRead(adata.Stream stream)throws Exception" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_raw_read_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public int raw_size_of()" << std::endl;
+    os << tabs(2) << "public int rawSizeOf()" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_raw_size_of_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void raw_write(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void rawWrite(adata.Stream stream)throws Exception" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_raw_write_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
