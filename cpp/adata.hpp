@@ -114,8 +114,8 @@ namespace adata
   class exception : public ::std::exception
   {
   public:
-    explicit exception( error_code_t ec , char const * message)
-      :std::exception(message),ec_(ec)
+    explicit exception( error_code_t ec)
+      :ec_(ec)
     {}
 
     ADATA_INLINE error_code_t error_code() const { return ec_; }
@@ -140,7 +140,7 @@ namespace adata
       return "";
     }
 
-    ADATA_INLINE const char * message()
+    virtual const char * what() const
     {
       return to_message(ec_);
     }
@@ -289,7 +289,7 @@ namespace adata
     {
       if(bad())
       {
-        throw exception(stream_buffer_overflow, "stream buffer overflow");
+        throw exception(stream_buffer_overflow);
       }
     }
   private:
@@ -671,7 +671,7 @@ namespace adata
   {
     if (value & const_negative_bit_value)
     {
-      throw exception(negative_assign_to_unsigned_integer_number, "negative assign to unsigned integer number");
+      throw exception(negative_assign_to_unsigned_integer_number);
     }
   }
 
@@ -679,7 +679,7 @@ namespace adata
   {
     if (bytes < read_bytes)
     {
-      throw exception(value_too_large_to_integer_number, "value too large to integer number");
+      throw exception(value_too_large_to_integer_number);
     }
   }
 
@@ -1454,7 +1454,7 @@ namespace adata
       if (this->m_read_ptr + len > this->m_read_tail_ptr)
       {
         bad_ = true;
-        throw exception(stream_buffer_overflow, "stream buffer overflow");
+        throw exception(stream_buffer_overflow);
       }
       std::memcpy(buffer, this->m_read_ptr, len);
       this->m_read_ptr += len;
@@ -1466,7 +1466,7 @@ namespace adata
       if (this->m_read_ptr + 1 > this->m_read_tail_ptr)
       {
         bad_ = true;
-        throw exception(stream_buffer_overflow, "stream buffer overflow");
+        throw exception(stream_buffer_overflow);
       }
       return *m_read_ptr++;
     }
@@ -1476,7 +1476,7 @@ namespace adata
       if (this->m_write_ptr + len > this->m_write_tail_ptr)
       {
         bad_ = true;
-        throw exception(stream_buffer_overflow, "stream buffer overflow");
+        throw exception(stream_buffer_overflow);
       }
       std::memcpy((void*)this->m_write_ptr, buffer, len);
       this->m_write_ptr += len;
@@ -1488,7 +1488,7 @@ namespace adata
       if (this->m_write_ptr + len > this->m_write_tail_ptr)
       {
         bad_ = true;
-        throw exception(stream_buffer_overflow, "stream buffer overflow");
+        throw exception(stream_buffer_overflow);
       }
       unsigned char * append_ptr = this->m_write_ptr;
       this->m_write_ptr += len;
@@ -1500,7 +1500,7 @@ namespace adata
       if (this->m_read_ptr + len > this->m_read_tail_ptr)
       {
         bad_ = true;
-        throw exception(stream_buffer_overflow, "stream buffer overflow");
+        throw exception(stream_buffer_overflow);
       }
       unsigned char const* ptr = this->m_read_ptr;
       this->m_read_ptr += len;
@@ -2488,7 +2488,7 @@ namespace adata
     read(stream, len);
     if (size > 0 && len > size)
     {
-      throw exception(number_of_element_not_match,"number of element not match");
+      throw exception(number_of_element_not_match);
     }
     return len;
   }
