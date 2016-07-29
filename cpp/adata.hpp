@@ -19,6 +19,15 @@
 #else
 # include <cstdint>
 #endif
+
+//msvc2013 pls
+#ifdef _MSC_VER
+# if _MSC_VER <= 1800
+#define constexpr
+#define noexcept
+# endif
+#endif // _MSC_VER && (_MSC_VER <= 1800)
+
 #include <cstring>
 
 #include <vector>
@@ -140,7 +149,7 @@ namespace adata
       return "";
     }
 
-    virtual const char * what() const
+    virtual const char * what() const noexcept
     {
       return to_message(ec_);
     }
