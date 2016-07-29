@@ -115,7 +115,7 @@ namespace adata
   {
   public:
     explicit exception( error_code_t ec , char const * message)
-      :ec_(ec), ::std::exception(message)
+      :std::exception(message),ec_(ec)
     {}
 
     ADATA_INLINE error_code_t error_code() const { return ec_; }
@@ -277,12 +277,12 @@ namespace adata
 
     ADATA_INLINE std::size_t read_length() const
     {
-      (std::size_t)return this->m_stream_.tellg();
+      return (std::size_t)this->m_stream_.tellg();
     }
 
     ADATA_INLINE std::size_t write_length() const
     {
-      (std::size_t)return this->m_stream_.tellp();
+      return (std::size_t)this->m_stream_.tellp();
     }
 
     ADATA_INLINE void check_bad()
