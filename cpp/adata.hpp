@@ -616,6 +616,7 @@ namespace adata
     stream.read((char*)&value, 1);
     if (value > const_tag_as_value)
     {
+      int read_bytes = (value & const_interger_byte_msak) + 1;
       stream.skip_read(read_bytes);
     }
   }
