@@ -816,7 +816,6 @@ namespace java_gen
 
   const char * using_define = R"(import java.util.ArrayList;
 import java.util.HashMap;
-import adata.Stream;
 
 )";
 
