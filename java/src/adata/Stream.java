@@ -406,6 +406,10 @@ public class Stream {
 	writeBuffer.put(sbuf);
   }
   
+  public void writeString(String str) throws Exception{
+	writeString(str,0);
+  }
+  
   public void skipRead(int len)
   {
 	readBuffer.position(readBuffer.position() + len);
