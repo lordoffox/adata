@@ -436,12 +436,12 @@ namespace java_gen
       ++tab_indent;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "size += Stream.sizeOfString(" << var_name << ");" << std::endl;
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfString(" << var_name << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " <<var_name << ") {" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
@@ -450,7 +450,7 @@ namespace java_gen
       else if (mdefine.m_type == e_base_type::map)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeOf(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
@@ -465,7 +465,7 @@ namespace java_gen
     {
       if (mdefine.m_type != e_base_type::type)
       {
-        os << tabs(tab_indent) << "size += Stream." << gen_java_opt_name(mdefine, "sizeOf") << "(" << var_name << ");" << std::endl;;
+        os << tabs(tab_indent) << "size += adata.Stream." << gen_java_opt_name(mdefine, "sizeOf") << "(" << var_name << ");" << std::endl;;
       }
       else
       {
@@ -498,9 +498,9 @@ namespace java_gen
       }
       tag_mask <<= 1;
     }
-    os << tabs(3) << "size += Stream.sizeOfInt64(tag);" << std::endl;
+    os << tabs(3) << "size += adata.Stream.sizeOfInt64(tag);" << std::endl;
 
-    os << tabs(3) << "size += Stream.sizeOfInt32(size + Stream.sizeOfInt32(size));" << std::endl;
+    os << tabs(3) << "size += adata.Stream.sizeOfInt32(size + adata.Stream.sizeOfInt32(size));" << std::endl;
 
     os << tabs(3) << "return size;" << std::endl;
   }
@@ -689,12 +689,12 @@ namespace java_gen
       ++tab_indent;
       if (mdefine.m_type == e_base_type::string)
       {
-        os << tabs(tab_indent) << "size += Stream.sizeOfString(" << var_name << ");" << std::endl;
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfString(" << var_name << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
@@ -703,7 +703,7 @@ namespace java_gen
       else if (mdefine.m_type == e_base_type::map)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
-        os << tabs(tab_indent) << "size += Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
         std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
         std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
         os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
@@ -718,7 +718,7 @@ namespace java_gen
     {
       if (mdefine.m_type != e_base_type::type)
       {
-        os << tabs(tab_indent) << "size += Stream." << gen_java_opt_name(mdefine, "sizeOf") << "(" << var_name << ");" << std::endl;;
+        os << tabs(tab_indent) << "size += adata.Stream." << gen_java_opt_name(mdefine, "sizeOf") << "(" << var_name << ");" << std::endl;;
       }
       else
       {
@@ -826,7 +826,7 @@ import java.util.HashMap;
     os << using_define;
 
     os << tabs(1) << "@SuppressWarnings(\"unused\")" << std::endl;
-    os << tabs(1) << "public class " << tdefine.m_name << " implements adata.Base  {" << std::endl;
+    os << tabs(1) << "public class " << tdefine.m_name << " extends adata.Base  {" << std::endl;
 
     std::vector<member_define*> mb_list;
 
