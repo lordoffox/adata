@@ -1,8 +1,8 @@
 package adata;
 
-public interface Base {
+public abstract class Base {
     public abstract void read(adata.Stream stream) throws Exception;
-    public default void skipRead(adata.Stream stream) throws Exception{
+    public void skipRead(adata.Stream stream) throws Exception{
     	stream.skipReadCompatible();
     }
     public abstract int sizeOf();

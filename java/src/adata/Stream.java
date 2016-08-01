@@ -391,6 +391,11 @@ public class Stream {
 	return new String( string_buf, cs_utf8 );
   }
   
+  public String readString() throws Exception{
+	int len = readInt32();
+	return readString(len);
+  }
+  
   public void writeString(String str , int len) throws Exception{
 	byte[] sbuf = str.getBytes(cs_utf8);
 	int slen = sbuf.length;
@@ -455,7 +460,7 @@ public class Stream {
   }
   
   public void skipReadString() throws Exception{
-	long slen = readInt64();
+	long slen = readInt32();
 	skipRead((int)slen);
   }
   
