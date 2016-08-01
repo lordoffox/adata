@@ -2474,7 +2474,7 @@ namespace adata
     value_ptr[ADATA_LEPOS8_7] = read_ptr[7];
   }
 
-  template<typename stream_ty, typename alloc_type>
+  template<typename alloc_type>
   ADATA_INLINE int32_t size_of(std::basic_string<char, std::char_traits<char>, alloc_type> const& str)
   {
     int32_t len = (int32_t)str.length();
@@ -2482,7 +2482,7 @@ namespace adata
     return len;
   }
 
-  template<typename stream_ty , typename alloc_type>
+  template<typename stream_ty ,typename alloc_type>
   ADATA_INLINE void read(stream_ty& stream, std::basic_string<char, std::char_traits<char>, alloc_type>& str)
   {
     int32_t len;
