@@ -2475,7 +2475,7 @@ namespace adata
   }
 
   template<typename stream_ty, typename alloc_type>
-  ADATA_INLINE int32 size_of(std::basic_string<char, std::char_traits<char>, alloc_type>& str)
+  ADATA_INLINE int32_t size_of(std::basic_string<char, std::char_traits<char>, alloc_type>& str)
   {
     int32_t len = (int32_t)str.length();
     len += size_of(len);
