@@ -154,14 +154,14 @@ public class Stream {
 	return uint8(readBuffer.get());
   }
 
-  long readScacleInt(int max_bytes) throws Exception{
+  long readScacleInt(int max_bytes){
 	int tag = loadUint8();
 	if(tag < const_tag_as_type){
 	  return tag;
 	}
 	int read_bytes = (tag & const_interger_byte_msak) + 1;
 	if(read_bytes > max_bytes)
-	  throw new Exception("integer value out of range.");
+	  throw new RuntimeException("integer value out of range.");
 	long value = 0;
 	switch(read_bytes){
 	case 1:{	  
@@ -238,22 +238,22 @@ public class Stream {
 	return value;
   }
 
-  public byte readInt8() throws Exception{
+  public byte readInt8(){
 	long value = readScacleInt(1);
 	return (byte)value;
   }
 
-  public short readInt16() throws Exception{
+  public short readInt16(){
 	long value = readScacleInt(2);
 	return (short)value;
   }
 
-  public int readInt32() throws Exception{
+  public int readInt32(){
 	long value = readScacleInt(4);
 	return (int)value;
   }
 
-  public long readInt64() throws Exception{
+  public long readInt64(){
 	long value = readScacleInt(8);
 	return value;
   }
@@ -371,10 +371,10 @@ public class Stream {
   
   static Charset cs_utf8 = java.nio.charset.StandardCharsets.UTF_8;
   
-  public int checkReadSize(int len) throws Exception{
+  public int checkReadSize(int len){
 	long slen = readInt64();
 	if(len >0 && slen > slen){
-      throw new Exception("length too large.");
+      throw new RuntimeException("length too large.");
 	}
 	return (int)slen;
   }
@@ -385,28 +385,28 @@ public class Stream {
 	return len;
   }
 
-  public String readString(int len) throws Exception{
+  public String readString(int len){
 	byte[] string_buf = new byte[len];
 	readBuffer.get(string_buf,0,len);
 	return new String( string_buf, cs_utf8 );
   }
   
-  public String readString() throws Exception{
+  public String readString(){
 	int len = readInt32();
 	return readString(len);
   }
   
-  public void writeString(String str , int len) throws Exception{
+  public void writeString(String str , int len){
 	byte[] sbuf = str.getBytes(cs_utf8);
 	int slen = sbuf.length;
 	if(len > 0 && slen > len){
-	  throw new Exception("length too large.");
+	  throw new RuntimeException("length too large.");
 	}
 	writeInt32(slen);
 	writeBuffer.put(sbuf);
   }
   
-  public void writeString(String str) throws Exception{
+  public void writeString(String str){
 	writeString(str,0);
   }
   
@@ -463,12 +463,12 @@ public class Stream {
 	skipRead(8);
   }
   
-  public void skipReadString() throws Exception{
+  public void skipReadString(){
 	long slen = readInt32();
 	skipRead((int)slen);
   }
   
-  public void skipReadCompatible() throws Exception
+  public void skipReadCompatible()
   {
     int offset = readBuffer.position();
     @SuppressWarnings("unused")

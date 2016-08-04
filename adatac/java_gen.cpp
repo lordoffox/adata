@@ -393,7 +393,7 @@ namespace java_gen
     if(mdefine.m_size.length() > 0)
     {
       os << tabs(tab_indent+1) << "if(len" << tab_indent << ">" << mdefine.m_size
-        << "){ throw new Exception(\"number of element not match.\");}" << std::endl;
+        << "){ throw new RuntimeException(\"number of element not match.\");}" << std::endl;
     }
   }
 
@@ -870,12 +870,12 @@ import java.util.HashMap;
       os << ";" << std::endl;
     }
 
-    os << tabs(2) << "public void read(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void read(adata.Stream stream)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void skipRead(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void skipRead(adata.Stream stream)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
@@ -885,12 +885,12 @@ import java.util.HashMap;
     gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void write(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void write(adata.Stream stream)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void rawRead(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void rawRead(adata.Stream stream)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_raw_read_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
@@ -900,7 +900,7 @@ import java.util.HashMap;
     gen_adata_operator_raw_size_of_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
 
-    os << tabs(2) << "public void rawWrite(adata.Stream stream)throws Exception" << std::endl;
+    os << tabs(2) << "public void rawWrite(adata.Stream stream)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_raw_write_type_code(desc_define, tdefine, os);
     os << tabs(2) << "}" << std::endl;
