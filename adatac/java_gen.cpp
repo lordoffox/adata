@@ -870,6 +870,35 @@ import java.util.HashMap;
       os << ";" << std::endl;
     }
 
+    os << tabs(2) << "public " << tdefine.m_name << "()" << std::endl;
+    os << tabs(2) << "{" << std::endl;
+    size_t mcount = mb_list.size();
+    for (const auto& mb : mb_list)
+    {
+      --mcount;
+      const member_define& member = *mb;
+      if (member.m_deleted)
+      {
+        continue;
+      }
+      std::string type_name = make_type_desc(desc_define, member);
+      os << tabs(3) << member.m_name;
+      if (member.is_initable())
+      {
+        os << " = " << make_type_default(desc_define, member);
+      }
+      else if (member.m_type == e_base_type::string)
+      {
+        os << " = " << "\"\"";
+      }
+      else
+      {
+        os << " = " << "new " << type_name << "()";
+      }
+      os << ";" << std::endl;
+    }
+    os << tabs(2) << "}" << std::endl;
+
     os << tabs(2) << "public void read(adata.Stream stream)" << std::endl;
     os << tabs(2) << "{" << std::endl;
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
