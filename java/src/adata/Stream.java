@@ -17,16 +17,16 @@ public class Stream {
 	return readBuffer;
   }
   
-  public void setReadBuffer(ByteBuffer buf){
-	readBuffer = buf;
+  public void setReadBuffer(byte[] buf){
+	readBuffer = ByteBuffer.wrap(buf);
   }
   
   public ByteBuffer getWriteBuffer(){
 	return writeBuffer;
   }
   
-  public void setWriteBuffer(ByteBuffer buf){
-	writeBuffer = buf;
+  public void setWriteBuffer(byte[] buf){
+	writeBuffer = ByteBuffer.wrap(buf);
   }
   
   public void writeData(byte[] data , int len){
