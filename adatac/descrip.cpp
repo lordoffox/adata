@@ -216,6 +216,26 @@ namespace
 
     return define;
   }
+
+  static typename_map_type make_typedef_ref_java()
+  {
+    typename_map_type define;
+    define.insert(std::make_pair(s_fix_int8, "Byte"));
+    define.insert(std::make_pair(s_fix_int16, "Short"));
+    define.insert(std::make_pair(s_fix_int32, "Integer"));
+    define.insert(std::make_pair(s_fix_int64, "Long"));
+    define.insert(std::make_pair(s_int8, "Byte"));
+    define.insert(std::make_pair(s_int16, "Short"));
+    define.insert(std::make_pair(s_int32, "Integer"));
+    define.insert(std::make_pair(s_int64, "Long"));
+    define.insert(std::make_pair(s_float32, "Float"));
+    define.insert(std::make_pair(s_float64, "Double"));
+    define.insert(std::make_pair(s_string, "String"));
+    define.insert(std::make_pair(s_list, "ArrayList"));
+    define.insert(std::make_pair(s_map, "HashMap"));
+
+    return define;
+  }
 }
 
 typename_map_type& get_cpp_typename_map()
@@ -233,6 +253,12 @@ typename_map_type& get_csharp_typename_map()
 typename_map_type& get_java_typename_map()
 {
   static typename_map_type define = make_typedef_java();
+  return define;
+}
+
+typename_map_type& get_java_ref_typename_map()
+{
+  static typename_map_type define = make_typedef_ref_java();
   return define;
 }
 

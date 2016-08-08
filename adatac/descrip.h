@@ -238,3 +238,4 @@ typedef std::map<std::string, std::string> typename_map_type;
 typename_map_type& get_cpp_typename_map();
 typename_map_type& get_csharp_typename_map();
 typename_map_type& get_java_typename_map();
+typename_map_type& get_java_ref_typename_map();

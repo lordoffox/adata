@@ -56,11 +56,15 @@ namespace java_gen
     }
   }
 
-  inline std::string make_typename(const descrip_define& desc_define, const std::string& name)
+  inline std::string make_typename(const descrip_define& desc_define, const std::string& name , bool is_ref = false)
   {
-    typename_map_type& map_define = get_java_typename_map();
-    auto find = map_define.find(name);
-    if (find == map_define.end())
+    typename_map_type * map_define = &get_java_typename_map();
+    if (is_ref)
+    {
+      map_define = &get_java_ref_typename_map();
+    }
+    auto find = map_define->find(name);
+    if (find == map_define->end())
     {
       type_define const* ty = desc_define.find_decl_type(name);
       assert(ty != nullptr);
@@ -69,7 +73,7 @@ namespace java_gen
     return find->second;
   }
 
-  std::string make_type_desc(const descrip_define& desc_define, const member_define& define)
+  std::string make_type_desc(const descrip_define& desc_define, const member_define& define , bool is_ref = false)
   {
     check_java_type(define.m_type);
     std::string type_name;
@@ -79,18 +83,18 @@ namespace java_gen
       type_name = make_typename(desc_define, define.m_typename);
       type_name += "<";
       check_java_type(define.m_template_parameters[0].m_type);
-      type_name += make_typename(desc_define, define.m_template_parameters[0].m_typename);
+      type_name += make_typename(desc_define, define.m_template_parameters[0].m_typename, true);
       if (define.m_type == e_base_type::map)
       {
         check_java_type(define.m_template_parameters[1].m_type);
         type_name += ",";
-        type_name += make_typename(desc_define, define.m_template_parameters[1].m_typename);
+        type_name += make_typename(desc_define, define.m_template_parameters[1].m_typename, true);
       }
       type_name += ">";
     }
     else
     {
-      type_name = make_typename(desc_define, define.m_typename);
+      type_name = make_typename(desc_define, define.m_typename,is_ref);
     }
     return type_name;
   }
@@ -221,7 +225,7 @@ namespace java_gen
         os << tabs(tab_indent + 1) << var_name << ".clear();" << std::endl;
         os << tabs(tab_indent + 1) << "for (int i = 0 ; i < len" << tab_indent << " ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
-        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent + 2) << decl_type << " element";
         std::string decl_value = gen_java_default_value(mdefine.m_template_parameters[0], decl_type);
         if (!decl_value.empty())
@@ -238,7 +242,7 @@ namespace java_gen
         os << tabs(tab_indent + 1) << var_name << ".clear();" << std::endl;
         os << tabs(tab_indent + 1) << "for (int i = 0 ; i < len" << tab_indent << " ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
-        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent + 2) << decl_type1 << " first_element";
         std::string decl_value1 = gen_java_default_value(mdefine.m_template_parameters[0], decl_type1);
         if (!decl_value1.empty())
@@ -246,7 +250,7 @@ namespace java_gen
           os << "= " << decl_value1;
         }
         os << "; " << std::endl;
-        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
+        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1],true);
         os << tabs(tab_indent + 2) << decl_type2 << " second_element";
         std::string decl_value2 = gen_java_default_value(mdefine.m_template_parameters[1], decl_type2);
         if (!decl_value2.empty())
@@ -442,7 +446,7 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " <<var_name << ") {" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
         os << tabs(tab_indent) << "}" << std::endl;
@@ -451,9 +455,9 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
-        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
-        os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
+        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
+        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1],true);
+        os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ".entrySet()) {" << std::endl;
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "it.getKey()", false);
         gen_member_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "it.getValue()", false);
         os << tabs(tab_indent) << "}" << std::endl;
@@ -530,7 +534,7 @@ namespace java_gen
         os << tabs(tab_indent + 1) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
         os << tabs(tab_indent + 1) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent + 1) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "v", false);
         os << tabs(tab_indent + 1) << "}" << std::endl;
@@ -540,9 +544,9 @@ namespace java_gen
         os << tabs(tab_indent + 1) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
         os << tabs(tab_indent + 1) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
-        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
-        os << tabs(tab_indent + 1) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
+        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
+        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1],true);
+        os << tabs(tab_indent + 1) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ".entrySet()) {" << std::endl;
         gen_member_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "it.getKey()", false);
         os << std::endl;
         gen_member_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 2, "it.getValue()", false);
@@ -608,7 +612,7 @@ namespace java_gen
         os << tabs(tab_indent + 1) << var_name << ".clear();" << std::endl;
         os << tabs(tab_indent + 1) << "for (int i = 0 ; i < len" << tab_indent << " ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
-        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent + 2) << decl_type << " element";
         std::string decl_value = gen_java_default_value(mdefine.m_template_parameters[0], decl_type);
         if (!decl_value.empty())
@@ -625,7 +629,7 @@ namespace java_gen
         os << tabs(tab_indent + 1) << var_name << ".clear();" << std::endl;
         os << tabs(tab_indent + 1) << "for (int i = 0 ; i < len" << tab_indent << " ; ++i)" << std::endl;
         os << tabs(tab_indent + 1) << "{" << std::endl;
-        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent + 2) << decl_type1 << " first_element";
         std::string decl_value1 = gen_java_default_value(mdefine.m_template_parameters[0], decl_type1);
         if (!decl_value1.empty())
@@ -633,7 +637,7 @@ namespace java_gen
           os << "= " << decl_value1;
         }
         os << "; " << std::endl;
-        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
+        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1],true);
         os << tabs(tab_indent + 2) << decl_type2 << " second_element";
         std::string decl_value2 = gen_java_default_value(mdefine.m_template_parameters[1], decl_type2);
         if (!decl_value2.empty())
@@ -695,7 +699,7 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
         os << tabs(tab_indent) << "}" << std::endl;
@@ -704,9 +708,9 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         os << tabs(tab_indent) << "size += adata.Stream.sizeOfInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
-        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
-        os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
+        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
+        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1],true);
+        os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ".entrySet()) {" << std::endl;
         gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "it.getKey()", false);
         gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "it.getValue()", false);
         os << tabs(tab_indent) << "}" << std::endl;
@@ -768,7 +772,7 @@ namespace java_gen
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
         os << tabs(tab_indent) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
         os << tabs(tab_indent) << "for(" << decl_type << " v : " << var_name << ") {" << std::endl;
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "v", false);
         os << tabs(tab_indent) << "}" << std::endl;
@@ -778,9 +782,9 @@ namespace java_gen
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
         gen_size_check_write_member_code(desc_define, tdefine, mdefine, os, tab_indent, false);
         os << tabs(tab_indent) << "stream.writeInt32(len" << tab_indent << ");" << std::endl;
-        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
-        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1]);
-        os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ") {" << std::endl;
+        std::string decl_type1 = make_type_desc(desc_define, mdefine.m_template_parameters[0],true);
+        std::string decl_type2 = make_type_desc(desc_define, mdefine.m_template_parameters[1],true);
+        os << tabs(tab_indent) << "for(java.util.HashMap.Entry<" << decl_type1 << "," << decl_type2 << "> it : " << var_name << ".entrySet()) {" << std::endl;
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "it.getKey()", false);
         gen_member_raw_write_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 1, "it.getValue()", false);
         os << tabs(tab_indent) << "}" << std::endl;
