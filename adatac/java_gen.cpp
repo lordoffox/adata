@@ -365,19 +365,19 @@ namespace java_gen
 
   void gen_adata_operator_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    gen_adata_read_tag(os, 3);
+    gen_adata_read_tag(os, 2);
 
     int64_t tag_mask = 1;
     int64_t total_mask = 0;
     for (const auto& member : tdefine.m_members)
     {
-      os << tabs(3) << "if((tag&" << tag_mask << "L)>0)";
-      gen_adata_read_member_code(desc_define, tdefine, member, os, 3);
+      os << tabs(2) << "if((tag&" << tag_mask << "L)>0)";
+      gen_adata_read_member_code(desc_define, tdefine, member, os, 2);
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
 
-    gen_adata_len_tag_jump(os, 3);
+    gen_adata_len_tag_jump(os, 2);
   }
 
   inline void gen_adata_skip_read_member_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent)
@@ -389,7 +389,7 @@ namespace java_gen
 
   void gen_adata_operator_skip_read_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    os << tabs(3) << "stream.skipReadCompatible();" << std::endl;
+    os << tabs(2) << "stream.skipReadCompatible();" << std::endl;
   }
 
   inline void gen_size_check_write_member_code(const descrip_define&, const type_define&, const member_define& mdefine, std::ofstream& os, int tab_indent, bool trace_error = true)
@@ -480,9 +480,9 @@ namespace java_gen
 
   void gen_adata_operator_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    os << tabs(3) << "int size = 0;" << std::endl;
+    os << tabs(2) << "int size = 0;" << std::endl;
 
-    gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
+    gen_adata_operator_write_tag_code(desc_define, tdefine, os, 2);
     int64_t tag_mask = 1;
     for (const auto& member : tdefine.m_members)
     {
@@ -492,21 +492,21 @@ namespace java_gen
       {
         if (member.is_multi())
         {
-          os << tabs(3) << "if((tag&" << tag_mask << "L)>0)" << std::endl;
+          os << tabs(2) << "if((tag&" << tag_mask << "L)>0)" << std::endl;
         }
-        gen_member_size_of_type_code(desc_define, tdefine, member, os, 3, var_name);
+        gen_member_size_of_type_code(desc_define, tdefine, member, os, 2, var_name);
       }
       else
       {
-        os << tabs(3) << "//" << var_name << " deleted , skip write." << std::endl;
+        os << tabs(2) << "//" << var_name << " deleted , skip write." << std::endl;
       }
       tag_mask <<= 1;
     }
-    os << tabs(3) << "size += adata.Stream.sizeOfInt64(tag);" << std::endl;
+    os << tabs(2) << "size += adata.Stream.sizeOfInt64(tag);" << std::endl;
 
-    os << tabs(3) << "size += adata.Stream.sizeOfInt32(size + adata.Stream.sizeOfInt32(size));" << std::endl;
+    os << tabs(2) << "size += adata.Stream.sizeOfInt32(size + adata.Stream.sizeOfInt32(size));" << std::endl;
 
-    os << tabs(3) << "return size;" << std::endl;
+    os << tabs(2) << "return size;" << std::endl;
   }
 
   void gen_member_write_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
@@ -569,9 +569,9 @@ namespace java_gen
 
   void gen_adata_operator_write_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    gen_adata_operator_write_tag_code(desc_define, tdefine, os, 3);
-    os << tabs(3) << "stream.writeInt64(tag);" << std::endl;
-    os << tabs(3) << "stream.writeInt32(this.sizeOf());" << std::endl;
+    gen_adata_operator_write_tag_code(desc_define, tdefine, os, 2);
+    os << tabs(2) << "stream.writeInt64(tag);" << std::endl;
+    os << tabs(2) << "stream.writeInt32(this.sizeOf());" << std::endl;
 
     int64_t tag_mask = 1;
     int64_t total_mask = 0;
@@ -583,13 +583,13 @@ namespace java_gen
       {
         if (member.is_multi())
         {
-          os << tabs(3) << "if((tag&" << tag_mask << "L)>0)";
+          os << tabs(2) << "if((tag&" << tag_mask << "L)>0)";
         }
-        gen_member_write_type_code(desc_define, tdefine, member, os, 3, var_name);
+        gen_member_write_type_code(desc_define, tdefine, member, os, 2, var_name);
       }
       else
       {
-        os << tabs(3) << "//" << var_name << " deleted , skip write." << std::endl;
+        os << tabs(2) << "//" << var_name << " deleted , skip write." << std::endl;
       }
       total_mask |= tag_mask;
       tag_mask <<= 1;
@@ -681,7 +681,7 @@ namespace java_gen
   {
     for (const auto& member : tdefine.m_members)
     {
-      gen_adata_raw_read_member_code(desc_define, tdefine, member, os, 3);
+      gen_adata_raw_read_member_code(desc_define, tdefine, member, os, 2);
     }
   }
 
@@ -733,7 +733,7 @@ namespace java_gen
 
   void gen_adata_operator_raw_size_of_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
-    os << tabs(3) << "int size = 0;" << std::endl;
+    os << tabs(2) << "int size = 0;" << std::endl;
 
     for (const auto& member : tdefine.m_members)
     {
@@ -741,7 +741,7 @@ namespace java_gen
       var_name += member.m_name;
       if (member.m_deleted == false)
       {
-        gen_member_raw_size_of_type_code(desc_define, tdefine, member, os, 3, var_name);
+        gen_member_raw_size_of_type_code(desc_define, tdefine, member, os, 2, var_name);
       }
     }
     os << tabs(2) << "return size;" << std::endl;
@@ -813,24 +813,44 @@ namespace java_gen
       var_name += member.m_name;
       if (!member.m_deleted)
       {
-        gen_member_raw_write_type_code(desc_define, tdefine, member, os, 3, var_name);
+        gen_member_raw_write_type_code(desc_define, tdefine, member, os, 2, var_name);
       }
     }
   }
-
-  const char * using_define = R"(import java.util.ArrayList;
-import java.util.HashMap;
-
-)";
 
   void gen_code_type(const descrip_define& desc_define, const type_define& tdefine, std::string const& path)
   {
     std::ofstream os(path + tdefine.m_name + ".java");
     os << "package " << desc_define.m_namespace.m_fullname << ";" << std::endl;
-    os << using_define;
+    {
 
-    os << tabs(1) << "@SuppressWarnings(\"unused\")" << std::endl;
-    os << tabs(1) << "public class " << tdefine.m_name << " extends adata.Base  {" << std::endl;
+      bool has_list = false;
+      bool has_map = false;
+      for (auto& member : tdefine.m_members)
+      {
+        member_define * mb = (member_define *)&member;
+        if(mb->m_deleted)
+        {
+          continue;
+        }
+        if(mb->m_type == e_base_type::list)
+        {
+          has_list = true;
+        }
+        else if (mb->m_type == e_base_type::map)
+        {
+          has_map = true;
+        }
+      }
+      if (has_list)
+        os << "import java.util.ArrayList;" << std::endl;
+      if (has_map)
+        os << "import java.util.HashMap;" << std::endl;
+      if (has_list || has_map)
+        os << std::endl;
+    }
+
+    os << "public class " << tdefine.m_name << " extends adata.Base  {" << std::endl;
 
     std::vector<member_define*> mb_list;
 
@@ -854,11 +874,11 @@ import java.util.HashMap;
       const member_define& member = *mb;
       if (member.m_deleted)
       {
-        os << tabs(2) << "//" << member.m_name << " deleted , skip define." << std::endl;
+        os << tabs(1) << "//" << member.m_name << " deleted , skip define." << std::endl;
         continue;
       }
       std::string type_name = make_type_desc(desc_define, member);
-      os << tabs(2) << "public " << type_name << " " << member.m_name;
+      os << tabs(1) << "public " << type_name << " " << member.m_name;
       if (member.is_initable())
       {
         os << " = " << make_type_default(desc_define, member);
@@ -874,8 +894,8 @@ import java.util.HashMap;
       os << ";" << std::endl;
     }
 
-    os << tabs(2) << "public " << tdefine.m_name << "()" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public " << tdefine.m_name << "()" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     size_t mcount = mb_list.size();
     for (const auto& mb : mb_list)
     {
@@ -886,7 +906,7 @@ import java.util.HashMap;
         continue;
       }
       std::string type_name = make_type_desc(desc_define, member);
-      os << tabs(3) << member.m_name;
+      os << tabs(2) << member.m_name;
       if (member.is_initable())
       {
         os << " = " << make_type_default(desc_define, member);
@@ -901,44 +921,44 @@ import java.util.HashMap;
       }
       os << ";" << std::endl;
     }
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public void read(adata.Stream stream)" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public void read(adata.Stream stream)" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public void skipRead(adata.Stream stream)" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public void skipRead(adata.Stream stream)" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public int sizeOf()" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public int sizeOf()" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public void write(adata.Stream stream)" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public void write(adata.Stream stream)" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_write_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public void rawRead(adata.Stream stream)" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public void rawRead(adata.Stream stream)" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_raw_read_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public int rawSizeOf()" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public int rawSizeOf()" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_raw_size_of_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(2) << "public void rawWrite(adata.Stream stream)" << std::endl;
-    os << tabs(2) << "{" << std::endl;
+    os << tabs(1) << "public void rawWrite(adata.Stream stream)" << std::endl;
+    os << tabs(1) << "{" << std::endl;
     gen_adata_operator_raw_write_type_code(desc_define, tdefine, os);
-    os << tabs(2) << "}" << std::endl;
+    os << tabs(1) << "}" << std::endl;
 
-    os << tabs(1) << "}" << std::endl << std::endl;
+    os << "}" << std::endl << std::endl;
   }
 
   void gen_type_code(const descrip_define& desc_define, std::string const& path)
