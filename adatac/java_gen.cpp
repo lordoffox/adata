@@ -109,11 +109,14 @@ namespace java_gen
     case e_base_type::int16:
     case e_base_type::uint32:
     case e_base_type::int32:
-    case e_base_type::uint64:
-    case e_base_type::int64:
     case e_base_type::float64:
     {
       return define.m_default_value;
+    }
+    case e_base_type::uint64:
+    case e_base_type::int64:
+    {
+      return define.m_default_value + "L";
     }
     case e_base_type::float32:
     {
@@ -141,9 +144,12 @@ namespace java_gen
     case e_base_type::int8:
     case e_base_type::int16:
     case e_base_type::int32:
-    case e_base_type::int64:
     {
       return "0";
+    }
+    case e_base_type::int64:
+    {
+      return "0L";
     }
     case e_base_type::float32:
     {
