@@ -59,36 +59,6 @@ local const_interger_byte_msak = 0x7;
 local const_negative_bit_value = 0x20;
 local const_negative_tag = const_tag_as_type + const_negative_bit_value;
 
-local ec_success = 0;
-local ec_negative_assign_to_unsigned_integer_number = 1;
-local ec_value_outof_ranger_to_integer_number = 2;
-local ec_sequence_length_overflow = 3;
-local ec_stream_buffer_overflow = 4;
-local ec_number_of_element_not_macth = 5;
-local ec_undefined_member_protocol_not_compatible = 6;
-local ec_value_not_match_number = 7;
-local ec_error_value_fix_int8 = 8;
-local ec_error_value_fix_uint8 = 9;
-local ec_error_value_fix_int16 = 10;
-local ec_error_value_fix_uint16 = 11;
-local ec_error_value_fix_int32 = 12;
-local ec_error_value_fix_uint32 = 13;
-local ec_error_value_fix_int64 = 14;
-local ec_error_value_fix_uint64 = 15;
-local ec_error_value_int8 = 16;
-local ec_error_value_uint8 = 17;
-local ec_error_value_int16 = 18;
-local ec_error_value_uint16 = 19;
-local ec_error_value_int32 = 20;
-local ec_error_value_uint32 = 21;
-local ec_error_value_int64 = 22;
-local ec_error_value_uint64 = 23;
-local ec_error_value_float32 = 24;
-local ec_error_value_double64 = 25;
-local ec_error_value_string = 26;
-local ec_error_value_list = 27;
-local ec_error_value_map = 28;
-
 local adata_et_unknow     = 0;
 local adata_et_fix_int8   = 1;
 local adata_et_fix_uint8  = 2;
@@ -149,7 +119,6 @@ buf_mt.__index = buf_mt;
 local new_buf = function(n)
   local b = {};
   b.uv = ffi.new("union uval_t");
-  b.e = 0;
   b.rlen = 0;
   b.wlen = 0;
   b.wcap = n;
@@ -173,41 +142,24 @@ m.resize_buf = resize_buf;
 buf_mt.resize = resize_buf;
 
 local clear_read = function(b)
-  b.e = 0;
   b.rlen = 0;
 end
 m.clear_read = clear_read;
 buf_mt.clear_read = clear_read;
 
 local clear_write = function(b)
-  b.e = 0;
   b.wlen = 0;
 end
 m.clear_write = clear_write;
 buf_mt.clear_write = clear_write;
 
 local clear_buf = function(b)
-  b.e = 0;
   b.rlen = 0;
   b.wlen = 0;
 end
 
 m.clear_buf = clear_buf;
 buf_mt.clear = clear_buf;
-
-local set_error = function(b,e)
-  b.e = e;
-end
-
-m.set_error = set_error;
-buf_mt.set_error = set_error;
-
-m.good = function(b) return b.e == ec_success; end
-
-m.get_error = function(b) return b.e; end
-
-m.trace_info = trace_info;
-buf_mt.trace_info = trace_info;
 
 local get_wt_data = function(b,dont_clear)
   local str = ffi.string(b.wbuf , b.wlen);
@@ -222,7 +174,6 @@ local set_rd_data = function(b,s)
   b.rcap = #s;
   b.rbuf = s;
   b.rlen = 0;
-  b.e = 0;
 end
 m.set_read_data = set_rd_data;
 buf_mt.set_read_data = set_rd_data;
@@ -235,7 +186,6 @@ end
 
 local loadbyte2p = function(b , n)
   if b.rlen + n > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.i64 = 0;
@@ -245,7 +195,6 @@ end
 
 local savebyte2p = function(b , n)
   if b.wlen + n > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if n > 0 then b.wbuf[b.wlen] = b.uv.b[p2_1];  b.wlen = b.wlen + 1; end
@@ -254,8 +203,6 @@ end
 
 local loadbyte4p = function(b , n)
   if b.rlen + n > b.rcap then
-    b.e = ec_stream_buffer_overflow;
-    error("stream buffer overflow");
     error("stream buffer overflow");
   end
   b.uv.i64 = 0;
@@ -267,7 +214,6 @@ end
 
 local savebyte4p = function(b , n)
   if b.wlen + n > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if n > 0 then b.wbuf[b.wlen] = b.uv.b[p4_1];  b.wlen = b.wlen + 1; end
@@ -278,7 +224,6 @@ end
 
 local loadbyte8p = function(b , n)
   if b.rlen + n > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.i64 = 0;
@@ -294,7 +239,6 @@ end
 
 local savebyte8p = function(b , n)
   if b.wlen + n > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if n > 0 then b.wbuf[b.wlen] = b.uv.b[p8_1];  b.wlen = b.wlen + 1; end
@@ -309,7 +253,6 @@ end
 
 local rd_fixi8 = function(b)
   if b.rlen + 1 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.u8 = get_byte(b);
@@ -322,7 +265,6 @@ buf_mt.rd_fixi8 = rd_fixi8;
 
 local rd_fixu8 = function(b)
   if b.rlen + 1 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   local v  = get_byte(b);
@@ -335,11 +277,9 @@ buf_mt.rd_fixu8 = rd_fixu8;
 
 local wt_fixi8 = function(b , v)
   if b.wlen + 1 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if v < -127 or v > 127 then
-    b.e = ec_error_value_fix_int8;
     error("error value fix int8");
   end
   b.uv.i8 = v;
@@ -352,11 +292,9 @@ buf_mt.wt_fixi8 = wt_fixi8;
 
 local wt_fixu8 = function(b , v)
   if b.wlen + 1 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if v < 0 or v > 256 then
-    b.e = ec_error_value_fix_uint8;
     error("error value fix uint8");
   end
   b.wbuf[b.wlen] = v;
@@ -368,7 +306,6 @@ buf_mt.wt_fixu8 = wt_fixu8;
 
 local rd_fixi16 = function(b)
   if b.rlen + 2 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -382,7 +319,6 @@ buf_mt.rd_fixi16 = rd_fixi16;
 
 local rd_fixu16 = function(b)
   if b.rlen + 2 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -396,11 +332,9 @@ buf_mt.rd_fixu16 = rd_fixu16;
 
 local wt_fixi16 = function(b , v)
   if b.wlen + 2 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if v < -32767 or v > 32767 then
-    b.e = ec_error_value_fix_int16;
     error("error value fix int16");
   end  
   b.uv.i16 = v;
@@ -413,11 +347,9 @@ buf_mt.wt_fixi16 = wt_fixi16;
 
 local wt_fixu16 = function(b , v)
   if b.wlen + 2 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if v < 0 or v > 65535 then
-    b.e = ec_error_value_fix_uint16;
     error("error value fix uint16");
   end
   b.uv.u16 = v;
@@ -430,7 +362,6 @@ buf_mt.wt_fixu16 = wt_fixu16;
 
 local rd_fixi32 = function(b)
   if b.rlen + 4 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -446,7 +377,6 @@ buf_mt.rd_fixi32 = rd_fixi32;
 
 local rd_fixu32 = function(b)
   if b.rlen + 4 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -462,11 +392,9 @@ buf_mt.rd_fixu32 = rd_fixu32;
 
 local wt_fixi32 = function(b , v)
   if b.wlen + 4 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if v < -2147483647 or v > 2147483647 then
-    b.e = ec_error_value_fix_int32;
     error("error value fix int32;");
   end
   b.uv.i32 = v;
@@ -481,11 +409,9 @@ buf_mt.wt_fixi32 = wt_fixi32;
 
 local wt_fixu32 = function(b , v)
   if b.wlen + 4 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   if v < 0 or v > 4294967295 then
-    b.e = ec_error_value_fix_uint32;
     error("error_value_fix_uint32");
   end
   b.uv.u32 = v;
@@ -500,7 +426,6 @@ buf_mt.wt_fixu32 = wt_fixu32;
 
 local rd_fixi64 = function(b)
   if b.rlen + 8 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -520,7 +445,6 @@ buf_mt.rd_fixi64 = rd_fixi64;
 
 local rd_fixu64 = function(b)
   if b.rlen + 8 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -540,7 +464,6 @@ buf_mt.rd_fixu64 = rd_fixu64;
 
 local wt_fixi64 = function(b , v)
   if b.wlen + 8 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.i64 = v;
@@ -559,7 +482,6 @@ buf_mt.wt_fixi64 = wt_fixi64;
 
 local wt_fixu64 = function(b , v)
   if b.wlen + 8 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.u64 = v;
@@ -619,7 +541,6 @@ buf_mt.szof_fixu64 = m.szof_fixu64
 
 local rd_f32 = function(b)
   if b.rlen + 4 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -635,7 +556,6 @@ buf_mt.rd_f32 = rd_f32;
 
 local rd_f64 = function(b)
   if b.rlen + 8 > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.i64 = 0;
@@ -655,7 +575,6 @@ buf_mt.rd_f64 = rd_f64;
 
 local wt_f32 = function(b,v)
   if b.wlen + 4 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.f = v;
@@ -671,7 +590,6 @@ buf_mt.wt_f32 = wt_f32;
 
 local wt_f64 = function(b,v)
   if b.wlen + 8 > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.uv.d = v;
@@ -693,7 +611,6 @@ local rd_i8 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 1 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if tag_as_value == false then
@@ -712,11 +629,9 @@ local rd_u8 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 1 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
     error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
@@ -732,7 +647,6 @@ local rd_i16 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 2 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if tag_as_value == false then
@@ -752,11 +666,9 @@ local rd_u16 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 2 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
     error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
@@ -773,7 +685,6 @@ local rd_i32 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 4 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if tag_as_value == false then
@@ -793,11 +704,9 @@ local rd_u32 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 4 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
     error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
@@ -814,7 +723,6 @@ local rd_i64 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 8 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if tag_as_value == false then
@@ -834,11 +742,9 @@ local rd_u64 = function(b)
   local tag = rd_fixu8(b);
   local tag_as_value , nbit , bytes = decode_tag(tag);
   if bytes > 8 then
-    b.e = ec_value_outof_ranger_to_integer_number;
     error("value outof ranger to integer number");
   end
   if nbit == true then
-    b.e = ec_negative_assign_to_unsigned_integer_number;
     error("negative assign to unsigned integer number");
   end
   if tag_as_value == false then
@@ -857,12 +763,10 @@ local rd_str = function(b , n)
   local len = rd_i32(b);
   if n ~= nill and n > 0 then
     if len > n then 
-      b.e = ec_sequence_length_overflow;
       error("sequence length overflow");
     end
   end
   if b.rlen + len > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   local str = ssbu(b.rbuf , b.rlen + 1 , b.rlen + len);
@@ -875,7 +779,6 @@ buf_mt.rd_str = rd_str;
 
 local skip_rd = function(b , n)
   if b.rlen + n > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.rlen = b.rlen + n;
@@ -958,12 +861,10 @@ local skip_rd_str = function(b , n)
   local len = rd_i32(b);
   if n > 0 then
     if len > n then
-      b.e = ec_sequence_length_overflow;
       error("sequence length overflow");
     end
   end
   if b.rlen + len > b.rcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   b.rlen = b.rlen + len;
@@ -978,7 +879,6 @@ local wt_i8 = function(b , n)
     wt_fixu8(b,v)    
   else
     if v > 127 then
-      b.e = ec_error_value_int8;
       error("error value int8");
     end
     wt_fixu8(b,tag);
@@ -995,7 +895,6 @@ local wt_u8 = function(b , n)
     wt_fixu8(b,v)    
   else
     if v > 255 then
-      b.e = ec_error_value_uint8;
       error("error value uint8");
     end
     wt_fixu8(b,tag);
@@ -1016,7 +915,6 @@ local wt_i16 = function(b , n)
     elseif v < 0x8000 then
       bytes = 1;
     else
-      b.e = ec_error_value_int16;
       error("error value int16");
     end
     wt_fixu8(b,tag+bytes);
@@ -1038,7 +936,6 @@ local wt_u16 = function(b , n)
     elseif v < 0x10000 then
       bytes = 1;
     else
-      b.e = ec_error_value_uint16;
       error("error value uint16");
     end
     wt_fixu8(b,tag+bytes);
@@ -1064,7 +961,6 @@ local wt_i32 = function(b , n)
     elseif v < 0x80000000 then
       bytes = 3;
     else
-      b.e = ec_error_value_int32;
       error("error value int32");
     end
     wt_fixu8(b,tag+bytes);
@@ -1090,7 +986,6 @@ local wt_u32 = function(b , n)
     elseif v < 0x100000000 then
       bytes = 3;
     else
-      b.e = ec_error_value_uint32;
       error("error value uint32");
     end
     wt_fixu8(b,tag+bytes);
@@ -1124,7 +1019,6 @@ local wt_i64 = function(b , n)
     elseif v < 0x8000000000000000LL then
       bytes = 7;
     else
-      b.e = ec_error_value_int64;
       error("error value int64");
     end
     wt_fixu8(b,tag+bytes);
@@ -1249,13 +1143,11 @@ local wt_str = function(b , s , n)
   local len = #s;
   if n ~= nil and n > 0 then
     if len > n then
-      b.e = ec_sequence_length_overflow;
       error("sequence ength overflow");
     end
   end
   wt_i32(b,len);
   if b.wlen + len > b.wcap then
-    b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
   ffi.copy(b.wbuf + b.wlen , s);
