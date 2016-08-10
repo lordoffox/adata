@@ -175,14 +175,12 @@ buf_mt.resize = resize_buf;
 local clear_read = function(b)
   b.e = 0;
   b.rlen = 0;
-  b.wlen = 0;
 end
 m.clear_read = clear_read;
 buf_mt.clear_read = clear_read;
 
 local clear_write = function(b)
   b.e = 0;
-  b.rlen = 0;
   b.wlen = 0;
 end
 m.clear_write = clear_write;
@@ -222,12 +220,18 @@ buf_mt.get_write_data = get_wt_data;
 
 local set_rd_data = function(b,s)
   b.rcap = #s;
-  b.rbuf = ffi.cast("uint8_t *", s);
+  b.rbuf = s;
   b.rlen = 0;
   b.e = 0;
 end
 m.set_read_data = set_rd_data;
 buf_mt.set_read_data = set_rd_data;
+
+local sbyte = string.byte;
+
+local get_byte = function(b)
+  return sbyte(b.rbuf,b.rlen+1)
+end
 
 local loadbyte2p = function(b , n)
   if b.rlen + n > b.rcap then
@@ -235,8 +239,8 @@ local loadbyte2p = function(b , n)
     error("stream buffer overflow");
   end
   b.uv.i64 = 0;
-  if n > 0 then b.uv.b[p2_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 1 then b.uv.b[p2_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
+  if n > 0 then b.uv.b[p2_1] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 1 then b.uv.b[p2_2] = get_byte(b);  b.rlen = b.rlen + 1; end
 end
 
 local savebyte2p = function(b , n)
@@ -252,12 +256,13 @@ local loadbyte4p = function(b , n)
   if b.rlen + n > b.rcap then
     b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
+    error("stream buffer overflow");
   end
   b.uv.i64 = 0;
-  if n > 0 then b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 1 then b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 2 then b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 3 then b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
+  if n > 0 then b.uv.b[p4_1] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 1 then b.uv.b[p4_2] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 2 then b.uv.b[p4_3] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 3 then b.uv.b[p4_4] = get_byte(b);  b.rlen = b.rlen + 1; end
 end
 
 local savebyte4p = function(b , n)
@@ -277,14 +282,14 @@ local loadbyte8p = function(b , n)
     error("stream buffer overflow");
   end
   b.uv.i64 = 0;
-  if n > 0 then b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 1 then b.uv.b[p8_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 2 then b.uv.b[p8_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 3 then b.uv.b[p8_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 4 then b.uv.b[p8_5] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 5 then b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 6 then b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
-  if n > 7 then b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1; end
+  if n > 0 then b.uv.b[p8_1] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 1 then b.uv.b[p8_2] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 2 then b.uv.b[p8_3] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 3 then b.uv.b[p8_4] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 4 then b.uv.b[p8_5] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 5 then b.uv.b[p8_6] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 6 then b.uv.b[p8_7] = get_byte(b);  b.rlen = b.rlen + 1; end
+  if n > 7 then b.uv.b[p8_8] = get_byte(b);  b.rlen = b.rlen + 1; end
 end
 
 local savebyte8p = function(b , n)
@@ -307,7 +312,7 @@ local rd_fixi8 = function(b)
     b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
-  b.uv.u8 = b.rbuf[b.rlen];
+  b.uv.u8 = get_byte(b);
   b.rlen = b.rlen + 1;
   return b.uv.i8;
 end
@@ -320,7 +325,7 @@ local rd_fixu8 = function(b)
     b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
-  local v  = b.rbuf[b.rlen];
+  local v  = get_byte(b);
   b.rlen = b.rlen + 1;
   return v;
 end
@@ -367,8 +372,8 @@ local rd_fixi16 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p2_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p2_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p2_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p2_2] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.i16;
 end
 
@@ -381,8 +386,8 @@ local rd_fixu16 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p2_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p2_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p2_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p2_2] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.u16;
 end
  
@@ -429,10 +434,10 @@ local rd_fixi32 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p4_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p4_2] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p4_3] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p4_4] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.i32;
 end
 
@@ -445,10 +450,10 @@ local rd_fixu32 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p4_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p4_2] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p4_3] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p4_4] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.u32;
 end
 
@@ -499,14 +504,14 @@ local rd_fixi64 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_5] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_2] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_3] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_4] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_5] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_6] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_7] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_8] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.i64;
 end
 
@@ -519,14 +524,14 @@ local rd_fixu64 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_5] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_2] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_3] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_4] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_5] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_6] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_7] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_8] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.u64;
 end
 
@@ -618,10 +623,10 @@ local rd_f32 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p4_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p4_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p4_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p4_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p4_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p4_2] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p4_3] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p4_4] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.f;
 end
 
@@ -634,14 +639,14 @@ local rd_f64 = function(b)
     error("stream buffer overflow");
   end
   b.i64 = 0;
-  b.uv.b[p8_1] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_2] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_3] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_4] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_5] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_6] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
-  b.uv.b[p8_7] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;
-  b.uv.b[p8_8] = b.rbuf[b.rlen];  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_1] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_2] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_3] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_4] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_5] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_6] = get_byte(b);  b.rlen = b.rlen + 1;    
+  b.uv.b[p8_7] = get_byte(b);  b.rlen = b.rlen + 1;
+  b.uv.b[p8_8] = get_byte(b);  b.rlen = b.rlen + 1;    
   return b.uv.d;
 end
 
@@ -846,6 +851,8 @@ end
 m.rd_u64 = rd_u64;
 buf_mt.rd_u64 = rd_u64;
 
+local ssbu = string.sub;
+
 local rd_str = function(b , n)
   local len = rd_i32(b);
   if n ~= nill and n > 0 then
@@ -858,7 +865,7 @@ local rd_str = function(b , n)
     b.e = ec_stream_buffer_overflow;
     error("stream buffer overflow");
   end
-  local str = ffi.string(b.rbuf + b.rlen , len);
+  local str = ssbu(b.rbuf , b.rlen + 1 , b.rlen + len);
   b.rlen = b.rlen + len;
   return  str;
 end
