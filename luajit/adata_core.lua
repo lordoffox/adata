@@ -348,7 +348,7 @@ buf_mt.wt_fixi8 = wt_fixi8;
 local wt_fixu8 = function(b , v)
   if b.wlen + 1 > b.wcap then
     b.e = ec_stream_buffer_overflow;
-    error("stream buffer overflow");;
+    error("stream buffer overflow");
   end
   if v < 0 or v > 256 then
     b.e = ec_error_value_fix_uint8;
@@ -1496,7 +1496,7 @@ local read_member = function( buf , mb , o)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     local param = mb[def_pos_params][1];
     for i = 1 , count do
@@ -1510,7 +1510,7 @@ local read_member = function( buf , mb , o)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
@@ -1735,7 +1735,7 @@ local write_member = function( buf , mb , o , ctx)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     wt_i32(buf,count);
     local param = mb[def_pos_params][1];
@@ -1748,7 +1748,7 @@ local write_member = function( buf , mb , o , ctx)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
@@ -1838,7 +1838,7 @@ local raw_read_member = function( buf , mb , o)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     local param = mb[def_pos_params][1];
     for i = 1 , count do
@@ -1852,7 +1852,7 @@ local raw_read_member = function( buf , mb , o)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];
@@ -2005,7 +2005,7 @@ local raw_write_member = function( buf , mb , o)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     wt_i32(buf,count);
     local param = mb[def_pos_params][1];
@@ -2018,7 +2018,7 @@ local raw_write_member = function( buf , mb , o)
     local size = mb[def_pos_size];
     if size > 0 and count > size then
       buf.set_error(ec_sequence_length_overflow);
-      error("sequence length overflow");;
+      error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
     local vparam = mb[def_pos_params][2];

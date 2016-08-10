@@ -328,7 +328,7 @@ namespace adata {
     {
       adata::zero_copy_buffer * zbuf = _get_zbuf_arg(L, 1);
       lua_Integer len = lua_tointeger(L, 2);
-      int32_t slen = adata::check_read_size(*zbuf, len);
+      int32_t slen = adata::check_read_size(*zbuf, (int)len);
       const char * str = core_adata_buffer_skip_read(L, zbuf, slen);
       lua_pushlstring(L, str, slen);
       return 1;
@@ -1579,7 +1579,7 @@ namespace adata {
         if (it.value.u64 > (1ULL >> 53))
         {
           v = 0;
-          throw adata::exception(value_too_large_to_integer_number,"value_too_large_to_integer_number");
+          throw adata::exception(value_too_large_to_integer_number);
         }
         v = (int64_t)it.value.u64;
         return 0;
@@ -1601,7 +1601,7 @@ namespace adata {
         if (it.value.d64 < 0)
         {
           v = 0;
-          throw adata::exception(negative_assign_to_unsigned_integer_number,"negative assign to unsigned integer number");
+          throw adata::exception(negative_assign_to_unsigned_integer_number);
         }
         v = (uint64_t)it.value.d64;
         return 0;
@@ -1611,7 +1611,7 @@ namespace adata {
         if (it.value.i64 < 0)
         {
           v = 0;
-          throw adata::exception(negative_assign_to_unsigned_integer_number,"negative assign to unsigned integer number");
+          throw adata::exception(negative_assign_to_unsigned_integer_number);
         }
         v = (uint64_t)it.value.i64;
         return 0;
