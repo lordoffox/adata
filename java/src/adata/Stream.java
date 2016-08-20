@@ -1,44 +1,45 @@
 package adata;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 public class Stream {
-  ByteBuffer readBuffer;
-  ByteBuffer writeBuffer;
-  byte[] dataBytes = new byte[9];
+  byte[] readBuffer;
+  byte[] writeBuffer;
+  int readLen = 0;
+  int writeLen = 0;
   
   final static int const_tag_as_value = 0x7f;
   final static int const_tag_as_type = 0x80;
   final static int const_interger_byte_msak = 0x1f;
   final static int const_negative_bit_value = 0x20;
   final static int const_store_postive_integer_byte_mask = 0x80 - 2;
-
-  public ByteBuffer getReadBuffer(){
+  
+  public byte[] getReadBuffer(){
 	return readBuffer;
   }
   
-  public void setReadBuffer(ByteBuffer buf){
+  public void setReadBuffer(byte[] buf){
 	readBuffer = buf;
   }
   
-  public ByteBuffer getWriteBuffer(){
+  public byte[] getWriteBuffer(){
 	return writeBuffer;
   }
   
-  public void setWriteBuffer(ByteBuffer buf){
+  public void setWriteBuffer(byte[] buf){
 	writeBuffer = buf;
   }
   
   public void writeData(byte[] data , int len){
-	writeBuffer.put(data,0,len);
+	System.arraycopy(writeBuffer, writeLen, data, 0, len);
+	writeLen += len;
   }
   
   public void clearRead(){
-	readBuffer.position(0);
+	readLen= 0;
   }
   
   public void clearWrite(){
-	writeBuffer.position(0);
+	writeLen = 0;
   }
   
   public void clear(){
@@ -47,11 +48,11 @@ public class Stream {
   }
   
   public int readLength(){
-	return readBuffer.position();
+	return readBuffer.length;
   }
   
   public int writeLength(){
-	return writeBuffer.position();
+	return writeBuffer.length;
   }
   
   public static int fixSizeOfInt8(){
@@ -71,35 +72,82 @@ public class Stream {
   }
 
   public byte fixReadInt8(){
-	return readBuffer.get();
+	return readBuffer[readLen++];
   }
   
   public short fixReadInt16(){
-	return readBuffer.getShort();
+	int v = readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	return (short)v;
   }
   
   public int fixReadInt32(){
-	return readBuffer.getInt();
+	int v = readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	return v;
   }
   
   public long fixReadInt64(){
-	return readBuffer.getLong();
+	long v = readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	v <<= 8;
+	v += readBuffer[readLen++] & 0xff;
+	return v;
   }
 
   public void fixWriteInt8(byte val){
-	writeBuffer.put(val);
+	writeBuffer[writeLen++] = val;
   }
   
   public void fixWriteInt16(short val){
-	writeBuffer.putShort(val);
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
   }
   
   public void fixWriteInt32(int val){
-	writeBuffer.putInt(val);
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
   }
   
   public void fixWriteInt64(long val){
-	  writeBuffer.putLong(val);
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
+	val >>= 8;
+	writeBuffer[writeLen++] = (byte)(val&0xff);
   }
    
   public static int sizeOfInt8(byte value){
@@ -145,15 +193,21 @@ public class Stream {
   }
   
   static int uint8(byte v){
-    if(v <0 )return 256 + v;
-    return v;	  
+    return v & 0xff;	  
   }
   
-  int loadUint8()
-  {
-	return uint8(readBuffer.get());
+  int loadUint8(){
+	return readBuffer[readLen++] & 0xff;
   }
 
+  long loadUint8Long(){
+	return readBuffer[readLen++] & 0xff;
+  }
+
+  void saveUint8(int val){
+	writeBuffer[writeLen++] = (byte)(val & 0xff);
+  }
+  
   long readScacleInt(int max_bytes){
 	int tag = loadUint8();
 	if(tag < const_tag_as_type){
@@ -163,74 +217,9 @@ public class Stream {
 	if(read_bytes > max_bytes)
 	  throw new RuntimeException("integer value out of range.");
 	long value = 0;
-	switch(read_bytes){
-	case 1:{	  
-	  value = loadUint8();
-	  break;
-	}
-	case 2:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}
-	case 3:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[2]);
-	  value <<= 8; value += uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}
-	case 4:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[3]);
-	  value <<= 8; value += uint8(dataBytes[2]);
-	  value <<= 8; value += uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}
-	case 5:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[4]);
-	  value <<= 8; value += uint8(dataBytes[3]);
-	  value <<= 8; value += uint8(dataBytes[2]);
-	  value <<= 8; value += uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}
-	case 6:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[5]);
-	  value <<= 8; value += uint8(dataBytes[4]);
-	  value <<= 8; value += uint8(dataBytes[3]);
-	  value <<= 8; value += uint8(dataBytes[2]);
-	  value <<= 8; value += uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}
-	case 7:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[6]);
-	  value <<= 8; value += uint8(dataBytes[5]);
-	  value <<= 8; value += uint8(dataBytes[4]);
-	  value <<= 8; value += uint8(dataBytes[3]);
-	  value <<= 8; value += uint8(dataBytes[2]);
-	  value <<= 8; value += uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}
-	case 8:{
-	  readBuffer.get(dataBytes, 0, read_bytes);
-	  value = uint8(dataBytes[7]);
-	  value <<= 8; value += uint8(dataBytes[6]);
-	  value <<= 8; value += uint8(dataBytes[5]);
-	  value <<= 8; value += uint8(dataBytes[4]);
-	  value <<= 8; value += uint8(dataBytes[3]);
-	  value <<= 8; value += uint8(dataBytes[2]);
-	  value <<= 8; value += uint8(dataBytes[1]);
-	  value <<= 8; value += uint8(dataBytes[0]);
-	  break;
-	}	  
+	int bit = 0;
+	for(int i = 0 ; i < read_bytes; ++i , bit += 8){
+	  value += loadUint8Long() << bit;
 	}
 	if((tag & const_negative_bit_value)>0){
 		value = - value;
@@ -260,80 +249,101 @@ public class Stream {
 
   void writeScacleInt(long value){
     if (0 <= value && value < const_tag_as_type){
-      writeBuffer.put((byte)value);
+      saveUint8((int)value);
       return;
     }
-    dataBytes[0] = (byte)(const_tag_as_type);
+    int tag = (const_tag_as_type);
 	if (value < 0){
 	  value = (long)(-value);
-	  dataBytes[0] += const_negative_bit_value;
+	  tag += const_negative_bit_value;
 	}
 	if (value < 0x100){
-	  dataBytes[1] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,2);
+	  saveUint8(tag);
+	  saveUint8((int)value);
 	}
 	else if (value < 0x10000){
-	  dataBytes[0]+=1;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,3);
+	  saveUint8(tag+1);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}
 	else if (value < 0x1000000){
-	  dataBytes[0]+=2;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  value >>= 8; dataBytes[3] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,4);
+	  saveUint8(tag+2);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}
 	else if (value < 0x100000000L){
-	  dataBytes[0]+=3;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  value >>= 8; dataBytes[3] = (byte)(value);
-	  value >>= 8; dataBytes[4] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,5);
+	  saveUint8(tag+3);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}
 	else if (value < 0x10000000000L){
-	  dataBytes[0]+=4;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  value >>= 8; dataBytes[3] = (byte)(value);
-	  value >>= 8; dataBytes[4] = (byte)(value);
-	  value >>= 8; dataBytes[5] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,6);
+	  saveUint8(tag+4);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}
 	else if (value < 0x1000000000000L){
-	  dataBytes[0]+=4;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  value >>= 8; dataBytes[3] = (byte)(value);
-	  value >>= 8; dataBytes[4] = (byte)(value);
-	  value >>= 8; dataBytes[5] = (byte)(value);
-	  value >>= 8; dataBytes[6] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,7);
+	  saveUint8(tag+5);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}
 	else if (value < 0x100000000000000L){
-	  dataBytes[0]+=4;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  value >>= 8; dataBytes[3] = (byte)(value);
-	  value >>= 8; dataBytes[4] = (byte)(value);
-	  value >>= 8; dataBytes[5] = (byte)(value);
-	  value >>= 8; dataBytes[6] = (byte)(value);
-	  value >>= 8; dataBytes[7] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,8);
+	  saveUint8(tag+6);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}
 	else {
-	  dataBytes[0]+=4;
-	  dataBytes[1] = (byte)(value);
-	  value >>= 8; dataBytes[2] = (byte)(value);
-	  value >>= 8; dataBytes[3] = (byte)(value);
-	  value >>= 8; dataBytes[4] = (byte)(value);
-	  value >>= 8; dataBytes[5] = (byte)(value);
-	  value >>= 8; dataBytes[6] = (byte)(value);
-	  value >>= 8; dataBytes[7] = (byte)(value);
-	  value >>= 8; dataBytes[8] = (byte)(value);
-	  writeBuffer.put(dataBytes,0,9);
+	  saveUint8(tag+7);
+	  saveUint8((int)value);
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
+	  value >>= 8;
+	  saveUint8((int)(value));
 	}	
   }
   
@@ -354,19 +364,53 @@ public class Stream {
   }
   
   public float readFloat(){
-	return readBuffer.getFloat();
+    int l = loadUint8();
+    l += loadUint8() << 8;
+    l += loadUint8() << 16;
+    l += loadUint8() << 24;
+    return Float.intBitsToFloat(l);
   }
   
   public double readDouble(){
-	return readBuffer.getDouble();
+    long l = loadUint8Long();
+    l += loadUint8Long() << 8;
+    l += loadUint8Long() << 16;
+    l += loadUint8Long() << 24;
+    l += loadUint8Long() << 32;
+    l += loadUint8Long() << 40;
+    l += loadUint8Long() << 48;
+    l += loadUint8Long() << 56;
+    return Double.longBitsToDouble(l);
   }
   
   public void writeFloat(float value){
-	writeBuffer.putFloat(value);
+	int fbit = Float.floatToIntBits(value);  
+    saveUint8(fbit);
+    fbit >>= 8;
+    saveUint8(fbit);
+    fbit >>= 8;
+    saveUint8(fbit);
+    fbit >>= 8;
+    saveUint8(fbit);
   }
 
   public void writeDouble(double value){
-	writeBuffer.putDouble(value);
+	long fbit = Double.doubleToLongBits(value);  
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
+    fbit >>= 8;
+    saveUint8((int)fbit);
   }
   
   static Charset cs_utf8 = java.nio.charset.StandardCharsets.UTF_8;
@@ -386,9 +430,9 @@ public class Stream {
   }
 
   public String readString(int len){
-	byte[] string_buf = new byte[len];
-	readBuffer.get(string_buf,0,len);
-	return new String( string_buf, cs_utf8 );
+	String str = new String( readBuffer , readLen , len , cs_utf8 );
+	readLen += len;
+	return str;
   }
   
   public String readString(){
@@ -403,7 +447,7 @@ public class Stream {
 	  throw new RuntimeException("length too large.");
 	}
 	writeInt32(slen);
-	writeBuffer.put(sbuf);
+	writeData(sbuf,slen);
   }
   
   public void writeString(String str){
@@ -412,12 +456,12 @@ public class Stream {
   
   public void skipRead(int len)
   {
-	readBuffer.position(readBuffer.position() + len);
+	readLen += len;
   }
   
   void skipReadScacleInt()
   {
-	byte tag = readBuffer.get();
+	int tag = loadUint8();
 	if(tag < const_tag_as_type) return;
 	int read_bytes = (tag & const_interger_byte_msak) + 1;
 	skipRead(read_bytes);
@@ -470,11 +514,11 @@ public class Stream {
   
   public void skipReadCompatible()
   {
-    int offset = readBuffer.position();
+    int offset = readLen;
     @SuppressWarnings("unused")
 	long tag = readInt64();
     Integer len_tag = readInt32();
-    Integer read_len = (Integer)(readBuffer.position() - offset);    
+    Integer read_len = (Integer)(readLen - offset);    
     if (len_tag > read_len) skipRead(len_tag - read_len);
   }
 }
