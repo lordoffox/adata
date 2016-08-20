@@ -48,7 +48,7 @@ public class Stream {
   }
   
   public int readLength(){
-	return read;
+	return readLen;
   }
   
   public int writeLength(){
