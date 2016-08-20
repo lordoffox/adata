@@ -48,10 +48,18 @@ public class Stream {
   }
   
   public int readLength(){
-	return readBuffer.length;
+	return read;
   }
   
   public int writeLength(){
+	return writeLen;
+  }
+  
+  public int readBufferSize(){
+	return readBuffer.length;
+  }
+  
+  public int writeBufferSizeLen(){
 	return writeBuffer.length;
   }
   
