@@ -927,7 +927,30 @@ namespace java_gen
       }
       os << ";" << std::endl;
     }
+
     os << tabs(1) << "}" << std::endl;
+
+    for (const auto& mb : mb_list)
+    {
+      --mcount;
+      const member_define& member = *mb;
+      if (member.m_deleted)
+      {
+        continue;
+      }
+      std::string type_name = make_type_desc(desc_define, member);
+      std::string mname = member.m_name;
+      if (mname.length() > 0)
+      {
+        mname[0] = upper_case_char(mname[0]);
+      }
+      os << tabs(1) << "public " << type_name << " get" << mname << "(){" << std::endl;
+      os << tabs(2) << "return this." << member.m_name << ";" << std::endl;
+      os << tabs(1) << "}" << std::endl;
+      os << tabs(1) << "public void set" << mname << "(" << type_name << " value){" << std::endl;
+      os << tabs(2) << "this." << member.m_name << " = value;" << std::endl;
+      os << tabs(1) << "}" << std::endl;
+    }
 
     os << tabs(1) << "public void read(adata.Stream stream)" << std::endl;
     os << tabs(1) << "{" << std::endl;
