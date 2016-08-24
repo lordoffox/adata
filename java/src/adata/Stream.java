@@ -30,7 +30,7 @@ public class Stream {
   }
   
   public void writeData(byte[] data , int len){
-	System.arraycopy(writeBuffer, writeLen, data, 0, len);
+	System.arraycopy(data, 0,writeBuffer, writeLen,  len);
 	writeLen += len;
   }
   
