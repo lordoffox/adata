@@ -466,7 +466,12 @@ public class Stream {
   {
 	readLen += len;
   }
-  
+
+  public void skipWrite(int len)
+  {
+	writeLen += len;
+  }
+
   void skipReadScacleInt()
   {
 	int tag = loadUint8();
