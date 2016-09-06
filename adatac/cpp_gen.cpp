@@ -678,7 +678,7 @@ namespace cpp_gen
       {
         os << tabs(tab_indent) << "for (" << make_type_desc(desc_define, mdefine) << "::const_iterator i = " << var_name << ".begin() ; i != " << var_name << ".end() ; ++i)" << std::endl;
         os << tabs(tab_indent) << "{" << std::endl;
-        gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "i*");
+        gen_member_raw_size_of_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 1, "*i");
         os << tabs(tab_indent) << "}";
         os << std::endl;
       }
