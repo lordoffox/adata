@@ -9,69 +9,6 @@ var FileReader = require('filereader');
   var const_interger_byte_msak = 0x1f;
   var const_negative_bit_value = 0x20;
   var const_store_postive_integer_byte_mask = 0x80 - 2;
-  
-  var ev = 0;
-  var success = ev++;
-  var negative_assign_to_unsigned_integer_number = ev++;
-  var value_too_large_to_integer_number = ev++;
-  var sequence_length_overflow = ev++;
-  var stream_buffer_overflow = ev++;
-  var number_of_element_not_macth = ev++;
-  var undefined_member_protocol_not_compatible = ev++;
-  var value_not_match_number = ev++;
-  var error_value_fix_int8 = ev++;
-  var error_value_fix_uint = ev++;
-  var error_value_fix_int16 = ev++;
-  var error_value_fix_uint16 = ev++;
-  var error_value_fix_int32 = ev++;
-  var error_value_fix_uint32 = ev++;
-  var error_value_fix_int64 = ev++;
-  var error_value_fix_uint64 = ev++;
-  var error_value_int8 = ev++;
-  var error_value_uint8 = ev++;
-  var error_value_int16 = ev++;
-  var error_value_uint16 = ev++;
-  var error_value_int32 = ev++;
-  var error_value_uint32 = ev++;
-  var error_value_int64 = ev++;
-  var error_value_uint64 = ev++;
-  var error_value_float32 = ev++;
-  var error_value_double64 = ev++;
-  var error_value_string = ev++;
-  var error_value_list = ev++;
-  var error_value_map = ev++;
-  
-  var err_msg = [
-    '',
-    "assign negative value to unsigned.",
-    "integer value out of range.",
-    "size out of range.",
-    "buffer overflow.",
-    "size too large.",
-    "undefined member, protocol not compatible.",
-    "value not match number.",
-    "value is not fixed int8",
-    "value is not fixed uint8",
-    "value is not fixed int16",
-    "value is not fixed uint16",
-    "value is not fixed int32",
-    "value is not fixed uint32",
-    "value is not fixed int64",
-    "value is not fixed uint64",
-    "value is not int8",
-    "value is not uint8",
-    "value is not int16",
-    "value is not uint16",
-    "value is not int32",
-    "value is not uint32",
-    "value is not int64",
-    "value is not uint64",
-    "value is not float32",
-    "value is not double64",
-    "value is not string",
-    "value is not list",
-    "value is not map",
-    ];
 
   var adata = function (size) {
     'use asm';
@@ -86,10 +23,6 @@ var FileReader = require('filereader');
     this.w = 0;
     this.wb = 0;
     this.l = size;
-    this.e = success;
-    this.t = [];
-    this.tn = 0;
-    for (var i = 0; i < 64; ++i) { this.t.push([]); }
   };
   
   adata.prototype.set = function (buf, len) {
@@ -100,8 +33,6 @@ var FileReader = require('filereader');
     this.w = 0;
     this.wb = 0;
     this.d = new DataView(this.b.buffer);
-    this.e = success;
-    this.tn = 0;
   };
   
   adata.prototype.clear = function () {
@@ -109,62 +40,30 @@ var FileReader = require('filereader');
     this.r = 0;
     this.w = 0;
     this.wb = 0;
-    this.e = success;
-    this.tn = 0;
   };
   
-  adata.prototype.trace = function (s, i) {
-    this.t[this.tn++] = [s,i];
-  };
-  
-  adata.prototype.trace_info = function () {
-    'use asm';
-    if (this.e === sucess) {
-      return '';
-    }
-    var r = [];
-    var x = 0;
-    for (var i = 0; i < this.tn; ++i) {
-      r.push(this.t[i][0]);
-      x = this.t[i][1];
-      if (x !== -1) {
-        r.push("[");
-        r.push(x);
-        r.push("]");
-      }
-      r.push(".");
-    }
-    r.push(' :');
-    r.push(err_msg[this.e]);
-    return r.join("");
-  };
-
   adata.prototype.skip_read = function (n) {
-    if (this.r + n >= this.l) { this.e = stream_buffer_overflow; }
+    if (this.r + n >= this.l) { throw "stream_buffer_overflow"; }
     this.r += n;
   }
 
   adata.prototype.sk_rd_u8 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 1) {
-        this.e = error_value_uint8;
-        return;
+        throw "error_value_uint8";
       }
       if (this.r + 1 > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       this.r++;
     }
@@ -173,20 +72,17 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_i8 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 1) {
-        this.e = error_value_int8;
-        return;
+        throw "error_value_int8";
       }
       if (this.r + 1 > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r++;
     }
@@ -195,24 +91,20 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_u16 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2) {
-        this.e = error_value_uint16;
-        return;
+        throw "error_value_uint16";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r += read_bytes;
     }
@@ -221,20 +113,17 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_i16 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2) {
-        this.e = error_value_int16;
-        return;
+        throw "error_value_int16";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r += read_bytes;
     }
@@ -243,24 +132,20 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_u32 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 4) {
-        this.e = error_value_uint32;
-        return;
+        throw "error_value_uint32";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r += read_bytes;
     }
@@ -269,20 +154,17 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_i32 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 4) {
-        this.e = error_value_int32;
-        return;
+        throw "error_value_int32";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r += read_bytes;
     }
@@ -291,24 +173,20 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_u64 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 8) {
-        this.e = error_value_uint64;
-        return;
+        throw "error_value_uint64";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r += read_bytes;
     }
@@ -317,20 +195,17 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd_i64 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return; }
     else {
       var read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 8) {
-        this.e = error_value_int64;
-        return;
+        throw "error_value_int64";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.r += read_bytes;
     }
@@ -339,8 +214,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fu8 = function () {
     'use asm';
     if (this.r + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     return this.b[this.r++];
   };
@@ -348,8 +222,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fi8 = function () {
     'use asm';
     if (this.r + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var v = this.b[this.r++];
     return (v > 127) ? v - 256 : v;
@@ -358,8 +231,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fu16 = function () {
     'use asm';
     if (this.r + 2 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var v = this.b[this.r++];
     v += (this.b[this.r++] << 8);
@@ -369,8 +241,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fi16 = function () {
     'use asm';
     if (this.r + 2 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var v = this.b[this.r++];
     v += (this.b[this.r++] << 8);
@@ -380,8 +251,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fu32 = function () {
     'use asm';
     if (this.r + 4 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var v = this.b[this.r++];
     v += (this.b[this.r++] << 8);
@@ -393,8 +263,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fi32 = function (s) {
     'use asm';
     if (this.r + 4 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var v = this.b[this.r++];
     v += (this.b[this.r++] << 8);
@@ -406,8 +275,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_fu64 = function () {
     'use asm';
     if (this.r + 8 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var p = this.r;
     this.r += 8;
@@ -417,19 +285,17 @@ var FileReader = require('filereader');
   adata.prototype.rd_fi64 = function () {
     'use asm';
     if (this.r + 8 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var p = this.r;
     this.r += 8;
     return new Long(this.d.getInt32(p, true), this.d.getInt32(p + 4, true), false);
-    return 0;
   };
   
   adata.prototype.rd_f32 = function () {
     'use asm';
     if (this.r + 4 >= this.l) {
-      this.e = stream_buffer_overflow;
+      throw "stream_buffer_overflow";
       return 0.0;
     }
     var p = this.r;
@@ -440,7 +306,7 @@ var FileReader = require('filereader');
   adata.prototype.rd_d64 = function () {
     'use asm';
     if (this.r + 8 >= this.l) {
-      this.e = stream_buffer_overflow;
+      throw "stream_buffer_overflow";
       return 0.0;
     }
     var p = this.r;
@@ -451,24 +317,20 @@ var FileReader = require('filereader');
   adata.prototype.rd_u8 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return 0;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 1) {
-        this.e = error_value_uint8;
-        return 0;
+        throw "error_value_uint8";
       }
       if (this.r + 1 > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       return this.b[this.r++];
     }
@@ -477,20 +339,17 @@ var FileReader = require('filereader');
   adata.prototype.rd_i8 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 1) {
-        this.e = error_value_int8;
-        return 0;
+        throw "error_value_int8";
       }
       if (this.r + 1 > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       if (tag & const_negative_bit_value > 0) { return -this.b[this.r++]; }
       return this.b[this.r++];
@@ -500,24 +359,20 @@ var FileReader = require('filereader');
   adata.prototype.rd_u16 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return 0;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 2) {
-        this.e = error_value_uint16;
-        return 0;
+        throw "error_value_uint16";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       var v = this.b[this.r++];
       switch (read_bytes) {
@@ -531,20 +386,17 @@ var FileReader = require('filereader');
   adata.prototype.rd_i16 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 2) {
-        this.e = error_value_int16;
-        return 0;
+        throw "error_value_int16";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       var v = this.b[this.r++];
       switch (read_bytes) {
@@ -559,24 +411,20 @@ var FileReader = require('filereader');
   adata.prototype.rd_u32 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return 0;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 4) {
-        this.e = error_value_uint32;
-        return 0;
+        throw "error_value_uint32";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       var v = this.b[this.r];
       switch (read_bytes) {
@@ -595,20 +443,17 @@ var FileReader = require('filereader');
   adata.prototype.rd_i32 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 4) {
-        this.e = error_value_int32;
-        return 0;
+        throw "error_value_int32";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       var v = this.b[this.r];
       switch (read_bytes) {
@@ -628,24 +473,20 @@ var FileReader = require('filereader');
   adata.prototype.rd_u64 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       if (tag & const_negative_bit_value > 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return 0;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 8) {
-        this.e = error_value_uint64;
-        return 0;
+        throw "error_value_uint64";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       var h = 0;
       var v = this.b[this.r++];
@@ -667,20 +508,17 @@ var FileReader = require('filereader');
   adata.prototype.rd_i64 = function () {
     'use asm';
     if (this.r + 1 > this.l) {
-      this.e = stream_buffer_overflow;
-      return 0;
+      throw "stream_buffer_overflow";
     }
     var tag = this.b[this.r++];
     if (tag < const_tag_as_type) { return tag; }
     else {
       var read_bytes = (tag & const_interger_byte_msak) + 1;
       if (read_bytes > 8) {
-        this.e = error_value_int64;
-        return 0;
+        throw "error_value_int64";
       }
       if (this.r + read_bytes > this.l) {
-        this.e = stream_buffer_overflow;
-        return 0;
+        throw "stream_buffer_overflow";
       }
       var v = this.b[this.r++];
       var h = 0;
@@ -703,88 +541,82 @@ var FileReader = require('filereader');
   adata.prototype.wt_fu8 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') { }
     else if (Long.isLong(v)) { v = v.toInt(); }
-    else { this.e = error_value_fix_uint8; return; }
+    else { throw "error_value_fix_uint8"; }
     if (v >= 0 && v <= 255) { this.b[this.w++] = v; }
-    else { this.e = value_too_large_to_integer_number; }
+    else { throw "value_too_large_to_integer_number"; }
   };
   
   adata.prototype.wt_fi8 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') { }
     else if (Long.isLong(v)) { v = v.toInt(); }
-    else { this.e = error_value_fix_int8; return; }
+    else { throw "error_value_fix_int8"; }
     if (v >= -127 && v <= 127) { this.b[this.w++] = v; }
-    else { this.e = value_too_large_to_integer_number; }
+    else { throw "value_too_large_to_integer_number"; }
   };
   
   adata.prototype.wt_fu16 = function (v) {
     'use asm';
     if (this.w + 2 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') { }
     else if (Long.isLong(v)) { v = v.toInt(); }
-    else { this.e = error_value_fix_uint16; return; }
+    else { throw "error_value_fix_uint16";}
     if (v >= 0 && v <= 65535) {
       this.b[this.w++] = v & 0xff;
       this.b[this.w++] = v >> 8;
     }
-    else { this.e = value_too_large_to_integer_number; }
+    else { throw "value_too_large_to_integer_number"; }
   };
   
   adata.prototype.wt_fi16 = function (v) {
     'use asm';
     if (this.w + 2 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') { }
     else if (Long.isLong(v)) { v = v.toInt(); }
-    else { this.e = error_value_fix_int16; return; }
+    else { throw "error_value_fix_int16"; }
     if (v >= -32767 && v <= 32767) {
       this.b[this.w++] = v & 0xff;
       this.b[this.w++] = v >> 8;
     }
-    else { this.e = value_too_large_to_integer_number; }
+    else { throw "value_too_large_to_integer_number"; }
   };
   
   adata.prototype.wt_fu32 = function (v) {
     'use asm';
     if (this.w + 4 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') { }
     else if (Long.isLong(v)) { v = v.toInt(); }
-    else { this.e = error_value_fix_uint32; return; }
+    else { throw "error_value_fix_uint32"; }
     if (v >= 0 && v <= 4294967295) {
       this.b[this.w++] = v & 0xff;
       this.b[this.w++] = (v >> 8) & 0xff;
       this.b[this.w++] = (v >> 16) & 0xff;
       this.b[this.w++] = (v >> 24);
     }
-    else { this.e = value_too_large_to_integer_number; }
+    else { throw "value_too_large_to_integer_number"; }
   };
   
   adata.prototype.wt_fi32 = function (v) {
     'use asm';
     if (this.w + 4 >= this.l) {
-      e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') {}
     else if (Long.isLong(v)) { v = v.toInt(); }
-    else {this.e = error_value_fix_int32; return; }
+    else { throw "error_value_fix_int32"; }
 
     if (v >= -2147483647 && v <= 2147483647) {
       this.b[this.w++] = v & 0xff;
@@ -792,14 +624,13 @@ var FileReader = require('filereader');
       this.b[this.w++] = (v >> 16) & 0xff;
       this.b[this.w++] = (v >> 24);
     }
-    else { this.e = value_too_large_to_integer_number; }
+    else { throw "value_too_large_to_integer_number"; }
   };
   
   adata.prototype.wt_fu64 = function (v) {
     'use asm';
     if (this.w + 8 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') {
       this.b[this.w++] = v & 0xff;
@@ -821,7 +652,7 @@ var FileReader = require('filereader');
     }
     else {
       if (typeof v !== 'number') {
-        this.e = error_value_fix_uint64; return;
+        throw "error_value_fix_uint64";
       }
     }
   };
@@ -829,8 +660,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_fi64 = function (v) {
     'use asm';
     if (this.w + 8 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (typeof v === 'number') {
       this.b[this.w++] = v & 0xff;
@@ -852,7 +682,7 @@ var FileReader = require('filereader');
     }
     else {
       if (typeof v !== 'number') {
-        this.e = error_value_fix_int64; return;
+        throw "error_value_fix_int64";
       }
     }
   };
@@ -860,8 +690,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_f32 = function (v) {
     'use asm';
     if (this.w + 4 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0.0;
+      throw "stream_buffer_overflow";
     }
     var p = this.w;
     this.w += 4;
@@ -871,8 +700,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_d64 = function (v) {
     'use asm';
     if (this.w + 8 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return 0.0;
+      throw "stream_buffer_overflow";
     }
     var p = this.w;
     this.w += 8;
@@ -884,13 +712,12 @@ var FileReader = require('filereader');
     if (Long.isLong(v)) { v = v.toInt(); }
     else {
       if (typeof v !== 'number') {
-        this.e = error_value_int8; return;
+        throw "error_value_int8";
       }
     }
     v = v & 0xff;
     if (v < 0) {
-      this.e = negative_assign_to_unsigned_integer_number;
-      return;
+      throw "negative_assign_to_unsigned_integer_number";
     }
     if (v < const_tag_as_type) { return 1; }
     else if (v < 0x100) { return 2; }
@@ -919,8 +746,7 @@ var FileReader = require('filereader');
     }
     v = v & 0xffff;
     if (v < 0) {
-      this.e = negative_assign_to_unsigned_integer_number;
-      return;
+      throw "negative_assign_to_unsigned_integer_number";
     }
     if (v < const_tag_as_type) { return 1; }
     else {
@@ -955,8 +781,7 @@ var FileReader = require('filereader');
       }
     }
     if (v < 0) {
-      this.e = negative_assign_to_unsigned_integer_number;
-      return;
+      throw "negative_assign_to_unsigned_integer_number";
     }
     if (v < const_tag_as_type) { return 1; }
     else {
@@ -1009,8 +834,7 @@ var FileReader = require('filereader');
         v = parseInt(v);
       }
       if (v < 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
     }
     if (h === 0 && v < const_tag_as_type) { return 1; }
@@ -1079,8 +903,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_u8 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (Long.isLong(v)) { v = v.toInt(); }
     else {
@@ -1090,14 +913,12 @@ var FileReader = require('filereader');
     }
     v = v & 0xff;
     if (v < 0) {
-      this.e = negative_assign_to_unsigned_integer_number;
-      return;
+      throw "negative_assign_to_unsigned_integer_number";
     }
     if (v < const_tag_as_type) { this.b[this.w++] = v; }
     else if (v < 0x100) {
       if (this.w + 2 >= this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.b[this.w++] = 0x80;
       this.b[this.w++] = v;
@@ -1107,8 +928,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_i8 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (Long.isLong(v)) { v = v.toInt(); }
     else {
@@ -1120,8 +940,7 @@ var FileReader = require('filereader');
     if (0 <= v) { this.b[this.w++] = v; }
     else {
       if (this.w + 2 >= this.l) {
-        this.e = stream_buffer_overflow;
-        return;
+        throw "stream_buffer_overflow";
       }
       this.b[this.w++] = 0x80 | const_negative_bit_value;
       this.b[this.w++] = -v;
@@ -1131,8 +950,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_u16 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (Long.isLong(v)) { v = v.toInt(); }
     else {
@@ -1142,23 +960,20 @@ var FileReader = require('filereader');
     }
     v = v & 0xffff;
     if (v < 0) {
-      this.e = negative_assign_to_unsigned_integer_number;
-      return;
+      throw "negative_assign_to_unsigned_integer_number";
     }
     if (v < const_tag_as_type) { this.b[this.w++] = v; }
     else {
       if (v < 0x100) {
         if (this.w + 2 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x80;
         this.b[this.w++] = v;
       }
       else {
         if (this.w + 3 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x81;
         this.b[this.w++] = v & 0xff;
@@ -1170,8 +985,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_i16 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (Long.isLong(v)) { v = v.toInt(); }
     else {
@@ -1189,16 +1003,14 @@ var FileReader = require('filereader');
       }
       if (v < 0x100) {
         if (this.w + 2 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x80+nb;
         this.b[this.w++] = v;
       }
       else {
         if (this.w + 3 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x81+nb;
         this.b[this.w++] = v & 0xff;
@@ -1210,8 +1022,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_u32 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (Long.isLong(v)) { v = v.toInt(); }
     else {
@@ -1220,23 +1031,20 @@ var FileReader = require('filereader');
       }
     }
     if (v < 0) {
-      this.e = negative_assign_to_unsigned_integer_number;
-      return;
+      throw "negative_assign_to_unsigned_integer_number";
     }
     if (v < const_tag_as_type) { this.b[this.w++] = v; }
     else {
       if (v < 0x100) {
         if (this.w + 2 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x80;
         this.b[this.w++] = v;
       }
       else if ( v< 0x10000) {
         if (this.w + 3 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x81;
         this.b[this.w++] = v & 0xff;
@@ -1244,8 +1052,7 @@ var FileReader = require('filereader');
       }
       else if (v < 0x1000000) {
         if (this.w + 4 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x82;
         this.b[this.w++] = v & 0xff;
@@ -1254,8 +1061,7 @@ var FileReader = require('filereader');
       }
       else{
         if (this.w + 5 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x83;
         this.b[this.w++] = v & 0xff;
@@ -1269,8 +1075,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_i32 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     if (Long.isLong(v)) { v = v.toInt(); }
     v = v & 0xffff;
@@ -1287,16 +1092,14 @@ var FileReader = require('filereader');
       }
       if (v < 0x100) {
         if (this.w + 2 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x80 + nb;
         this.b[this.w++] = v;
       }
       else if (v < 0x10000) {
         if (this.w + 3 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x81 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1304,8 +1107,7 @@ var FileReader = require('filereader');
       }
       else if (v < 0x1000000) {
         if (this.w + 4 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x82 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1314,8 +1116,7 @@ var FileReader = require('filereader');
       }
       else {
         if (this.w + 5 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x83 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1329,14 +1130,12 @@ var FileReader = require('filereader');
   adata.prototype.wt_u64 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var h = 0;
     if (Long.isLong(v)) {
       if (v.isNegative()) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
       h = v.high;
       v = v.toInt();
@@ -1347,8 +1146,7 @@ var FileReader = require('filereader');
       }
 
       if (v < 0) {
-        this.e = negative_assign_to_unsigned_integer_number;
-        return;
+        throw "negative_assign_to_unsigned_integer_number";
       }
     }
     if (h === 0 && v < const_tag_as_type) { this.b[this.w++] = v; }
@@ -1356,16 +1154,14 @@ var FileReader = require('filereader');
       if (h === 0) {
         if (v < 0x100) {
           if (this.w + 2 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x80;
           this.b[this.w++] = v;
         }
         else if (v < 0x10000) {
           if (this.w + 3 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x81;
           this.b[this.w++] = v & 0xff;
@@ -1373,8 +1169,7 @@ var FileReader = require('filereader');
         }
         else if (v < 0x1000000) {
           if (this.w + 4 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x82;
           this.b[this.w++] = v & 0xff;
@@ -1383,8 +1178,7 @@ var FileReader = require('filereader');
         }
         else {
           if (this.w + 5 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x83;
           this.b[this.w++] = v & 0xff;
@@ -1395,8 +1189,7 @@ var FileReader = require('filereader');
       }
       else if (h < 0x100) {
         if (this.w + 6 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x84;
         this.b[this.w++] = v & 0xff;
@@ -1407,8 +1200,7 @@ var FileReader = require('filereader');
       }
       else if (h < 0x10000) {
         if (this.w + 7 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x85;
         this.b[this.w++] = v & 0xff;
@@ -1420,8 +1212,7 @@ var FileReader = require('filereader');
       }
       else if (h < 0x1000000) {
         if (this.w + 8 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x86;
         this.b[this.w++] = v & 0xff;
@@ -1434,8 +1225,7 @@ var FileReader = require('filereader');
       }
       else {
         if (this.w + 9 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x87;
         this.b[this.w++] = v & 0xff;
@@ -1453,8 +1243,7 @@ var FileReader = require('filereader');
   adata.prototype.wt_i64 = function (v) {
     'use asm';
     if (this.w + 1 >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     var h = 0;
     var nb = 0;
@@ -1482,16 +1271,14 @@ var FileReader = require('filereader');
       if (h === 0) {
         if (v < 0x100) {
           if (this.w + 2 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x80 + nb;
           this.b[this.w++] = v;
         }
         else if (v < 0x10000) {
           if (this.w + 3 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x81 + nb;
           this.b[this.w++] = v & 0xff;
@@ -1499,8 +1286,7 @@ var FileReader = require('filereader');
         }
         else if (v < 0x1000000) {
           if (this.w + 4 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x82 + nb;
           this.b[this.w++] = v & 0xff;
@@ -1509,8 +1295,7 @@ var FileReader = require('filereader');
         }
         else {
           if (this.w + 5 >= this.l) {
-            this.e = stream_buffer_overflow;
-            return;
+            throw "stream_buffer_overflow";
           }
           this.b[this.w++] = 0x83 + nb;
           this.b[this.w++] = v & 0xff;
@@ -1521,8 +1306,7 @@ var FileReader = require('filereader');
       }
       else if (h < 0x100) {
         if (this.w + 6 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x84 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1533,8 +1317,7 @@ var FileReader = require('filereader');
       }
       else if (h < 0x10000) {
         if (this.w + 7 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x85 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1546,8 +1329,7 @@ var FileReader = require('filereader');
       }
       else if (h < 0x1000000) {
         if (this.w + 8 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x86 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1560,8 +1342,7 @@ var FileReader = require('filereader');
       }
       else {
         if (this.w + 9 >= this.l) {
-          this.e = stream_buffer_overflow;
-          return;
+          throw "stream_buffer_overflow";
         }
         this.b[this.w++] = 0x87 + nb;
         this.b[this.w++] = v & 0xff;
@@ -1589,15 +1370,10 @@ var FileReader = require('filereader');
     'use asm';
     var l = this.rd_i32();
     if (n > 0 && l > n) {
-      this.e = number_of_element_not_macth;
-      return;
-    }
-    if (this.e !== success) {
-      return;
+      throw "number_of_element_not_macth";
     }
     if (this.r + l >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     this.r += l;
   };
@@ -1606,15 +1382,10 @@ var FileReader = require('filereader');
     'use asm';
     var l = this.rd_i32();
     if (n > 0 && l > n) {
-      this.e = number_of_element_not_macth;
-      return "";
-    }
-    if (this.e !== success) {
-      return "";
+      throw "number_of_element_not_macth";
     }
     if (this.r + l >= this.l) {
-      this.e = stream_buffer_overflow;
-      return "";
+      throw "stream_buffer_overflow";
     }
     var s = [];
     var c = cs;
@@ -1627,8 +1398,7 @@ var FileReader = require('filereader');
   adata.prototype.szof_s = function (s, n) {
     'use asm';
     if (typeof s !== 'string') {
-      this.e = error_value_string;
-      return;
+      throw "error_value_string";
     }
     var l = s.length;
     l += this.szof_i32(l);
@@ -1638,21 +1408,15 @@ var FileReader = require('filereader');
   adata.prototype.wt_s = function (s, n) {
     'use asm';
     if (typeof s !== 'string') {
-      this.e = error_value_string;
-      return;
+      throw "error_value_string";
     }
     var l = s.length;
     if (n > 0 && l > n) {
-      this.e = number_of_element_not_macth;
-      return;
+      throw "number_of_element_not_macth";
     }
     this.wt_i32(l);
-    if (this.e !== success) {
-      return;
-    }
     if (this.w + l >= this.l) {
-      this.e = stream_buffer_overflow;
-      return;
+      throw "stream_buffer_overflow";
     }
     for (var i = 0; i < l; ++i) {
       this.b[this.w++] = ds[s[i]];
@@ -1714,66 +1478,37 @@ var FileReader = require('filereader');
     switch (mb.type) {
       case 20: {
         var l = this.rd_i32();
-        if (this.e !== success) {
-          this.trace(name, -1);
-          return;
-        }
         if (n > 0 && l > n) {
-          this.e = number_of_element_not_macth;
-          this.trace(mb.name, -1);
-          return;
+          throw "number_of_element_not_macth";
         }
         var pdef = mb.params[0];
         for (var i = 0; i < l; ++i) {
           this.sk_rd_v(pdef);
-          if (this.e !== success) {
-            this.trace(mb.name, i);
-            return;
-          }
         }
         return a;
       }//list
       case 21: {
         var l = this.rd_i32();
         if (n > 0 && l > n) {
-          this.e = number_of_element_not_macth;
-          return;
-        }
-        if (this.e !== success) {
-          this.trace(name, -1);
-          return;
+          throw "number_of_element_not_macth";
         }
         var pdef1 = mb.params[0];
         var pdef2 = mb.params[1];
         for (var i = 0; i < l; ++i) {
           this.sk_rd_v(pdef1);
           this.sk_rd_v(pdef2);
-          if (this.e !== success) {
-            this.trace(name, i);
-            return;
-          }
         }
         return m;
       }//map
     }
     this.sk_rd_v(type);
-    if (this.e !== success) {
-      this.trace(name, -1);
-      return;
-    }
   };
   
   adata.prototype.sk_rd = function (type) {
     'use asm';
     var offset = this.r;
     var read_tag = this.rd_i64();
-    if (this.e !== success) {
-      return;
-    }
     var len_tag = this.rd_i32();
-    if (this.e !== success) {
-      return;
-    }
     if (len_tag > 0) {
       var read_len = this.r;
       if (len_tag > read_len) {
@@ -1813,24 +1548,14 @@ var FileReader = require('filereader');
     switch (mb.type) {
       case 20: {
         var l = this.rd_i32();
-        if (this.e !== success) {
-          this.trace(mb.name, -1);
-          return;
-        }
         var n = mb.size;
         if (n > 0 && l > n) {
-          this.e = number_of_element_not_macth;
-          this.trace(mb.name, -1);
-          return;
+          throw "number_of_element_not_macth";
         }
         var pdef = mb.params[0];
         for (var i = 0; i < l; ++i) {
           var v = construct_value(pdef);
           v = this.rd_v(pdef);
-          if (this.e !== success) {
-            this.trace(mb.name, i);
-            return;
-          }
           mv.push(v);
         }
         return mv;
@@ -1839,13 +1564,7 @@ var FileReader = require('filereader');
         var l = this.rd_i32();
         var n = mb.size;
         if (n > 0 && l > n) {
-          this.e = number_of_element_not_macth;
-          this.trace(mb.name, -1);
-          return;
-        }
-        if (this.e !== success) {
-          this.trace(mb.name, -1);
-          return;
+          throw "number_of_element_not_macth";
         }
         var pdef1 = mb.params[0];
         var pdef2 = mb.params[1];
@@ -1854,20 +1573,12 @@ var FileReader = require('filereader');
           var v = construct_value(pdef2);
           k = this.rd_v(pdef1,k);
           v = this.rd_v(pdef2,v);
-          if (this.e !== success) {
-            this.trace(mb.name, i);
-            return;
-          }
           mv[k]=v;
         }
         return mv;
       }//map
     }
     var v = this.rd_v(mb,mv);
-    if (this.e !== success) {
-      this.trace(mb.name, -1);
-      return;
-    }
     return v;
   };
 
@@ -1875,13 +1586,7 @@ var FileReader = require('filereader');
     'use asm';
     var offset = this.r;
     var read_tag = this.rd_i64();
-    if (this.e !== success) {
-      return;
-    }
     var len_tag = this.rd_i32();
-    if (this.e !== success) {
-      return;
-    }
 
     var l = read_tag;
     var h = 0;
@@ -2003,16 +1708,7 @@ var FileReader = require('filereader');
       var m = type.members[i];
       if (m.del === 0) {
         var name = m.name;
-        try{
-          var msz = this.szof_m(v[name], m , ctx);
-        }
-        catch(err){
-          console.log(name + " error");
-        }
-        if (this.e != success) {
-          this.trace(m.name, -1);
-          return 0;
-        }
+        var msz = this.szof_m(v[name], m , ctx);
         if (msz > 0) {
           sz += msz;
           if (c < 32) {
@@ -2070,22 +1766,12 @@ var FileReader = require('filereader');
         var l = v.length;
         var n = mb.size;
         if (n > 0 && l > n) {
-          this.e = number_of_element_not_macth;
-          this.trace(mb.name, -1);
-          return;
+          throw "number_of_element_not_macth";
         }
         this.wt_i32(l);
-        if (this.e !== success) {
-          this.trace(mb.name, -1);
-          return;
-        }
         var pdef = mb.params[0];
         for (var i = 0; i < l; ++i) {
           this.wt_v(v[i], pdef , ctx);
-          if (this.e !== success) {
-            this.trace(mb.name, i);
-            return;
-          }
         }
         break;
       }//list
@@ -2093,33 +1779,19 @@ var FileReader = require('filereader');
         var l = Object.keys(v).length;
         var n = mb.size;
         if (n > 0 && l > n) {
-          this.e = number_of_element_not_macth;
-          this.trace(mb.name, -1);
-          return;
+          throw "number_of_element_not_macth";
         }
         this.wt_i32(l);
-        if (this.e !== success) {
-          this.trace(mb.name, -1);
-          return;
-        }
         var pdef1 = mb.params[0];
         var pdef2 = mb.params[1];
         for (var k in v) {
           this.wt_v(k, pdef1 , ctx);
           this.wt_v(v[k], pdef2 , ctx);
-          if (this.e !== success) {
-            this.trace(mb.name, i);
-            return;
-          }
         }
         break;
       }//map
     }
     this.wt_v(v, mb , ctx);
-    if (this.e !== success) {
-      this.trace(mb.name, -1);
-      return;
-    }
   };
   
   adata.prototype.wt = function (type, v , ctx) {
@@ -2155,11 +1827,8 @@ var FileReader = require('filereader');
     }
   };
   
-  adata.prototype.read = function (type , obj , throw_err) {
+  adata.prototype.read = function (type , obj) {
     var v = this.rd(type , obj);
-    if (this.e !== success && !!throw_err) {
-      throw this.trace_info();
-    }
     return v;
   }
 
@@ -2168,14 +1837,11 @@ var FileReader = require('filereader');
     return this.szof(type, v);
   }
   
-  adata.prototype.write = function (type, v, throw_err) {
+  adata.prototype.write = function (type, v) {
     'use ams';
     var ctx = [0];
     this.szof(type, v , ctx);
     this.wt(type, v,ctx);
-    if (this.e !== success && !!throw_err) {
-      throw this.trace_info();
-    }
   }
   
   var types = {};
