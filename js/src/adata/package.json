@@ -7,7 +7,7 @@
     "keywords": [ "net", "array", "buffer", "arraybuffer", "typed array", "adata" ,"serialize"],
     "dependencies": {
         "long": "~1",
-        "file": "^0.10.2",
+        "File": "^0.10.2",
         "filereader": "^0.10.3"
     },
     "license": "Boost Software License - Version 1.0",

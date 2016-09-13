@@ -1,5 +1,5 @@
 ﻿var Long = require('long');
-var File = require('file');
+var File = require('File');
 var FileReader = require('filereader');
 
 (function (global) {
@@ -75,7 +75,7 @@ var FileReader = require('filereader');
 
   var adata = function (size) {
     'use asm';
-    if (size === null) {
+    if (size == null) {
       size = 65536;
     }
     if (size <= 0)
@@ -1587,7 +1587,7 @@ var FileReader = require('filereader');
   
   adata.prototype.sk_rd_s = function (n) {
     'use asm';
-    var l = this.rd_32();
+    var l = this.rd_i32();
     if (n > 0 && l > n) {
       this.e = number_of_element_not_macth;
       return;
@@ -1604,7 +1604,7 @@ var FileReader = require('filereader');
   
   adata.prototype.rd_s = function (n) {
     'use asm';
-    var l = this.rd_32();
+    var l = this.rd_i32();
     if (n > 0 && l > n) {
       this.e = number_of_element_not_macth;
       return "";
@@ -1631,7 +1631,7 @@ var FileReader = require('filereader');
       return;
     }
     var l = s.length;
-    l += this.szof_u32(l);
+    l += this.szof_i32(l);
     return l;
   };
   
@@ -1646,7 +1646,7 @@ var FileReader = require('filereader');
       this.e = number_of_element_not_macth;
       return;
     }
-    this.wt_32(l);
+    this.wt_i32(l);
     if (this.e !== success) {
       return;
     }
@@ -1713,7 +1713,7 @@ var FileReader = require('filereader');
     'use asm';
     switch (mb.type) {
       case 20: {
-        var l = this.rd_32();
+        var l = this.rd_i32();
         if (this.e !== success) {
           this.trace(name, -1);
           return;
@@ -1734,7 +1734,7 @@ var FileReader = require('filereader');
         return a;
       }//list
       case 21: {
-        var l = this.rd_32();
+        var l = this.rd_i32();
         if (n > 0 && l > n) {
           this.e = number_of_element_not_macth;
           return;
@@ -1766,7 +1766,7 @@ var FileReader = require('filereader');
   adata.prototype.sk_rd = function (type) {
     'use asm';
     var offset = this.r;
-    var read_tag = this.rd_64();
+    var read_tag = this.rd_i64();
     if (this.e !== success) {
       return;
     }
@@ -1812,7 +1812,7 @@ var FileReader = require('filereader');
     'use asm';
     switch (mb.type) {
       case 20: {
-        var l = this.rd_32();
+        var l = this.rd_i32();
         if (this.e !== success) {
           this.trace(mb.name, -1);
           return;
@@ -1836,7 +1836,7 @@ var FileReader = require('filereader');
         return mv;
       }//list
       case 21: {
-        var l = this.rd_32();
+        var l = this.rd_i32();
         var n = mb.size;
         if (n > 0 && l > n) {
           this.e = number_of_element_not_macth;
@@ -1874,7 +1874,7 @@ var FileReader = require('filereader');
   adata.prototype.rd = function (type ,v) {
     'use asm';
     var offset = this.r;
-    var read_tag = this.rd_64();
+    var read_tag = this.rd_i64();
     if (this.e !== success) {
       return;
     }
@@ -1958,7 +1958,7 @@ var FileReader = require('filereader');
         var sz = 0;
         if (_isArray(v) === true) {
           l = v.length;
-          sz += this.szof_u32(l);
+          sz += this.szof_i32(l);
           var pdef = mb.params[0];
           for (var i = 0; i < l; ++i) {
             sz += this.szof_v(v[i], pdef , ctx);
@@ -1972,7 +1972,7 @@ var FileReader = require('filereader');
         if (v.keys !== null) {
           var keys = Object.keys(v);
           l = keys.length;
-          sz += this.szof_u32(l);
+          sz += this.szof_i32(l);
           var pdef1 = mb.params[0];
           var pdef2 = mb.params[1];
           for (var k in v) {
@@ -2003,7 +2003,12 @@ var FileReader = require('filereader');
       var m = type.members[i];
       if (m.del === 0) {
         var name = m.name;
-        var msz = this.szof_m(v[name], m , ctx);
+        try{
+          var msz = this.szof_m(v[name], m , ctx);
+        }
+        catch(err){
+          console.log(name + " error");
+        }
         if (this.e != success) {
           this.trace(m.name, -1);
           return 0;
@@ -2025,8 +2030,8 @@ var FileReader = require('filereader');
       }
     }
     var tag = new Long(l, h);
-    sz += this.szof_u64(tag);
-    sz += this.szof_u32(sz);
+    sz += this.szof_i64(tag);
+    sz += this.szof_i32(sz);
     info.tag = tag;
     info.sz = sz;
     return sz;
@@ -2069,7 +2074,7 @@ var FileReader = require('filereader');
           this.trace(mb.name, -1);
           return;
         }
-        this.wt_32(l);
+        this.wt_i32(l);
         if (this.e !== success) {
           this.trace(mb.name, -1);
           return;
@@ -2092,7 +2097,7 @@ var FileReader = require('filereader');
           this.trace(mb.name, -1);
           return;
         }
-        this.wt_32(l);
+        this.wt_i32(l);
         if (this.e !== success) {
           this.trace(mb.name, -1);
           return;
@@ -2122,8 +2127,8 @@ var FileReader = require('filereader');
     var idx = ctx[0]+1;
     var info = ctx[idx];
     ctx[0] = idx;
-    this.wt_64(info.tag);
-    this.wt_32(info.sz);
+    this.wt_i64(info.tag);
+    this.wt_i32(info.sz);
     var l = info.tag.low;
     var h = info.tag.high;
     var mk = 1;
@@ -2282,7 +2287,10 @@ var FileReader = require('filereader');
         else if (typeof (c) === "object") {
           obj[f] = {};
         }
-        else {
+        else if (typeof (c) === "function") {
+          obj[f] = c();
+        }
+        else{
           obj[f] = c;
         }
       }
@@ -2333,10 +2341,11 @@ var FileReader = require('filereader');
           var namespace_idx = buf.rd_i32();
           
           if (namespace_idx == -1) {
+            member.typename = member.typename;
             member.type_def = types[member.typename];
           }
           else {
-            member.type_def = ns_types[namespace_idx + 1];
+            member.type_def = ns_types[namespace_idx];
           }
         }
         var member_del = buf.rd_i32();
@@ -2361,6 +2370,7 @@ var FileReader = require('filereader');
             ptype.typname = str_idx[ptype_typename_sid];
             var namespace_idx = buf.rd_i32();
             if (namespace_idx == -1) {
+              ptype.typname = ptype.typname;
               ptype.type_def = types[ptype.typename];
             }
             else {
