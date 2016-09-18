@@ -1553,7 +1553,7 @@ var FileReader = require('filereader');
         var pdef = mb.params[0];
         for (var i = 0; i < l; ++i) {
           var v = construct_value(pdef);
-          v = this.rd_v(pdef);
+          v = this.rd_v(pdef,v);
           mv.push(v);
         }
         return mv;
