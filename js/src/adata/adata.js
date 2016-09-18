@@ -487,17 +487,17 @@ var FileReader = require('filereader');
         throw "stream_buffer_overflow";
       }
       var h = 0;
-      var v = this.b[this.r++];
+      var v = this.b[this.r];
       switch (read_bytes) {
-        case 8: h += (this.b[this.r + 6] << 24);
-        case 7: h += (this.b[this.r + 5] << 16);
-        case 6: h += (this.b[this.r + 4] << 8);
-        case 5: h += (this.b[this.r + 3]);
-        case 4: v += (this.b[this.r + 2] << 24);
-        case 3: v += (this.b[this.r + 1] << 16);
-        case 2: v += (this.b[this.r] << 8);
+        case 8: h += (this.b[this.r + 7] << 24);
+        case 7: h += (this.b[this.r + 6] << 16);
+        case 6: h += (this.b[this.r + 5] << 8);
+        case 5: h += (this.b[this.r + 4]);
+        case 4: v += (this.b[this.r + 3] << 24);
+        case 3: v += (this.b[this.r + 2] << 16);
+        case 2: v += (this.b[this.r + 1] << 8);
       }
-      this.r += (read_bytes - 2);
+      this.r += read_bytes;
       if (h > 0) { return new Long(v, h, true); }
       return v;
     }
@@ -518,18 +518,18 @@ var FileReader = require('filereader');
       if ((this.r + read_bytes) > this.l) {
         throw "stream_buffer_overflow";
       }
-      var v = this.b[this.r++];
+      var v = this.b[this.r];
       var h = 0;
       switch (read_bytes) {
-        case 8: h += (this.b[this.r + 6] << 24);
-        case 7: h += (this.b[this.r + 5] << 16);
-        case 6: h += (this.b[this.r + 4] << 8);
-        case 5: h += (this.b[this.r + 3]);
-        case 4: v += (this.b[this.r + 2] << 24);
-        case 3: v += (this.b[this.r + 1] << 16);
-        case 2: v += (this.b[this.r] << 8);
+        case 8: h += (this.b[this.r + 7] << 24);
+        case 7: h += (this.b[this.r + 6] << 16);
+        case 6: h += (this.b[this.r + 5] << 8);
+        case 5: h += (this.b[this.r + 4]);
+        case 4: v += (this.b[this.r + 3] << 24);
+        case 3: v += (this.b[this.r + 2] << 16);
+        case 2: v += (this.b[this.r + 1] << 8);
       }
-      this.r += (read_bytes-2);
+      this.r += read_bytes;
       if ((tag & const_negative_bit_value) > 0) { h = -h; }
       if (h !== 0) { return new Long(v, h, false); }
       return v;
@@ -2027,7 +2027,6 @@ var FileReader = require('filereader');
         for (var p = 0; p < param_count; ++p){
           var ptype = {};
           var p_type = buf.rd_i32();
-          ptype.size = buf.rd_i32();
           ptype.type = p_type;
           if (p_type == adata_et_type) {
             var ptype_typename_sid = buf.rd_i32();
@@ -2041,6 +2040,7 @@ var FileReader = require('filereader');
               ptype.type_def = ns_types[namespace_idx];
             }
           }
+          ptype.size = buf.rd_i32();
           params.push(ptype);
         }
       }
