@@ -299,7 +299,7 @@ var FileReader = require('filereader');
     }
     var p = this.r;
     this.r += 4;
-    return this.d.getFloat32(p);
+    return this.d.getFloat32(p,true);
   };
   
   adata.prototype.rd_d64 = function () {
@@ -309,7 +309,7 @@ var FileReader = require('filereader');
     }
     var p = this.r;
     this.r += 8;
-    return this.d.getFloat64(p);
+    return this.d.getFloat64(p,true);
   };
   
   adata.prototype.rd_u8 = function () {
@@ -692,7 +692,7 @@ var FileReader = require('filereader');
     }
     var p = this.w;
     this.w += 4;
-    return this.d.setFloat32(p, v);
+    return this.d.setFloat32(p, v,true);
   };
   
   adata.prototype.wt_d64 = function (v) {
@@ -702,7 +702,7 @@ var FileReader = require('filereader');
     }
     var p = this.w;
     this.w += 8;
-    return this.d.setFloat64(p, v);
+    return this.d.setFloat64(p, v,true);
   };
   
   adata.prototype.szof_u8 = function (v) {
@@ -1607,11 +1607,13 @@ var FileReader = require('filereader');
         l = h;
         mk = 1;
       }
-      if ((sk === 1) && (m.del === 1)) {
-        this.sk_rd_m(m);
-      }
-      else {
-        v[name] = this.rd_m(m,v[name]);  
+      if (sk === 0) {
+        if(m.del === 1){
+          this.sk_rd_m(m);
+        }
+        else {
+          v[name] = this.rd_m(m,v[name]);  
+        }
       }
     }
     if (len_tag > 0) {
@@ -1881,7 +1883,7 @@ var FileReader = require('filereader');
   
   var construct_value = function (type){
     if (type.type == adata_et_type) {
-      return type.constructor();
+      return type.type_def.constructor();
     }
     return null;
   }
@@ -1958,13 +1960,12 @@ var FileReader = require('filereader');
           obj[f] = c;
         }
       }
-
       return obj;
     }
     
     var full_name = ns_name + '.' + type.name;
     constructors[full_name] = new_type;
-    type.constructor = new_type();
+    type.constructor = new_type;
   }
 
   var parser_namespace = function (buf) {

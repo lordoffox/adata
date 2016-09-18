@@ -6,9 +6,7 @@
     "main": "index.js",
     "keywords": [ "net", "array", "buffer", "arraybuffer", "typed array", "adata" ,"serialize"],
     "dependencies": {
-        "long": "~1",
-        "File": "^0.10.2",
-        "filereader": "^0.10.3"
+        "long": "~1"
     },
     "license": "Boost Software License - Version 1.0",
     "repositories": [
