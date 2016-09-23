@@ -1853,10 +1853,11 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        byte temp = (byte)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = (sbyte)(-value);
+          temp = (byte)(-value);
         }
         if (stream.write_len + 2 >= stream.data_len)
         {
@@ -1864,7 +1865,7 @@ namespace adata
           throw new exception(stream.error_code);
         }
         stream.buffer[stream.write_len++] = tag;
-        stream.buffer[stream.write_len++] = (byte)value;
+        stream.buffer[stream.write_len++] = temp;
       }
     }
 
@@ -1906,12 +1907,13 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        UInt16 temp = (UInt16)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = (Int16)(-value);
+          temp = (UInt16)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           if (stream.write_len + 2 >= stream.data_len)
           {
@@ -1919,7 +1921,7 @@ namespace adata
             throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = tag;
-          stream.buffer[stream.write_len++] = (byte)value;
+          stream.buffer[stream.write_len++] = (byte)temp;
         }
         else
         {
@@ -1928,7 +1930,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI16 = value;
+          stream.value.VU16 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2005,12 +2007,13 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
-        if (value < 0)
+        UInt32 temp = (UInt32)value;
+        if (temp < 0)
         {
           tag += const_negative_bit_value;
-          value = -value;
+          temp = (UInt32)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           if (stream.write_len + 2 >= stream.data_len)
           {
@@ -2018,16 +2021,16 @@ namespace adata
             throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = tag;
-          stream.buffer[stream.write_len++] = (byte)value;
+          stream.buffer[stream.write_len++] = (byte)temp;
         }
-        else if (value < 0x10000)
+        else if (temp < 0x10000)
         {
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2041,14 +2044,14 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000)
+        else if (temp < 0x1000000)
         {
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           tag += 2;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2071,7 +2074,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2198,12 +2201,13 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        UInt64 temp = (UInt64)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = -value;
+          temp = (UInt64)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           if (stream.write_len + 2 >= stream.data_len)
           {
@@ -2211,16 +2215,16 @@ namespace adata
             throw new exception(stream.error_code);
           }
           stream.buffer[stream.write_len++] = tag;
-          stream.buffer[stream.write_len++] = (byte)value;
+          stream.buffer[stream.write_len++] = (byte)temp;
         }
-        else if (value < 0x10000)
+        else if (temp < 0x10000)
         {
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2234,14 +2238,14 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000)
+        else if (temp < 0x1000000)
         {
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 2;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2257,14 +2261,14 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000L)
+        else if (temp < 0x100000000L)
         {
           if (stream.write_len + 5 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2282,14 +2286,14 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x10000000000L)
+        else if (temp < 0x10000000000L)
         {
           if (stream.write_len + 6 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 4;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2309,14 +2313,14 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000000000L)
+        else if (temp < 0x1000000000000L)
         {
           if (stream.write_len + 7 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 5;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2338,14 +2342,14 @@ namespace adata
             stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000000000L)
+        else if (temp < 0x100000000000000L)
         {
           if (stream.write_len + 8 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 6;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2376,7 +2380,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             throw new exception(stream.error_code);
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 7;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
