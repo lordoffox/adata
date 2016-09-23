@@ -260,6 +260,27 @@ public class Stream {
       saveUint8((int)value);
       return;
     }
+    if ( value == -9223372036854775808L)
+    {
+      int tag = (const_tag_as_type)+const_negative_bit_value;
+  	  saveUint8(tag+7);
+  	  saveUint8((int)value);
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  value >>= 8;
+  	  saveUint8((int)(value));
+  	  return;
+    }
     int tag = (const_tag_as_type);
 	if (value < 0){
 	  value = (long)(-value);
