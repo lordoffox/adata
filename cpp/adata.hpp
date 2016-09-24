@@ -191,8 +191,9 @@ namespace adata
   ADATA_INLINE int32_t size_of(int16_t value)
   {
     if (0 <= value && value < const_tag_as_type) return 1;
-    if (value < 0) value = -value;
-    if (value < 0x100) return 2;
+    uint16_t temp = value;
+    if (value < 0) temp = -value;
+    if (temp < 0x100) return 2;
     return 3;
   }
 
@@ -208,10 +209,11 @@ namespace adata
   ADATA_INLINE int32_t size_of(int32_t value)
   {
     if (0 <= value && value < const_tag_as_type) return 1;
-    if (value < 0) value = -value;
-    if (value < 0x100) return 2;
-    else if (value < 0x10000) return 3;
-    else if (value < 0x1000000) return 4;
+    uint32_t temp = value;
+    if (value < 0) temp = -value;
+    if (temp < 0x100) return 2;
+    else if (temp < 0x10000) return 3;
+    else if (temp < 0x1000000) return 4;
     return 5;
   }
 
@@ -231,14 +233,15 @@ namespace adata
   ADATA_INLINE int32_t size_of(int64_t value)
   {
     if (0 <= value && value < const_tag_as_type) return 1;
+    uint64_t temp = value;
     if (value < 0) value = -value;
-    if (value < 0x100) return 2;
-    else if (value < 0x10000) return 3;
-    else if (value < 0x1000000) return 4;
-    else if (value < 0x100000000) return 5;
-    else if (value < 0x10000000000LL) return 6;
-    else if (value < 0x1000000000000LL) return 7;
-    else if (value < 0x100000000000000LL) return 8;
+    if (temp < 0x100) return 2;
+    else if (temp < 0x10000) return 3;
+    else if (temp < 0x1000000) return 4;
+    else if (temp < 0x100000000) return 5;
+    else if (temp < 0x10000000000LL) return 6;
+    else if (temp < 0x1000000000000LL) return 7;
+    else if (temp < 0x100000000000000LL) return 8;
     return 9;
   }
 

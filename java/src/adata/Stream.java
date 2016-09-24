@@ -165,23 +165,26 @@ public class Stream {
   
   public static int sizeOfInt16(short value){
     if (0 <= value && value < const_tag_as_type) return 1;
-    if (value < 0) value = (short)(-value);
-    if (value < 0x100) return 2;
+    int temp = value;
+    if (value < 0) temp = -value;
+    if (temp < 0x100) return 2;
     return 3;
   }
   
   public static int sizeOfInt32(int value){
     if (0 <= value && value < const_tag_as_type) return 1;
-    if (value < 0) value = (int)(-value);
-    if (value < 0x100) return 2;
-    if (value < 0x10000) return 3;
-    if (value < 0x1000000) return 4;
+    long temp = value;
+    if (value < 0) temp = -value;
+    if (temp < 0x100) return 2;
+    if (temp < 0x10000) return 3;
+    if (temp < 0x1000000) return 4;
     return 5;
   }
 
   public static int sizeOfInt64(long value){
 	if (0 <= value && value < const_tag_as_type) return 1;
-	if (value < 0) value = (long)(-value);
+	if ( value == -9223372036854775808L) return 9;
+	if (value < 0) value = -value;
 	if (value < 0x100) return 2;
 	else if (value < 0x10000) return 3;
 	else if (value < 0x1000000) return 4;
@@ -479,6 +482,12 @@ public class Stream {
 	writeData(sbuf,slen);
   }
   
+
+  public void skipWrite(int len)
+  {
+	writeLen += len;
+  }
+
   public void writeString(String str){
 	writeString(str,0);
   }
@@ -487,12 +496,7 @@ public class Stream {
   {
 	readLen += len;
   }
-
-  public void skipWrite(int len)
-  {
-	writeLen += len;
-  }
-
+  
   void skipReadScacleInt()
   {
 	int tag = loadUint8();

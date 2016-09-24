@@ -564,8 +564,9 @@ namespace adata
     public static Int32 size_of(Int16 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
-      if (value < 0) value = (Int16)(-value);
-      if (value < 0x100) return 2;
+      UInt16 temp = value;
+      if (value < 0) temp = (UInt16)-value;
+      if (temp < 0x100) return 2;
       return 3;
     }
 
@@ -581,10 +582,11 @@ namespace adata
     public static Int32 size_of(Int32 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
-      if (value < 0) value = (Int32)(-value);
-      if (value < 0x100) return 2;
-      if (value < 0x10000) return 3;
-      if (value < 0x1000000) return 4;
+      UInt32 temp = value;
+      if (value < 0) temp = (UInt32)(-value);
+      if (temp < 0x100) return 2;
+      if (temp < 0x10000) return 3;
+      if (temp < 0x1000000) return 4;
       return 5;
     }
 
@@ -604,14 +606,15 @@ namespace adata
     public static Int32 size_of(Int64 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
-      if (value < 0) value = (Int64)(-value);
-      if (value < 0x100) return 2;
-      else if (value < 0x10000) return 3;
-      else if (value < 0x1000000) return 4;
-      else if (value < 0x100000000L) return 5;
-      else if (value < 0x10000000000L) return 6;
-      else if (value < 0x1000000000000L) return 7;
-      else if (value < 0x100000000000000L) return 8;
+      UInt64 temp = value;
+      if (value < 0) temp = (UInt64)(-value);
+      if (temp < 0x100) return 2;
+      else if (temp < 0x10000) return 3;
+      else if (temp < 0x1000000) return 4;
+      else if (temp < 0x100000000L) return 5;
+      else if (temp < 0x10000000000L) return 6;
+      else if (temp < 0x1000000000000L) return 7;
+      else if (temp < 0x100000000000000L) return 8;
       return 9;
     }
 
