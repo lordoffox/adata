@@ -291,7 +291,7 @@ namespace adata
     }
     else
     {
-      value_type temp = value;
+      uint16_t temp = value;
       if (value < 0)
       {
         temp = -value;
@@ -340,7 +340,7 @@ namespace adata
     }
     else
     {
-      value_type temp = value;
+      uint32_t temp = value;
       if (value < 0)
       {
         temp = -value;
@@ -413,7 +413,7 @@ namespace adata
     }
     else
     {
-      value_type temp = value;
+      uint64_t temp = value;
       if (value < 0)
       {
         temp = -value;
