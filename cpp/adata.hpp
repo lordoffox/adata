@@ -3599,6 +3599,10 @@ namespace adata
     }
   }
 
+#ifndef MAX_ADATA_LEN 
+# define MAX_ADATA_LEN 65535
+#endif
+
   template<typename stream_ty>
   ADATA_INLINE uint32_t check_read_size(stream_ty& stream, ::std::size_t size = 0)
   {
@@ -3610,6 +3614,11 @@ namespace adata
       return 0;
     }
     if (size > 0 && len > size)
+    {
+      stream.m_error_code = number_of_element_not_macth;
+      return 0;
+    }
+    else if (len > MAX_ADATA_LEN)
     {
       stream.m_error_code = number_of_element_not_macth;
       return 0;
