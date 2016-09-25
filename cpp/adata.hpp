@@ -2509,12 +2509,20 @@ namespace adata
     stream.write(str.data(), len);
   }
 
+#ifndef MAX_ADATA_LEN 
+# define MAX_ADATA_LEN 65535
+#endif
+
   template<typename stream_ty>
   ADATA_INLINE int32_t check_read_size(stream_ty& stream, int size = 0)
   {
     int32_t len;
     read(stream, len);
     if (size > 0 && len > size)
+    {
+      throw exception(number_of_element_not_match);
+    }
+    else if (len > MAX_ADATA_LEN)
     {
       throw exception(number_of_element_not_match);
     }
