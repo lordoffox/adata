@@ -164,7 +164,7 @@ namespace adata
 
     ADATA_INLINE void trace_error(const char * tag, int32_t sub = -1)
     {
-      if (m_trace_info_count > 64)
+      if (m_trace_info_count >= 64)
       {
         return;
       }
