@@ -1238,15 +1238,13 @@ local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
     local mt = {};
     local type_members = {};
     
-    local type_def = {name , type_members};
-
     local member_count = rd_i32(buf);
-    type_def.member_count = member_count;
     local param_type_count = rd_i32(buf);
     
     local type_name_sid = rd_i32(buf);
     type_name_sid = rehash(ns_str_pool_idx,type_name_sid);
     type_name = str_idx[type_name_sid];
+    local type_def = {type_name , type_members};
     local process_count = 1;
     for m = 1, member_count do
       local member_name_sid = rd_i32(buf);
@@ -1283,9 +1281,7 @@ local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
       local param_count = rd_i32(buf);
       for p = 1,param_count do
         local p_type = rd_i32(buf);
-        local size = rd_i32(buf);
         local ptype_type = p_type;
-        local ptype_size = size;
         local ptype_typename = nil;
         local ptype_typedef = nil;
         if p_type == adata_et_type then
@@ -1299,6 +1295,7 @@ local load_namespace = function(buf,str_pool,str_idx,types,mts,mt_list)
             ptype_type_def = ns_types[namespace_idx+1];
           end            
         end
+        local ptype_size = rd_i32(buf);
         local ptype = {ptype_type,ptype_size,ptype_typename,ptype_typedef};
         tinsert(member_params,ptype);
       end
@@ -1335,7 +1332,55 @@ local skip_rd_type = function(str_idx , mt_list , buf , obj_type , o)
   end    
 end
 
-m.skip_rd = skip_rd_type;
+m.skip_read = skip_rd_type;
+
+local skip_rd_value = function(buf , def , o)
+  if ty >= adata_et_int8 and ty <= adata_et_uint64 then
+    skip_rd_ints(buf)
+  elseif ty == adata_et_fix_int8 or ty == adata_et_fix_uint8 then
+    skip_rd_fixi8(buf)
+  elseif ty == adata_et_fix_int16 or ty == adata_et_fix_uint16 then
+    skip_rd_fixi16(buf)
+  elseif ty == adata_et_fix_int32 or ty == adata_et_fix_uint32 or ty ==adata_et_float64  then
+    skip_rd_fixi32(buf)
+  elseif ty == adata_et_fix_int64 or ty == adata_et_fix_uint64 or ty == adata_et_float64 then
+    skip_rd_fixi64(buf)
+  elseif ty == adata_et_string then
+    skip_rd_str(buf)
+  else
+   skip_rd_type(0,0,buf)
+  end
+end
+
+local skip_rd_member = function( buf , mb , o)
+  local ty = mb[def_pos_type];
+  if ty == adata_et_list then
+    local count = rd_i32(buf);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      error("sequence length overflow");
+    end;
+    local param = mb[def_pos_params][1];
+    for i = 1 , count do
+      local val = construct_value(param);
+      skip_rd_value(buf,param , val);
+    end
+  elseif ty == adata_et_map then
+    local count = rd_i32(buf);
+    local size = mb[def_pos_size];
+    if size > 0 and count > size then
+      error("sequence length overflow");
+    end;
+    local kparam = mb[def_pos_params][1];
+    local vparam = mb[def_pos_params][2];
+    for i = 1 , count do
+      skip_rd_value(buf,kparam,kval);
+      skip_rd_value(buf,vparam,vval);
+    end
+  else
+    skip_rd_value(buf,mb,o);
+  end
+end
 
 local read_type;
 
@@ -1394,7 +1439,6 @@ local read_member = function( buf , mb , o)
     local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     local param = mb[def_pos_params][1];
@@ -1408,7 +1452,6 @@ local read_member = function( buf , mb , o)
     local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
@@ -1465,7 +1508,7 @@ read_type = function(buf,type_def,o)
     local mb = members[i];
     if read_tag % masks[i+1] >= masks[i] then
       if mb[def_pos_del] > 0 then
-        skip_rd();
+        skip_rd_member();
       else
         local mname = mb[def_pos_name];
         o[mname] = read_member(buf,mb,o[mname]);        
@@ -1633,7 +1676,6 @@ local write_member = function( buf , mb , o , ctx)
     local count = #o;
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     wt_i32(buf,count);
@@ -1646,7 +1688,6 @@ local write_member = function( buf , mb , o , ctx)
     local count = tablen(o);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
@@ -1736,7 +1777,6 @@ local raw_read_member = function( buf , mb , o)
     local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     local param = mb[def_pos_params][1];
@@ -1750,7 +1790,6 @@ local raw_read_member = function( buf , mb , o)
     local count = rd_i32(buf);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
@@ -1903,7 +1942,6 @@ local raw_write_member = function( buf , mb , o)
     local count = #o;
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     wt_i32(buf,count);
@@ -1916,7 +1954,6 @@ local raw_write_member = function( buf , mb , o)
     local count = tablen(o);
     local size = mb[def_pos_size];
     if size > 0 and count > size then
-      buf.set_error(ec_sequence_length_overflow);
       error("sequence length overflow");
     end;
     local kparam = mb[def_pos_params][1];
