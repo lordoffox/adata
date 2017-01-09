@@ -2011,7 +2011,7 @@ namespace adata
       {
         byte tag = const_tag_as_type;
         UInt32 temp = (UInt32)value;
-        if (temp < 0)
+        if (value < 0)
         {
           tag += const_negative_bit_value;
           temp = (UInt32)(-value);
