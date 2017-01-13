@@ -133,7 +133,7 @@ namespace adata
         size = the_buffer.Length;
       }
       this.buffer = the_buffer;
-      this.data_len = the_buffer.Length;
+      this.data_len = size;
       this.read_len = 0;
       this.write_len = 0;
     }
