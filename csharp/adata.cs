@@ -1176,6 +1176,11 @@ namespace adata
       {
         return;
       }
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
@@ -1187,7 +1192,6 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         throw new exception(stream.error_code);
       }
-      bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1306,6 +1310,11 @@ namespace adata
       {
         return;
       }
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
@@ -1317,7 +1326,6 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         throw new exception(stream.error_code);
       }
-      bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1496,6 +1504,11 @@ namespace adata
       {
         return;
       }
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
       int read_bytes = (int)(value & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
@@ -1508,7 +1521,6 @@ namespace adata
         throw new exception(stream.error_code);
       }
       stream.value.VU64 = 0;
-      bool signed = (value & const_negative_bit_value) > 0;
       if (IsLittleEndian)
       {
         switch (read_bytes)
