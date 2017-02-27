@@ -426,7 +426,7 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
       ++tab_indent;
-      os << tabs(tab_indent) << "int32_t len = (int32_t)" << var_name << ".size();" << std::endl;
+      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
@@ -667,7 +667,7 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
       ++tab_indent;
-      os << tabs(tab_indent) << "int32_t len = (int32_t)" << var_name << ".size();" << std::endl;
+      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
       if (mdefine.m_type == e_base_type::string)
       {
