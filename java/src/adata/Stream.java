@@ -84,44 +84,33 @@ public class Stream {
   }
   
   public short fixReadInt16(){
-	int v = readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
+	int v = loadUint8();
+	v += (loadUint8() <<8);
 	return (short)v;
   }
   
   public int fixReadInt32(){
-	int v = readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	return v;
+    int v = loadUint8();
+    v += (loadUint8() <<8);
+    v += (loadUint8() <<16);
+    v += (loadUint8() <<24);
+    return v;
   }
   
   public long fixReadInt64(){
-	long v = readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	v <<= 8;
-	v += readBuffer[readLen++] & 0xff;
-	return v;
+    long v = loadUint8Long();
+    v += (loadUint8Long() <<8);
+    v += (loadUint8Long() <<16);
+    v += (loadUint8Long() <<24);
+    v += (loadUint8Long() <<32);
+    v += (loadUint8Long() <<40);
+    v += (loadUint8Long() <<48);
+    v += (loadUint8Long() <<56);
+    return v;
   }
 
   public void fixWriteInt8(byte val){
-	writeBuffer[writeLen++] = val;
+  writeBuffer[writeLen++] = val;
   }
   
   public void fixWriteInt16(short val){
