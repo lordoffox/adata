@@ -2,7 +2,7 @@ ADATA v1.3
 =======
 
 ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
-Note: JavaScript and Java not support yet.
+Note: JavaScript not test yet.
 
 Features Overview
 ---------------
@@ -513,6 +513,7 @@ pv1's value should equals with pv1_other and size_of also as well.
 
 
 Change log:
+
 *v1.3
 1.change C++ error handler to exception
 2.change lua error handler to exception
