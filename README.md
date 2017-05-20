@@ -2,6 +2,7 @@ ADATA v1.3
 =======
 
 ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
+
 Note: JavaScript not test yet.
 
 Features Overview
@@ -510,6 +511,97 @@ if (stream.error())
 ```
 
 pv1's value should equals with pv1_other and size_of also as well.
+
+
+Use in Java
+-------------------
+
+Assuming you have written a schema using the above language in say player.adl, you've generated a directory with namespace as you defined(rule: my/game/), you can now start using this in your program by adding the file. As noted, this file relies on adata.jar, which should be added in your project.
+
+Assuming adatac exe under adata/example/adl, player.adl under adata/example/adl/my/game, quest.adl under adata/example/adl/my/game, vec3.adl under adata/example/adl/util, the adatac command are:
+
+* player.adl.cs: adatac -Imy/game/player.adl -Putil -Pmy/game -Gjava
+* quest.adl.cs: adatac -Imy/game/quest.adl -Gjava
+* vec3.adl.cs: adatac -Iutil/vec3.adl -Gjava
+
+### Serialization
+
+First, create adata.Stream:
+
+```java
+
+adata.Stream stream = new adata.Stream();
+byte[] buf = new byte[4096];
+stream.setReadBuffer(buf);```
+stream.setWriteBuffer(buf);
+Now create player_v1 object and set its value to serialize:
+
+```java
+
+// create a my.game.player_v1 object
+my.game.player_v1 pv1 = new my.game.player_v1();
+
+// set its value
+pv1.id = 152001
+pv1.name = "alex"
+pv1.age = 22
+
+
+//serialize: 
+
+pv1.write(stream);
+
+// serialize success
+
+```
+
+### Deserialization
+
+java's adata.Stream read and write shared same byte array, so this just use stream to read:
+
+```java
+
+// create other player_v1 to deserialize
+my.game.player_v1 pv1_other = new my.game.player_v1();
+
+// deserialize
+pv1_other.read(stream);
+
+// deserialize success
+
+```
+
+pv1's value should equals with pv1_other and size_of also as well.
+
+Use in JavaScript
+-------------------
+JavaScript as same as lua
+
+### Serialization
+
+First, load the .adt file
+
+```javascript
+
+var Long = require('long');
+var adata = require('adata');
+
+var s = new adata();
+//callback_fn is the action when file load done.
+s.load('./testpack.adt',callback_fn);
+
+var callback_fn = function (){
+  var playe_v1_type = s.type('my.game.player_v1')
+  var pv1 = playe_v1_type();
+//serialize: 
+  v1.write(s);
+
+//deserialize:
+  var pv2 = playe_v1_type();
+  v2.read(s);
+}
+
+```
 
 
 Change log:
