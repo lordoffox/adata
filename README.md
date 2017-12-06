@@ -605,6 +605,8 @@ var callback_fn = function (){
 
 
 Change log:
+*v1.3.1
+1.add kotlin suport
 
 *v1.3
 1.change C++ error handler to exception

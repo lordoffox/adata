@@ -36,6 +36,11 @@ namespace csharp_gen
   void gen_code(const descrip_define&, const std::string&);
 }
 
+namespace kotlin_gen
+{
+  void gen_code(const descrip_define&, const std::string&);
+}
+
 namespace java_gen
 {
   void gen_code(const descrip_define&, const std::string&);
@@ -131,6 +136,10 @@ void run_program()
     else if (gen_type == "java")
     {
       java_gen::gen_code(define, outputpath + "java/");
+    }
+    else if (gen_type == "kt")
+    {
+      kotlin_gen::gen_code(define, outputfile + ".adl.kt");
     }
     else if (gen_type == "adt")
     {
