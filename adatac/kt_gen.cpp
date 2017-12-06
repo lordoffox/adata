@@ -217,17 +217,17 @@ namespace kotlin_gen
       }
 
       os << tabs(tab_indent) << "{\n";
-      os << tabs(tab_indent + 1) << "val len" << gen_check_read_size(mdefine) << "-1\n";
+      os << tabs(tab_indent + 1) << "val len" << gen_check_read_size(mdefine) << "\n";
       if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent + 1) << var_name << ".clear()\n";
-        os << tabs(tab_indent + 1) << "for (i in 0..len){\n";
+        os << tabs(tab_indent + 1) << "for (i in 0 until len){\n";
         os << tabs(tab_indent + 2) << var_name << ".add(" << gen_kotlin_read_element(desc_define, mdefine.m_template_parameters[0]) << ")\n";
         os << tabs(tab_indent + 1) << "}";
       }
       else if (mdefine.m_type == e_base_type::map)
       {
-        os << tabs(tab_indent + 1) << "for (i in 0..len){\n";
+        os << tabs(tab_indent + 1) << "for (i in 0 until len){\n";
         os << tabs(tab_indent + 2) << var_name << "[" << gen_kotlin_read_element(desc_define, mdefine.m_template_parameters[0]) << "] = "
           << gen_kotlin_read_element(desc_define, mdefine.m_template_parameters[1]) << "\n";
         os << tabs(tab_indent + 1) << "}";
@@ -252,13 +252,13 @@ namespace kotlin_gen
       }
       else if (mdefine.m_type == e_base_type::list)
       {
-        os << tabs(tab_indent + 1) << "for (i in 0..len){\n";
+        os << tabs(tab_indent + 1) << "for (i in 0 until len){\n";
         gen_adata_operator_read_skip_member_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2);
         os << tabs(tab_indent + 1) << "}\n";
       }
       else if (mdefine.m_type == e_base_type::map)
       {
-        os << tabs(tab_indent + 1) << "for (i in 0..len){\n";
+        os << tabs(tab_indent + 1) << "for (i in 0 until len){\n";
         gen_adata_operator_read_skip_member_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2);
         gen_adata_operator_read_skip_member_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 2);
         os << tabs(tab_indent + 1) << "}\n";
@@ -605,17 +605,17 @@ namespace kotlin_gen
       }
 
       os << tabs(tab_indent) << "run{\n";
-      os << tabs(tab_indent + 1) << "val len" << gen_check_read_size(mdefine) << "-1\n";
+      os << tabs(tab_indent + 1) << "val len" << gen_check_read_size(mdefine) << "\n";
       if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent + 1) << var_name << ".clear()\n";
-        os << tabs(tab_indent + 1) << "for (i in 0..len){\n";
+        os << tabs(tab_indent + 1) << "for (i in 0 until len){\n";
         os << tabs(tab_indent + 2) << var_name << ".add(" << gen_kotlin_raw_read_element(desc_define, mdefine.m_template_parameters[0]) << ")\n";
         os << tabs(tab_indent + 1) << "}";
       }
       else if (mdefine.m_type == e_base_type::map)
       {
-        os << tabs(tab_indent + 1) << "for (i in 0..len){\n";
+        os << tabs(tab_indent + 1) << "for (i in 0 until len){\n";
         os << tabs(tab_indent + 2) << var_name << "[" << gen_kotlin_raw_read_element(desc_define, mdefine.m_template_parameters[0]) << "] = "
           << gen_kotlin_raw_read_element(desc_define, mdefine.m_template_parameters[1]) << "\n";
         os << tabs(tab_indent + 1) << "}";
