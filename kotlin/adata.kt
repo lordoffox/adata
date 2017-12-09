@@ -453,10 +453,11 @@ class Stream {
     return str
   }
 
-  fun readString(len:Int = 0):String{
+  fun readString(len: Int = 0): String {
     val sLen = checkReadSize(len)
     return readStringBySize(sLen)
   }
+
   //@JvmOverloads
   fun writeString(str: String, len: Int = 0) {
     val sbuf = str.toByteArray(java.nio.charset.StandardCharsets.UTF_8)
@@ -547,22 +548,21 @@ interface Base {
   fun rawWrite(stream: Stream)
 }
 
-fun  checkWriteSize(vLen:Int, len:Int)
-{
-  if(len > 0) {
-    if(vLen > len){
+fun checkWriteSize(vLen: Int, len: Int) {
+  if (len > 0) {
+    if (vLen > len) {
       throw RuntimeException("length too large.")
     }
   }
 }
 
-inline fun <reified T> readElement(stream: Stream):T where T:Base{
+inline fun <reified T> readElement(stream: Stream): T where T : Base {
   val vv = T::class.primaryConstructor!!.call()
   vv.read(stream)
   return vv
 }
 
-inline fun <reified T> rawReadElement(stream: Stream):T where T:Base{
+inline fun <reified T> rawReadElement(stream: Stream): T where T : Base {
   val vv = T::class.primaryConstructor!!.call()
   vv.rawRead(stream)
   return vv
