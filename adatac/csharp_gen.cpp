@@ -138,6 +138,10 @@ namespace csharp_gen
       {
         os << " = " << "\"\"";
       }
+      else if (member.m_type == e_base_type::buffer)
+      {
+        os << " = " << "new byte[0]";
+      }
       else
       {
         os << " = " << "new " << type_name << "()";
@@ -179,6 +183,10 @@ namespace csharp_gen
     {
       return "\"\"";
     }
+    case e_base_type::buffer:
+    {
+      return "new byte[0]";
+    }
     case e_base_type::type:
     {
       std::string value = "new " + decl_type + "()";
@@ -218,7 +226,7 @@ namespace csharp_gen
       }
       os << ");";
       os << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "adata.stream.read(stream,ref " << var_name << ",len" << tab_indent << ");";
       }
@@ -302,7 +310,7 @@ namespace csharp_gen
       }
       os << ");";
       os << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "stream.skip_read(len" << tab_indent << ");" << std::endl;
       }
@@ -445,7 +453,7 @@ namespace csharp_gen
         {
           os << tabs(tab_indent) << "if(this." << member.m_name << ".Count > 0){tag|=" << tag_mask << "L;}" << std::endl;
         }
-        else if (member.m_type == e_base_type::string)
+        else if (member.m_type == e_base_type::string || member.m_type == e_base_type::buffer)
         {
           os << tabs(tab_indent) << "if(this." << member.m_name << ".Length > 0){tag|=" << tag_mask << "L;}" << std::endl;
         }
@@ -460,7 +468,7 @@ namespace csharp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
       ++tab_indent;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent) << "size += adata.stream.size_of(" << var_name << ");" << std::endl;
       }
@@ -552,7 +560,7 @@ namespace csharp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
 
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "adata.stream.write(stream," << var_name << ");" << std::endl;
       }
@@ -645,7 +653,7 @@ namespace csharp_gen
       }
       os << ");";
       os << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "adata.stream.read(stream,ref " << var_name << ",len" << tab_indent << ");";
       }
@@ -740,7 +748,7 @@ namespace csharp_gen
   {
     if (mdefine.is_multi())
     {
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent) << "size += adata.stream.size_of(" << var_name << ");" << std::endl;
       }
@@ -810,7 +818,7 @@ namespace csharp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
 
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "adata.stream.write(stream," << var_name << ");" << std::endl;
       }

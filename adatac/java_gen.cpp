@@ -163,6 +163,10 @@ namespace java_gen
     {
       return "\"\"";
     }
+    case e_base_type::buffer:
+    {
+      return "new byte[0]";
+    }
     case e_base_type::type:
     {
       std::string value = "new " + decl_type + "()";
@@ -225,6 +229,10 @@ namespace java_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent + 1) << var_name << " = stream.readString(len"<< tab_indent << ");";
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent + 1) << var_name << " = stream.readBuffer(len" << tab_indent << ");";
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -292,7 +300,7 @@ namespace java_gen
       os << tabs(tab_indent) << "{";
       os << std::endl << tabs(tab_indent + 1)
         << "int len" << tab_indent << gen_check_read_size(mdefine) << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "stream.skipRead(len" << tab_indent << ");" << std::endl;
       }
@@ -429,7 +437,7 @@ namespace java_gen
         {
           os << tabs(tab_indent) << "if(this." << member.m_name << ".size() > 0){tag|=" << tag_mask << "L;}" << std::endl;
         }
-        else if (member.m_type == e_base_type::string)
+        else if (member.m_type == e_base_type::string || member.m_type == e_base_type::buffer)
         {
           os << tabs(tab_indent) << "if(this." << member.m_name << ".length() > 0){tag|=" << tag_mask << "L;}" << std::endl;
         }
@@ -447,6 +455,10 @@ namespace java_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent) << "size += adata.Stream.sizeOfString(" << var_name << ");" << std::endl;
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfBuffer(" << var_name << ");" << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -535,6 +547,19 @@ namespace java_gen
         }
         os << ");" << std::endl;
       }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent + 1) << "stream.writeBuffer(" << var_name;
+        if (mdefine.m_size.length() > 0)
+        {
+          os << "," << mdefine.m_size;
+        }
+        else
+        {
+          os << ",0";
+        }
+        os << ");" << std::endl;
+      }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent + 1) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
@@ -612,6 +637,10 @@ namespace java_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent + 1) << var_name << " = stream.readString(len" << tab_indent << ");";
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent + 1) << var_name << " = stream.readBuffer(len" << tab_indent << ");";
       }
       else if (mdefine.m_type == e_base_type::list)
       {
@@ -701,6 +730,10 @@ namespace java_gen
       {
         os << tabs(tab_indent) << "size += adata.Stream.sizeOfString(" << var_name << ");" << std::endl;
       }
+      if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << "size += adata.Stream.sizeOfBuffer(" << var_name << ");" << std::endl;
+      }
       else if (mdefine.m_type == e_base_type::list)
       {
         os << tabs(tab_indent) << "int len" << tab_indent << " = " << var_name << ".size();" << std::endl;
@@ -763,6 +796,19 @@ namespace java_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent) << "stream.writeString(" << var_name;
+        if (mdefine.m_size.length() > 0)
+        {
+          os << "," << mdefine.m_size;
+        }
+        else
+        {
+          os << ",0";
+        }
+        os << ");" << std::endl;
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << "stream.writeBuffer(" << var_name;
         if (mdefine.m_size.length() > 0)
         {
           os << "," << mdefine.m_size;
@@ -893,6 +939,10 @@ namespace java_gen
       {
         os << " = " << "\"\"";
       }
+      else if (member.m_type == e_base_type::buffer)
+      {
+        os << " = " << "new byte[0]";
+      }
       else
       {
         os << " = " << "new " << type_name << "()";
@@ -920,6 +970,10 @@ namespace java_gen
       else if (member.m_type == e_base_type::string)
       {
         os << " = " << "\"\"";
+      }
+      else if (member.m_type == e_base_type::buffer)
+      {
+        os << " = " << "new byte[0]";
       }
       else
       {

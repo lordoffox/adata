@@ -564,8 +564,8 @@ namespace adata
     public static Int32 size_of(Int16 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
-      UInt16 temp = value;
-      if (value < 0) temp = (UInt16)-value;
+      UInt16 temp = (UInt16)value;
+      if (value < 0) temp = (UInt16)(-value);
       if (temp < 0x100) return 2;
       return 3;
     }
@@ -582,7 +582,7 @@ namespace adata
     public static Int32 size_of(Int32 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
-      UInt32 temp = value;
+      UInt32 temp = (UInt32)value;
       if (value < 0) temp = (UInt32)(-value);
       if (temp < 0x100) return 2;
       if (temp < 0x10000) return 3;
@@ -606,7 +606,7 @@ namespace adata
     public static Int32 size_of(Int64 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
-      UInt64 temp = value;
+      UInt64 temp = (UInt64)value;
       if (value < 0) temp = (UInt64)(-value);
       if (temp < 0x100) return 2;
       else if (temp < 0x10000) return 3;
@@ -631,6 +631,13 @@ namespace adata
     public static Int32 size_of(string value)
     {
       Int32 len = System.Text.Encoding.UTF8.GetByteCount(value);
+      len += adata.stream.size_of(len);
+      return len;
+    }
+
+    public static Int32 size_of(byte[] value)
+    {
+      Int32 len = value.Length;
       len += adata.stream.size_of(len);
       return len;
     }
@@ -1783,7 +1790,7 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte07= stream.buffer[stream.read_len++];
+              stream.value.Byte7= stream.buffer[stream.read_len++];
               break;
             }
           case 2:
@@ -2660,6 +2667,20 @@ namespace adata
       stream.read_len += (int)len;
     }
 
+    public static void read(zero_copy_buffer stream, ref byte[] value, Int32 len)
+    {
+      if (len == 0)
+        return;
+      if (stream.read_len + len > stream.data_len)
+      {
+        stream.error_code = error_code_t.stream_buffer_overflow;
+        throw new exception(stream.error_code);
+      }
+      value = new byte[len];
+      System.Buffer.BlockCopy(stream.buffer, stream.read_len, value, 0, len);
+      stream.read_len += (int)len;
+    }
+
     public static void write(zero_copy_buffer stream, string value, Int32 len)
     {
       if (stream.write_len + len > stream.data_len)
@@ -2674,7 +2695,28 @@ namespace adata
       }
     }
 
+    public static void write(zero_copy_buffer stream, byte[] buff, Int32 len)
+    {
+      if (stream.write_len + len > stream.data_len)
+      {
+        stream.error_code = error_code_t.stream_buffer_overflow;
+        throw new exception(stream.error_code);
+      }
+      for (int i = 0; i < len; ++i)
+      {
+        stream.buffer[stream.write_len++] = buff[i];
+      }
+    }
+
+
     public static void read(zero_copy_buffer stream, ref string value)
+    {
+      Int32 len = 0;
+      read(stream, ref len);
+      read(stream, ref value, len);
+    }
+
+    public static void read(zero_copy_buffer stream, ref byte[] value)
     {
       Int32 len = 0;
       read(stream, ref len);
@@ -2698,7 +2740,32 @@ namespace adata
       }
     }
 
+    public static void write(zero_copy_buffer stream, byte[] buff)
+    {
+      Int32 len = buff.Length;
+      if (stream.write_len + len > stream.data_len)
+      {
+        stream.error_code = error_code_t.stream_buffer_overflow;
+        throw new exception(stream.error_code);
+      }
+      write(stream, len);
+      for (int i = 0; i < len; ++i)
+      {
+        stream.buffer[stream.write_len++] = buff[i];
+      }
+    }
+
     public static void skip_read(zero_copy_buffer stream, ref string value, UInt32 len)
+    {
+      if (stream.read_len + len > stream.data_len)
+      {
+        stream.error_code = error_code_t.stream_buffer_overflow;
+        throw new exception(stream.error_code);
+      }
+      stream.read_len += (int)len;
+    }
+
+    public static void skip_read(zero_copy_buffer stream, ref byte[] value, UInt32 len)
     {
       if (stream.read_len + len > stream.data_len)
       {

@@ -83,6 +83,16 @@ namespace cpp_gen
         type_name += " > ";
       }
     }
+    else if (define.m_type == e_base_type::buffer)
+    {
+      type_name = make_typename(desc_define, define.m_typename);
+      if (desc_define.m_option.m_cpp_allocator.length())
+      {
+        type_name = "::std::basic_string<<char, char_traits<char>,";
+        type_name += desc_define.m_option.m_cpp_allocator;
+        type_name += " > ";
+      }
+    }
     else
     {
       type_name = make_typename(desc_define, define.m_typename);
@@ -227,7 +237,7 @@ namespace cpp_gen
       }
       os << ");";
       os << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << var_name << ".resize(len);" << std::endl
           << tabs(tab_indent + 1) << "stream.read((char *)" << var_name << ".data(),len);";
@@ -278,7 +288,7 @@ namespace cpp_gen
       }
       os << ");";
       os << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "stream.skip_read(len);" << std::endl;
       }
@@ -428,7 +438,7 @@ namespace cpp_gen
       ++tab_indent;
       os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent) << "size += len;";
         os << std::endl;
@@ -509,7 +519,7 @@ namespace cpp_gen
       os << tabs(tab_indent + 1) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent + 1) << "write(stream,len);" << std::endl;
 
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "stream.write((" << var_name << ").data(),len);" << std::endl;
       }
@@ -590,7 +600,7 @@ namespace cpp_gen
       }
       os << ");";
       os << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << var_name << ".resize(len);" << std::endl
           << tabs(tab_indent + 1) << "stream.read((char *)" << var_name << ".data(),len);";
@@ -669,7 +679,7 @@ namespace cpp_gen
       ++tab_indent;
       os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent) << "size += len;";
         os << std::endl;
@@ -743,7 +753,7 @@ namespace cpp_gen
       os << tabs(tab_indent + 1) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
       os << tabs(tab_indent + 1) << "write(stream,len);" << std::endl;
 
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "stream.write((" << var_name << ").data(),len);" << std::endl;
       }

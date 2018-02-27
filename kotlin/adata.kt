@@ -78,6 +78,16 @@ fun fixSizeOf(str: String): Int {
   return sizeOf(str)
 }
 
+fun sizeOf(buf: ByteArray): Int {
+  var len = buf.size
+  len += sizeOf(len)
+  return len
+}
+
+fun fixSizeOf(buf: ByteArray): Int {
+  return sizeOf(buf)
+}
+
 class Stream {
   private var readBuffer: ByteArray = ByteArray(0)
   private var writeBuffer: ByteArray = ByteArray(1024)
@@ -458,9 +468,24 @@ class Stream {
     return readStringBySize(sLen)
   }
 
+  fun readBuffer(len: Int = 0): ByteArray {
+    val sLen = checkReadSize(len)
+    val buf = readBuffer.copyOfRange(readLen, readLen + sLen)
+    readLen += len
+    return buf
+  }
   //@JvmOverloads
   fun writeString(str: String, len: Int = 0) {
     val sbuf = str.toByteArray(java.nio.charset.StandardCharsets.UTF_8)
+    val slen = sbuf.size
+    if (len in 1..(slen - 1)) {
+      throw RuntimeException("length too large.")
+    }
+    write(slen)
+    writeData(sbuf, slen)
+  }
+
+  fun writeBuffer(sbuf: ByteArray, len: Int = 0) {
     val slen = sbuf.size
     if (len in 1..(slen - 1)) {
       throw RuntimeException("length too large.")
@@ -525,6 +550,11 @@ class Stream {
   }
 
   fun skipReadString() {
+    val slen = readInt32().toLong()
+    skipRead(slen.toInt())
+  }
+
+  fun skipReadBuffer() {
     val slen = readInt32().toLong()
     skipRead(slen.toInt())
   }

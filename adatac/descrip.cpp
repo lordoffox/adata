@@ -101,6 +101,7 @@ namespace
   std::string s_float32 = "float32";
   std::string s_float64 = "float64";
   std::string s_string = "string";
+  std::string s_buffer = "buffer";
   std::string s_list = "list";
   std::string s_map = "map";
 
@@ -126,6 +127,7 @@ namespace
     define.insert(std::make_pair(s_float32, "float"));
     define.insert(std::make_pair(s_float64, "double"));
     define.insert(std::make_pair(s_string, "::std::string"));
+    define.insert(std::make_pair(s_buffer, "::std::string"));
     define.insert(std::make_pair(s_list, "::std::vector"));
     define.insert(std::make_pair(s_map, "::std::map"));
 
@@ -156,6 +158,7 @@ namespace
     define.insert(std::make_pair(s_float32, float32));
     define.insert(std::make_pair(s_float64, float64));
     define.insert(std::make_pair(s_string, e_base_type::string));
+    define.insert(std::make_pair(s_buffer, e_base_type::buffer));
 
     define.insert(std::make_pair(s_list, list));
     define.insert(std::make_pair(s_map, map));
@@ -191,6 +194,7 @@ namespace
     define.insert(std::make_pair(s_float32, "float"));
     define.insert(std::make_pair(s_float64, "double"));
     define.insert(std::make_pair(s_string, "string"));
+    define.insert(std::make_pair(s_buffer, "byte[]"));
     define.insert(std::make_pair(s_list, "List"));
     define.insert(std::make_pair(s_map, "Dictionary"));
 
@@ -211,6 +215,7 @@ namespace
     define.insert(std::make_pair(s_float32, "float"));
     define.insert(std::make_pair(s_float64, "double"));
     define.insert(std::make_pair(s_string, "String"));
+    define.insert(std::make_pair(s_buffer, "byte[]"));
     define.insert(std::make_pair(s_list, "ArrayList"));
     define.insert(std::make_pair(s_map, "HashMap"));
 
@@ -231,6 +236,7 @@ namespace
     define.insert(std::make_pair(s_float32, "Float"));
     define.insert(std::make_pair(s_float64, "Double"));
     define.insert(std::make_pair(s_string, "String"));
+    define.insert(std::make_pair(s_buffer, "ByteArray"));
     define.insert(std::make_pair(s_list, "MutableList"));
     define.insert(std::make_pair(s_map, "MutableMap"));
 
@@ -251,6 +257,7 @@ namespace
     define.insert(std::make_pair(s_float32, "Float"));
     define.insert(std::make_pair(s_float64, "Double"));
     define.insert(std::make_pair(s_string, "String"));
+    define.insert(std::make_pair(s_buffer, "byte[]"));
     define.insert(std::make_pair(s_list, "ArrayList"));
     define.insert(std::make_pair(s_map, "HashMap"));
 

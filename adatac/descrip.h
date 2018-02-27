@@ -58,6 +58,7 @@ enum e_base_type
   list,
   map,
   type,
+  buffer,
   max_count
 };
 
@@ -144,7 +145,7 @@ struct member_define
 
   inline bool	is_multi()const
   {
-    return ::is_container(m_type) || m_type == e_base_type::string;
+    return ::is_container(m_type) || m_type == e_base_type::string || m_type == e_base_type::buffer;
   }
 
   inline bool is_initable()const

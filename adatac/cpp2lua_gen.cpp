@@ -73,7 +73,7 @@ namespace cpp2lua_gen
       }
       type_name += ">";
     }
-    else if (define.m_type == e_base_type::string)
+    else if (define.m_type == e_base_type::string || define.m_type == e_base_type::buffer)
     {
       type_name = make_typename(desc_define, define.m_typename);
       if (desc_define.m_option.m_cpp_allocator.length())

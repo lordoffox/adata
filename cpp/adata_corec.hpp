@@ -620,7 +620,8 @@ namespace adata {
       adata_et_string,
       adata_et_list,
       adata_et_map,
-      adata_et_type
+      adata_et_type,
+      adata_et_buffer,
     };
 
     typedef struct adata_member adata_member;
@@ -732,6 +733,12 @@ namespace adata {
       case adata_et_type:
       {
         lua_rawgeti(L, load_contex::str_idx_idx, typename_sid);
+        lua_rawseti(L, construct_list_idx, member_idx);
+        break;
+      }
+      case adata_et_buffer:
+      {
+        lua_pushstring(L, "");
         lua_rawseti(L, construct_list_idx, member_idx);
         break;
       }
@@ -1072,6 +1079,13 @@ namespace adata {
         }
         break;
       }
+      case adata_et_buffer:
+      {
+        uint32_t len = 0;
+        adata::read(*buf, len);
+        buf->skip_read(len);
+        break;
+      }
       default:
       {
         luaL_error(L, "undefined member protocol not compatible");
@@ -1238,6 +1252,11 @@ namespace adata {
         }
         break;
       }
+      case adata_et_buffer:
+      {
+        read_string(L, buf, size);
+        break;
+      }
       default:
       {
         luaL_error(L, "undefined member protocol not compatible");
@@ -1359,6 +1378,13 @@ namespace adata {
             lua_settable(L, -3);
             break;
           }
+          case adata_et_buffer:
+          {
+            lua_rawgeti(L, 1, mb->field_idx);
+            lua_pushlstring(L, "", 0);
+            lua_settable(L, -3);
+            break;
+          }
           }
         }
         mask <<= 1;
@@ -1439,6 +1465,11 @@ namespace adata {
         {
           luaL_error(L, "undefined member protocol not compatible");
         }
+        break;
+      }
+      case adata_et_buffer:
+      {
+        read_string(L, buf, size);
         break;
       }
       default:
@@ -1739,6 +1770,17 @@ namespace adata {
         }
         break;
       }
+      case adata_et_buffer:
+      {
+        if (lua_type(L, -1) != LUA_TSTRING)
+        {
+          return 0;
+        }
+        size_t slen = 0;
+        lua_tolstring(L, -1, &slen);
+        len = (int)slen;
+        break;
+      }
       }
       return len;
     }
@@ -1750,6 +1792,7 @@ namespace adata {
       case adata_et_string:
       case adata_et_list:
       case adata_et_map:
+      case adata_et_buffer:
       {
         return lua_get_len(L, mb) == 0;
       }
@@ -1793,6 +1836,11 @@ namespace adata {
         {
           return sizeof_type(L, type_define, ctx);
         }
+        break;
+      }
+      case adata_et_buffer:
+      {
+        return sizeof_string(L);
         break;
       }
       }
@@ -1929,6 +1977,11 @@ namespace adata {
         }
         break;
       }
+      case adata_et_buffer:
+      {
+        return sizeof_string(L);
+        break;
+      }
       }
       return 0;
     }
@@ -2034,6 +2087,11 @@ namespace adata {
         {
           luaL_error(L,"undefined member protocol not compatible");
         }
+        break;
+      }
+      case adata_et_buffer:
+      {
+        write_string(L, buf, size);
         break;
       }
       default:
@@ -2185,6 +2243,11 @@ namespace adata {
         {
           luaL_error(L, "undefined member protocol not compatible");
         }
+        break;
+      }
+      case adata_et_buffer:
+      {
+        write_string(L, buf, size);
         break;
       }
       default:

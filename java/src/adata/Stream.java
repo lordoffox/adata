@@ -1,5 +1,6 @@
 package adata;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public class Stream {
   byte[] readBuffer;
@@ -110,7 +111,7 @@ public class Stream {
   }
 
   public void fixWriteInt8(byte val){
-  writeBuffer[writeLen++] = val;
+	writeBuffer[writeLen++] = val;
   }
   
   public void fixWriteInt16(short val){
@@ -442,6 +443,32 @@ public class Stream {
       throw new RuntimeException("length too large.");
 	}
 	return (int)slen;
+  }
+  
+  public static int sizeOfBuffer(byte[] buf){
+	int len = buf.length;
+	len += sizeOfInt32(len);	
+	return len;
+  }
+
+  public byte[] readBuffer(int len){
+	byte[] buf = Arrays.copyOfRange(readBuffer, readLen, readLen+len);
+	readLen += len;
+	return buf;
+  }
+  
+  public String readBuffer(){
+	int len = readInt32();
+	return readString(len);
+  }
+  
+  public void writeBuffer(byte[] sbuf , int len){
+	int slen = sbuf.length;
+	if(len > 0 && slen > len){
+	  throw new RuntimeException("length too large.");
+	}
+	writeInt32(slen);
+	writeData(sbuf,slen);
   }
   
   public static int sizeOfString(String str){

@@ -82,6 +82,7 @@ local adata_et_string     =19;
 local adata_et_list       =20;
 local adata_et_map        =21;
 local adata_et_type       =22;
+local adata_et_buffer     =23;
 
 local m = {};
 
@@ -1217,6 +1218,8 @@ local decode_default_value = function(buf,t,tname)
     v = "";
   elseif t == adata_et_type then
     v = tname;
+  elseif t == adata_et_buffer then
+    v = "";
   end
   return v;
 end
@@ -1347,6 +1350,8 @@ local skip_rd_value = function(buf , def , o)
     skip_rd_fixi64(buf)
   elseif ty == adata_et_string then
     skip_rd_str(buf)
+  elseif ty == adata_et_buffer then
+    skip_rd_str(buf)
   else
    skip_rd_type(0,0,buf)
   end
@@ -1426,6 +1431,8 @@ local read_value = function(buf , def , o)
     return rd_str(buf,def[def_pos_size]);
   elseif ty == adata_et_type then
     return read_type(buf,def[def_pos_type_def],o)
+  elseif ty == adata_et_buffer then
+    return rd_str(buf,def[def_pos_size]);
   end
 end
 
@@ -1550,6 +1557,9 @@ local sizeof_value = function(def , o , ctx)
     return szof_i64(len) + len;
   elseif ty == adata_et_type then
     return sizeof_type(def[def_pos_type_def],o,ctx)
+  elseif ty == adata_et_buffer then
+    local len = #o;
+    return szof_i64(len) + len;
   end
 end
 
@@ -1667,6 +1677,8 @@ local write_value = function(buf , def , o , ctx)
     return wt_str(buf,o,def[def_pos_size]);
   elseif ty == adata_et_type then
     return write_type(buf,def[def_pos_type_def],o,ctx)
+  elseif ty == adata_et_buffer then
+    return wt_str(buf,o,def[def_pos_size]);
   end
 end
 
@@ -1768,6 +1780,8 @@ local raw_read_value = function(buf , def , o)
     return rd_str(buf,def[def_pos_size]);
   elseif ty == adata_et_type then
     return raw_read_type(buf,def[def_pos_type_def],o)
+  elseif ty == adata_et_buffer then
+    return rd_str(buf,def[def_pos_size]);
   end
 end
 
@@ -1842,6 +1856,9 @@ local raw_sizeof_value = function(def , o)
     return szof_i64(len) + len;
   elseif ty == adata_et_type then
     return raw_sizeof_type(def[def_pos_type_def],o)
+  elseif ty == adata_et_buffer then
+    local len = #o;
+    return szof_i64(len) + len;
   end
 end
 
@@ -1933,6 +1950,8 @@ local raw_write_value = function(buf , def , o)
     return wt_str(buf,o,def[def_pos_size]);
   elseif ty == adata_et_type then
     return raw_write_type(buf,def[def_pos_type_def],o)
+  elseif ty == adata_et_buffer then
+    return wt_str(buf,o,def[def_pos_size]);
   end
 end
 

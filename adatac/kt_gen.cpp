@@ -158,13 +158,17 @@ namespace kotlin_gen
     if (mdefine.m_type == e_base_type::type)
     {
       std::string str = "readElement(stream)";
-      //str += make_type_desc(desc_define, mdefine);
-      //str += ">(stream)";
       return str;
     }
     else if (mdefine.m_type == e_base_type::string)
     {
       std::string str = "stream.readString(";
+      str += gen_check_size(mdefine);
+      return str + ")";
+    }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      std::string str = "stream.readBuffer(";
       str += gen_check_size(mdefine);
       return str + ")";
     }
@@ -183,6 +187,12 @@ namespace kotlin_gen
     else if (mdefine.m_type == e_base_type::string)
     {
       std::string str = " = stream.readString(";
+      str += gen_check_size(mdefine);
+      return str + ")";
+    }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      std::string str = " = stream.readBuffer(";
       str += gen_check_size(mdefine);
       return str + ")";
     }
@@ -213,6 +223,11 @@ namespace kotlin_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent) << var_name << " = stream.readString(" << gen_check_size(mdefine) << ")\n";
+        return;
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << var_name << " = stream.readBuffer(" << gen_check_size(mdefine) << ")\n";
         return;
       }
 
@@ -246,7 +261,7 @@ namespace kotlin_gen
     {
       os << tabs(tab_indent) << "{\n";
       os << tabs(tab_indent + 1) << "var len" << gen_check_read_size(mdefine) << "\n";
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent + 1) << "stream.skipRead(len" << tab_indent << ")\n";
       }
@@ -350,7 +365,7 @@ namespace kotlin_gen
         {
           os << tabs(tab_indent) << "if(" << member.m_name << ".isNotEmpty()){tag = tag or " << tag_mask << "L}\n";
         }
-        else if (member.m_type == e_base_type::string)
+        else if (member.m_type == e_base_type::string || member.m_type == e_base_type::buffer)
         {
           os << tabs(tab_indent) << "if(" << member.m_name << ".isNotEmpty()){tag = tag or " << tag_mask << "L}\n";
         }
@@ -363,7 +378,7 @@ namespace kotlin_gen
   {
     if (mdefine.is_multi())
     {
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent) << "size += sizeOf(" << var_name << ")\n";
         return;
@@ -447,6 +462,14 @@ namespace kotlin_gen
       str += gen_check_size(mdefine);
       return str + ")";
     }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      std::string str = "stream.writeBuffer(";
+      str += var_name;
+      str += ",";
+      str += gen_check_size(mdefine);
+      return str + ")";
+    }
 
     if (mdefine.m_fixed)
     {
@@ -464,6 +487,11 @@ namespace kotlin_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent) << "stream.writeString(" << var_name << "," << gen_check_size(mdefine) << ")\n";
+        return;
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << "stream.writeBuffer(" << var_name << "," << gen_check_size(mdefine) << ")\n";
         return;
       }
       os << tabs(tab_indent) << "{\n";
@@ -570,6 +598,12 @@ namespace kotlin_gen
       str += gen_check_size(mdefine);
       return str + ")";
     }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      std::string str = "stream.readBuffer(";
+      str += gen_check_size(mdefine);
+      return str + ")";
+    }
 
     std::string str = "stream.";
     return str + gen_kotlin_opt_name(mdefine, "read") + "()";
@@ -588,6 +622,12 @@ namespace kotlin_gen
       str += gen_check_size(mdefine);
       return str + ")";
     }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      std::string str = " = stream.readBuffer(";
+      str += gen_check_size(mdefine);
+      return str + ")";
+    }
 
     std::string str = " = stream.";
     return str + gen_kotlin_opt_name(mdefine, prefix) + "()";
@@ -601,6 +641,11 @@ namespace kotlin_gen
       if (mdefine.m_type == e_base_type::string)
       {
         os << tabs(tab_indent) << var_name << " = stream.readString(" << gen_check_size(mdefine)<< ")\n";
+        return;
+      }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << var_name << " = stream.readBuffer(" << gen_check_size(mdefine) << ")\n";
         return;
       }
 
@@ -651,7 +696,7 @@ namespace kotlin_gen
   {
     if (mdefine.is_multi())
     {
-      if (mdefine.m_type == e_base_type::string)
+      if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
         os << tabs(tab_indent) << "size += fixSizeOf(" << var_name << ")\n";
         return;
@@ -721,6 +766,14 @@ namespace kotlin_gen
       str += gen_check_size(mdefine);
       return str + ")";
     }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      std::string str = "stream.writeBuffer(";
+      str += var_name;
+      str += ",";
+      str += gen_check_size(mdefine);
+      return str + ")";
+    }
 
     if (mdefine.m_fixed)
     {
@@ -740,6 +793,12 @@ namespace kotlin_gen
         os << tabs(tab_indent) << "stream.writeString(" << var_name << "," << gen_check_size(mdefine) << ")\n";
         return;
       }
+      else if (mdefine.m_type == e_base_type::buffer)
+      {
+        os << tabs(tab_indent) << "stream.writeBuffer(" << var_name << "," << gen_check_size(mdefine) << ")\n";
+        return;
+      }
+
       os << tabs(tab_indent) << "run{\n";
       if (mdefine.m_type == e_base_type::list)
       {
@@ -801,6 +860,10 @@ namespace kotlin_gen
       else if (member.m_type == e_base_type::string)
       {
         os << " = " << "\"\"";
+      }
+      else if (member.m_type == e_base_type::buffer)
+      {
+        os << " = " << "ByteArray(0)";
       }
       else if (member.m_type == e_base_type::list)
       {

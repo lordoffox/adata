@@ -1364,18 +1364,74 @@ var FileReader = require('filereader');
     cs[i] = v; // 0x00 -> "\00"
   }
   
-  adata.prototype.sk_rd_s = function (n) {
-    'use asm';
-    var l = this.rd_i32();
-    if ((n > 0) && (l > n)) {
-      throw "number_of_element_not_macth";
-    }
-    if ((this.r + l) > this.l) {
-      throw "stream_buffer_overflow";
-    }
-    this.r += l;
+  adata.prototype.sk_rd_buf = function (n) {
+      'use asm';
+      var l = this.rd_i32();
+      if ((n > 0) && (l > n)) {
+          throw "number_of_element_not_macth";
+      }
+      if ((this.r + l) > this.l) {
+          throw "stream_buffer_overflow";
+      }
+      this.r += l;
   };
-  
+ 
+  adata.prototype.rd_buf = function (n) {
+      'use asm';
+      var l = this.rd_i32();
+      if ((n > 0) && (l > n)) {
+          throw "number_of_element_not_macth";
+      }
+      if ((this.r + l) > this.l) {
+          throw "stream_buffer_overflow";
+      }
+      var s = new byte[l];
+      for (var i = 0; i < l; ++i) {
+          s[i] = this.b[this.r++];
+      }
+      return s;
+  };
+
+  adata.prototype.szof_buf = function (s, n) {
+      'use asm';
+      if (typeof s !== 'string') {
+          throw "error_value_string";
+      }
+      var l = s.length;
+      l += this.szof_i32(l);
+      return l;
+  };
+
+  adata.prototype.wt_buf = function (s, n) {
+      'use asm';
+      if (typeof s !== 'string') {
+          throw "error_value_string";
+      }
+      var l = s.length;
+      if ((n > 0) && (l > n)) {
+          throw "number_of_element_not_macth";
+      }
+      this.wt_i32(l);
+      if ((this.w + l) > this.l) {
+          throw "stream_buffer_overflow";
+      }
+      for (var i = 0; i < l; ++i) {
+          this.b[this.w++] = s[i];
+      }
+  };
+
+  adata.prototype.sk_rd_s = function (n) {
+      'use asm';
+      var l = this.rd_i32();
+      if ((n > 0) && (l > n)) {
+          throw "number_of_element_not_macth";
+      }
+      if ((this.r + l) > this.l) {
+          throw "stream_buffer_overflow";
+      }
+      this.r += l;
+  };
+
   adata.prototype.rd_s = function (n) {
     'use asm';
     var l = this.rd_i32();
@@ -1444,6 +1500,7 @@ var FileReader = require('filereader');
   var adata_et_list = 20;
   var adata_et_map = 21;
   var adata_et_type = 22;
+  var adata_et_buffer = 23;
 
   adata.prototype.sk_rd_v = function (type) {
     'use asm';
@@ -1468,6 +1525,7 @@ var FileReader = require('filereader');
       case 18: { return this.skip_read(8); }//double
       case 19: { return this.sk_rd_s(type.size); }//string
       case 22: { return this.sk_rd(type.type_def); }//type
+      case 23: { return this.sk_rd_buf(type.size); }//string
     }
   };
   
@@ -1537,7 +1595,8 @@ var FileReader = require('filereader');
       case 17: { return this.rd_f32(); }//float
       case 18: { return this.rd_d64(); }//double
       case 19: { return this.rd_s(type.size); }//string
-      case 22: { return this.rd(type.type_def , v); }//type
+      case 22: { return this.rd(type.type_def, v); }//type
+      case 23: { return this.rd_buf(type.size); }//string
     }
   };
     
@@ -1647,7 +1706,8 @@ var FileReader = require('filereader');
       case 17: { return 4; }//float
       case 18: { return 8; }//double
       case 19: { return this.szof_s(v,type.size); }//string
-      case 22: { return this.szof(type.type_def , v , ctx); }//type
+      case 22: { return this.szof(type.type_def, v, ctx); }//type
+      case 23: { return this.szof_buf(v, type.size); }//string
     }
   };
   
@@ -1755,7 +1815,8 @@ var FileReader = require('filereader');
       case 17: { return this.wt_f32(v); }//float
       case 18: { return this.wt_d64(v); }//double
       case 19: { return this.wt_s(v,type.size); }//string
-      case 22: { return this.wt(type.type_def,v , ctx); }//type
+      case 22: { return this.wt(type.type_def, v, ctx); }//type
+      case 23: { return this.wt_buf(v, type.size); }//string
     }
   };
   
@@ -1877,6 +1938,9 @@ var FileReader = require('filereader');
     }
     else if (t === adata_et_type) {
       v = constructors[member.typename];
+    }
+    else if (t === adata_et_buffer) {
+        v = [];
     }
     return v;
   }
