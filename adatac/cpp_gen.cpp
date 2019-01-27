@@ -363,6 +363,10 @@ namespace cpp_gen
       {
         os << tabs(2) << var_name << " = " << make_type_default(desc_define, member) << ";" << std::endl;
       }
+      else
+      {
+        os << tabs(2) << "::adata::reset(" << var_name << ");" << std::endl;
+      }
     }
     os << tabs(1) << "}" << std::endl << std::endl;
   }
