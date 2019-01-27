@@ -386,7 +386,7 @@ namespace cpp_gen
         var_name += member.m_name;
         os << tabs(2) << "else {" << var_name << ".clear();}" << std::endl;
       }
-      else
+      else if (member.is_initable())
       {
         std::string var_name = "value.";
         var_name += member.m_name;
