@@ -345,6 +345,28 @@ namespace cpp_gen
     return "inline ";
   }
 
+  void gen_adata_operator_reset_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
+  {
+    std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
+    os << tabs(1) << gen_inline_code(tdefine) << "void reset(" << full_type_name << "& value)" << std::endl;
+    os << tabs(1) << "{" << std::endl;
+
+    for (const auto& member : tdefine.m_members)
+    {
+      std::string var_name = "value.";
+      var_name += member.m_name;
+      if (member.is_multi())
+      {
+        os << tabs(2) << var_name << ".clear();" << std::endl;
+      }
+      else if (member.is_initable())
+      {
+        os << tabs(2) << var_name << " = " << make_type_default(desc_define, member) << ";" << std::endl;
+      }
+    }
+    os << tabs(1) << "}" << std::endl << std::endl;
+  }
+
   void gen_adata_len_tag_jump(std::ofstream& os, int tab_indent)
   {
     os << tabs(tab_indent) << "if(len_tag >= 0)" << std::endl;
@@ -380,18 +402,6 @@ namespace cpp_gen
     {
       os << tabs(2) << "if(tag&" << tag_mask << "LL)";
       gen_adata_read_member_code(desc_define, tdefine, member, os, 2);
-      if (member.is_multi())
-      {
-        std::string var_name = "value.";
-        var_name += member.m_name;
-        os << tabs(2) << "else {" << var_name << ".clear();}" << std::endl;
-      }
-      else if (member.is_initable())
-      {
-        std::string var_name = "value.";
-        var_name += member.m_name;
-        os << tabs(2) << "else {" << var_name << " = " << make_type_default(desc_define, member) << ";}" << std::endl;        
-      }
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
@@ -826,6 +836,7 @@ namespace cpp_gen
 
   inline void gen_adata_operator_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
+    gen_adata_operator_reset_type_code(desc_define, tdefine, os);
     gen_adata_operator_read_type_code(desc_define, tdefine, os);
     gen_adata_operator_skip_read_type_code(desc_define, tdefine, os);
     gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
