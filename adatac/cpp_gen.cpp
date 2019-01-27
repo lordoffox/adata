@@ -425,6 +425,12 @@ namespace cpp_gen
         var_name += member.m_name;
         os << tabs(2) << "else {" << var_name << ".clear();}" << std::endl;
       }
+      else if (member.is_initable())
+      {
+        std::string var_name = "value.";
+        var_name += member.m_name;
+        os << tabs(2) << "else {" << var_name << " = " << make_type_default(desc_define, member) << ";}" << std::endl;
+      }
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
