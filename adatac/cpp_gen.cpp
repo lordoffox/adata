@@ -423,7 +423,7 @@ namespace cpp_gen
       {
         std::string var_name = "value.";
         var_name += member.m_name;
-        os << std::endl << tabs(2) << "else {" << var_name << ".clear();}" << std::endl;
+        os << tabs(2) << "else {" << var_name << ".clear();}" << std::endl;
       }
       total_mask |= tag_mask;
       tag_mask <<= 1;
