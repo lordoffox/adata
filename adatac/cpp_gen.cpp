@@ -261,7 +261,7 @@ namespace cpp_gen
         os << tabs(tab_indent + 2) << var_name << ".insert(::std::make_pair(first_element,second_element));" << std::endl;
         os << tabs(tab_indent + 1) << "}";
       }
-      os << std::endl << tabs(tab_indent) << "} else {" << var_name << ".clear();}" << std::endl;
+      os << std::endl << tabs(tab_indent) << "}" << std::endl;
     }
     else
     {
@@ -380,6 +380,12 @@ namespace cpp_gen
     {
       os << tabs(2) << "if(tag&" << tag_mask << "LL)";
       gen_adata_read_member_code(desc_define, tdefine, member, os, 2);
+      if (member.is_multi())
+      {
+        std::string var_name = "value.";
+        var_name += member.m_name;
+        os << std::endl << tabs(2) << "else {" << var_name << ".clear();}" << std::endl;
+      }
       total_mask |= tag_mask;
       tag_mask <<= 1;
     }
