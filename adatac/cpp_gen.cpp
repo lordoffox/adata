@@ -285,7 +285,7 @@ namespace cpp_gen
         os << tabs(tab_indent + 2) << var_name << ".insert(::std::make_pair(first_element,second_element));" << std::endl;
         os << tabs(tab_indent + 1) << "}";
       }
-      os << std::endl << tabs(tab_indent) << "}" << std::endl;
+      os << std::endl << tabs(tab_indent) << "} else {" << var_name << ".clear();}" << std::endl;
     }
     else
     {
