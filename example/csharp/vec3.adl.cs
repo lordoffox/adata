@@ -1,92 +1,82 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using adata;
 
 namespace util {
-  public class vec3
+  public partial class vec3: adata.base_obj
   {
     public float x = 0.0F;
     public float y = 0.0F;
     public float z = 0.0F;
   }
 
-class vec3_stream
-{
-    public static void read(adata.zero_copy_buffer stream, ref vec3 value)
+  public partial class vec3
+  {
+    public override void read(adata.zero_copy_buffer stream)
     {
       int offset = stream.read_length();
-      UInt64 tag = 0;
+      Int64 tag = 0;
       adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
       Int32 len_tag = 0;
       adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
 
-      if((tag&1)>0)      {adata.stream.read(stream,ref value.x);{if(stream.error()){stream.trace_error("x",-1);return;}}}
-      if((tag&2)>0)      {adata.stream.read(stream,ref value.y);{if(stream.error()){stream.trace_error("y",-1);return;}}}
-      if((tag&4)>0)      {adata.stream.read(stream,ref value.z);{if(stream.error()){stream.trace_error("z",-1);return;}}}
+      if((tag&1L)>0)      adata.stream.read(stream,ref this.x);
+      if((tag&2L)>0)      adata.stream.read(stream,ref this.y);
+      if((tag&4L)>0)      adata.stream.read(stream,ref this.z);
       if(len_tag >= 0)
       {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
+        Int32 read_len = stream.read_length() - offset;
+        if(len_tag > read_len) stream.skip_read((UInt32)(len_tag - read_len));
       }
     }
 
-    public static void skip_read(adata.zero_copy_buffer stream, ref vec3 value)
-    {
-      int offset = stream.read_length();
-      UInt64 tag = 0;
-      adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
-      Int32 len_tag = 0;
-      adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
-
-      if((tag&1)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("x",-1);return;}}}
-      if((tag&2)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("y",-1);return;}}}
-      if((tag&4)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("z",-1);return;}}}
-      if(len_tag >= 0)
-      {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
-      }
-    }
-
-    public static Int32 size_of(vec3 value)
+    public override Int32 size_of()
     {
       Int32 size = 0;
-      UInt64 tag = 7;
-      {
-        size += adata.stream.size_of(value.x);
-      }
-      {
-        size += adata.stream.size_of(value.y);
-      }
-      {
-        size += adata.stream.size_of(value.z);
-      }
+      Int64 tag = 7L;
+      size += adata.stream.size_of(this.x);
+      size += adata.stream.size_of(this.y);
+      size += adata.stream.size_of(this.z);
       size += adata.stream.size_of(tag);
       size += adata.stream.size_of(size + adata.stream.size_of(size));
       return size;
     }
 
-    public static void write(adata.zero_copy_buffer stream , vec3 value)
+    public override void write(adata.zero_copy_buffer stream)
     {
-      UInt64 tag = 7;
+      Int64 tag = 7L;
       adata.stream.write(stream,tag);
-      if(stream.error()){ return; }
-      adata.stream.write(stream,size_of(value));
-      if(stream.error()){return;}
-      {adata.stream.write(stream,value.x);{if(stream.error()){stream.trace_error("x",-1);return;}}}
-      {adata.stream.write(stream,value.y);{if(stream.error()){stream.trace_error("y",-1);return;}}}
-      {adata.stream.write(stream,value.z);{if(stream.error()){stream.trace_error("z",-1);return;}}}
-      return;
+      adata.stream.write(stream,this.size_of());
+      adata.stream.write(stream,this.x);
+      adata.stream.write(stream,this.y);
+      adata.stream.write(stream,this.z);
+    }
+
+    public override void raw_read(adata.zero_copy_buffer stream)
+    {
+      adata.stream.read(stream,ref this.x);
+      adata.stream.read(stream,ref this.y);
+      adata.stream.read(stream,ref this.z);
+    }
+
+    public override Int32 raw_size_of()
+    {
+      Int32 size = 0;
+      size += adata.stream.size_of(this.x);
+      size += adata.stream.size_of(this.y);
+      size += adata.stream.size_of(this.z);
+      return size;
+    }
+
+    public override void raw_write(adata.zero_copy_buffer stream)
+    {
+      adata.stream.write(stream,this.x);
+      adata.stream.write(stream,this.y);
+      adata.stream.write(stream,this.z);
     }
 
   }
-
 
 }
 

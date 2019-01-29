@@ -39,24 +39,19 @@ namespace example
       Int32 buf_len = 0;
 
       // serialize
-      buf_len = my.game.player_stream.size_of(pv1);
-      my.game.player_stream.write(stream, pv1);
-      Debug.Assert(!stream.error(), stream.get_error_msg());
+      buf_len = pv1.size_of();
+      pv1.write(stream);
 
       var pv1_other = new my.game.player_v1();
 
       // deserialize
-      my.game.player_stream.read(stream, ref pv1_other);
-      Debug.Assert(!stream.error(), stream.get_error_msg());
-      Debug.Assert(plyCmp.Equals(pv1, pv1_other));
-
+      pv1_other.read(stream);
       stream.clear();
 
       var pv2 = new my.game.player_v2();
 
       // forward compat (old data, new struct)
-      my.game.player_stream.read(stream, ref pv2);
-      Debug.Assert(!stream.error(), stream.get_error_msg());
+      pv2.read(stream);
 
       Debug.Assert(plyCmp.Equals(pv1, pv2));
 
@@ -68,13 +63,11 @@ namespace example
       pv2.name = "pv2";
       pv2.friends.Add(2);
       pv2.friends.Add(100);
-      buf_len = my.game.player_stream.size_of(pv2);
+      buf_len = pv2.size_of();
 
-      my.game.player_stream.write(stream, pv2);
-      Debug.Assert(!stream.error(), stream.get_error_msg());
+      pv2.write(stream);
 
-      my.game.player_stream.read(stream, ref pv1);
-      Debug.Assert(!stream.error(), stream.get_error_msg());
+      pv1.read(stream);
 
       Debug.Assert(plyCmp.Equals(pv1, pv2));
 

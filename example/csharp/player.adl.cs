@@ -1,16 +1,17 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using adata;
 
 namespace my {namespace game {
-  public class item
+  public partial class item: adata.base_obj
   {
     public Int32 type = 0;
     public Int32 level = 0;
     public Int64 id = 0;
   }
 
-  public class player_v1
+  public partial class player_v1: adata.base_obj
   {
     public Int32 id = 0;
     public Int32 age = 0;
@@ -21,7 +22,7 @@ namespace my {namespace game {
     public List<my.game.quest> quests = new List<my.game.quest>();
   }
 
-  public class player_v2
+  public partial class player_v2: adata.base_obj
   {
     public Int32 id = 0;
     //age deleted , skip define.
@@ -33,448 +34,373 @@ namespace my {namespace game {
     public List<Int32> friends = new List<Int32>();
   }
 
-class player_stream
-{
-    public static void read(adata.zero_copy_buffer stream, ref item value)
+  public partial class item
+  {
+    public override void read(adata.zero_copy_buffer stream)
     {
       int offset = stream.read_length();
-      UInt64 tag = 0;
+      Int64 tag = 0;
       adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
       Int32 len_tag = 0;
       adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
 
-      if((tag&1)>0)      {adata.stream.read(stream,ref value.id);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)      {adata.stream.read(stream,ref value.type);{if(stream.error()){stream.trace_error("type",-1);return;}}}
-      if((tag&4)>0)      {adata.stream.read(stream,ref value.level);{if(stream.error()){stream.trace_error("level",-1);return;}}}
+      if((tag&1L)>0)      adata.stream.read(stream,ref this.id);
+      if((tag&2L)>0)      adata.stream.read(stream,ref this.type);
+      if((tag&4L)>0)      adata.stream.read(stream,ref this.level);
       if(len_tag >= 0)
       {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
+        Int32 read_len = stream.read_length() - offset;
+        if(len_tag > read_len) stream.skip_read((UInt32)(len_tag - read_len));
       }
     }
 
-    public static void skip_read(adata.zero_copy_buffer stream, ref item value)
-    {
-      int offset = stream.read_length();
-      UInt64 tag = 0;
-      adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
-      Int32 len_tag = 0;
-      adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
-
-      if((tag&1)>0)      {Int64 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("type",-1);return;}}}
-      if((tag&4)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("level",-1);return;}}}
-      if(len_tag >= 0)
-      {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
-      }
-    }
-
-    public static Int32 size_of(item value)
+    public override Int32 size_of()
     {
       Int32 size = 0;
-      UInt64 tag = 7;
-      {
-        size += adata.stream.size_of(value.id);
-      }
-      {
-        size += adata.stream.size_of(value.type);
-      }
-      {
-        size += adata.stream.size_of(value.level);
-      }
+      Int64 tag = 7L;
+      size += adata.stream.size_of(this.id);
+      size += adata.stream.size_of(this.type);
+      size += adata.stream.size_of(this.level);
       size += adata.stream.size_of(tag);
       size += adata.stream.size_of(size + adata.stream.size_of(size));
       return size;
     }
 
-    public static void write(adata.zero_copy_buffer stream , item value)
+    public override void write(adata.zero_copy_buffer stream)
     {
-      UInt64 tag = 7;
+      Int64 tag = 7L;
       adata.stream.write(stream,tag);
-      if(stream.error()){ return; }
-      adata.stream.write(stream,size_of(value));
-      if(stream.error()){return;}
-      {adata.stream.write(stream,value.id);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      {adata.stream.write(stream,value.type);{if(stream.error()){stream.trace_error("type",-1);return;}}}
-      {adata.stream.write(stream,value.level);{if(stream.error()){stream.trace_error("level",-1);return;}}}
-      return;
+      adata.stream.write(stream,this.size_of());
+      adata.stream.write(stream,this.id);
+      adata.stream.write(stream,this.type);
+      adata.stream.write(stream,this.level);
     }
 
-    public static void read(adata.zero_copy_buffer stream, ref player_v1 value)
+    public override void raw_read(adata.zero_copy_buffer stream)
+    {
+      adata.stream.read(stream,ref this.id);
+      adata.stream.read(stream,ref this.type);
+      adata.stream.read(stream,ref this.level);
+    }
+
+    public override Int32 raw_size_of()
+    {
+      Int32 size = 0;
+      size += adata.stream.size_of(this.id);
+      size += adata.stream.size_of(this.type);
+      size += adata.stream.size_of(this.level);
+      return size;
+    }
+
+    public override void raw_write(adata.zero_copy_buffer stream)
+    {
+      adata.stream.write(stream,this.id);
+      adata.stream.write(stream,this.type);
+      adata.stream.write(stream,this.level);
+    }
+
+  }
+
+  public partial class player_v1
+  {
+    public override void read(adata.zero_copy_buffer stream)
     {
       int offset = stream.read_length();
-      UInt64 tag = 0;
+      Int64 tag = 0;
       adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
       Int32 len_tag = 0;
       adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
 
-      if((tag&1)>0)      {adata.stream.read(stream,ref value.id);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream,30);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
-        adata.stream.read(stream,ref value.name,len3);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
+      if((tag&1L)>0)      adata.stream.read(stream,ref this.id);
+      if((tag&2L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream,30);
+        adata.stream.read(stream,ref this.name,len3);
       }
-      if((tag&4)>0)      {adata.stream.read(stream,ref value.age);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-      if((tag&8)>0)      {util.vec3_stream.read(stream,ref value.pos);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-      if((tag&16)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("inventory",-1);return;}}
+      if((tag&4L)>0)      adata.stream.read(stream,ref this.age);
+      if((tag&8L)>0)      this.pos.read(stream);
+      if((tag&16L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.inventory.Clear();
         for (int i = 0 ; i < len3 ; ++i)
         {
           item element= new item(); 
-          {read(stream,ref element);}
-          value.inventory.Add(element);
-          {if(stream.error()){stream.trace_error("inventory",(int)i);return;}}
+          element.read(stream);
+          this.inventory.Add(element);
         }
       }
-      if((tag&32)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("quests",-1);return;}}
+      if((tag&32L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.quests.Clear();
         for (int i = 0 ; i < len3 ; ++i)
         {
           my.game.quest element= new my.game.quest(); 
-          {my.game.quest_stream.read(stream,ref element);}
-          value.quests.Add(element);
-          {if(stream.error()){stream.trace_error("quests",(int)i);return;}}
+          element.read(stream);
+          this.quests.Add(element);
         }
       }
-      if((tag&64)>0)      {adata.stream.read(stream,ref value.factor);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
+      if((tag&64L)>0)      adata.stream.read(stream,ref this.factor);
       if(len_tag >= 0)
       {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
+        Int32 read_len = stream.read_length() - offset;
+        if(len_tag > read_len) stream.skip_read((UInt32)(len_tag - read_len));
       }
     }
 
-    public static void skip_read(adata.zero_copy_buffer stream, ref player_v1 value)
-    {
-      int offset = stream.read_length();
-      UInt64 tag = 0;
-      adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
-      Int32 len_tag = 0;
-      adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
-
-      if((tag&1)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream,30);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
-        stream.skip_read(len3);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
-      }
-      if((tag&4)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-      if((tag&8)>0)      {util.vec3 dummy_value = null;util.vec3_stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-      if((tag&16)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("inventory",-1);return;}}
-        for (int i = 0 ; i < len3 ; ++i)
-        {
-          {item dummy_value = null;skip_read(stream,ref dummy_value);}
-          {if(stream.error()){stream.trace_error("inventory",(int)i);return;}}
-        }
-      }
-      if((tag&32)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("quests",-1);return;}}
-        for (int i = 0 ; i < len3 ; ++i)
-        {
-          {my.game.quest dummy_value = null;my.game.quest_stream.skip_read(stream,ref dummy_value);}
-          {if(stream.error()){stream.trace_error("quests",(int)i);return;}}
-        }
-      }
-      if((tag&64)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
-      if(len_tag >= 0)
-      {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
-      }
-    }
-
-    public static Int32 size_of(player_v1 value)
+    public override Int32 size_of()
     {
       Int32 size = 0;
-      UInt64 tag = 77;
-      if(value.name.Length > 0){tag|=2;}
-      if(value.inventory.Count > 0){tag|=16;}
-      if(value.quests.Count > 0){tag|=32;}
+      Int64 tag = 77L;
+      if(this.name.Length > 0){tag|=2L;}
+      if(this.inventory.Count > 0){tag|=16L;}
+      if(this.quests.Count > 0){tag|=32L;}
+      size += adata.stream.size_of(this.id);
+      if((tag&2L)>0)
       {
-        size += adata.stream.size_of(value.id);
+        size += adata.stream.size_of(this.name);
       }
-      if((tag&2)>0)
+      size += adata.stream.size_of(this.age);
+      size += this.pos.size_of();
+      if((tag&16L)>0)
       {
-        UInt32 len4 = (UInt32)value.name.Length;
+        Int32 len4 = this.inventory.Count;
         size += adata.stream.size_of(len4);
-        size += (Int32)len4;
-      }
-      {
-        size += adata.stream.size_of(value.age);
-      }
-      {
-        size += util.vec3_stream.size_of(value.pos);
-      }
-      if((tag&16)>0)
-      {
-        UInt32 len4 = (UInt32)value.inventory.Count;
-        size += adata.stream.size_of(len4);
-        foreach (item i in value.inventory)
+        foreach (item i in this.inventory)
         {
-          size += size_of(i);
+          size += i.size_of();
         }
       }
-      if((tag&32)>0)
+      if((tag&32L)>0)
       {
-        UInt32 len4 = (UInt32)value.quests.Count;
+        Int32 len4 = this.quests.Count;
         size += adata.stream.size_of(len4);
-        foreach (my.game.quest i in value.quests)
+        foreach (my.game.quest i in this.quests)
         {
-          size += my.game.quest_stream.size_of(i);
+          size += i.size_of();
         }
       }
-      {
-        size += adata.stream.size_of(value.factor);
-      }
+      size += adata.stream.size_of(this.factor);
       size += adata.stream.size_of(tag);
       size += adata.stream.size_of(size + adata.stream.size_of(size));
       return size;
     }
 
-    public static void write(adata.zero_copy_buffer stream , player_v1 value)
+    public override void write(adata.zero_copy_buffer stream)
     {
-      UInt64 tag = 77;
-      if(value.name.Length > 0){tag|=2;}
-      if(value.inventory.Count > 0){tag|=16;}
-      if(value.quests.Count > 0){tag|=32;}
+      Int64 tag = 77L;
+      if(this.name.Length > 0){tag|=2L;}
+      if(this.inventory.Count > 0){tag|=16L;}
+      if(this.quests.Count > 0){tag|=32L;}
       adata.stream.write(stream,tag);
-      if(stream.error()){ return; }
-      adata.stream.write(stream,size_of(value));
-      if(stream.error()){return;}
-      {adata.stream.write(stream,value.id);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)
-      {
-        UInt32 len3 = (UInt32)value.name.Length;
-        adata.stream.write(stream,len3);
-        adata.stream.write(stream,value.name,len3);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
+      adata.stream.write(stream,this.size_of());
+      adata.stream.write(stream,this.id);
+      if((tag&2L)>0)      {
+        adata.stream.write(stream,this.name);
       }
-      {adata.stream.write(stream,value.age);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-      {util.vec3_stream.write(stream,value.pos);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-      if((tag&16)>0)
-      {
-        UInt32 len3 = (UInt32)value.inventory.Count;
+      adata.stream.write(stream,this.age);
+      this.pos.write(stream);
+      if((tag&16L)>0)      {
+        Int32 len3 = this.inventory.Count;
         adata.stream.write(stream,len3);
         int count = 0;
-        foreach (item i in value.inventory)
+        foreach (item i in this.inventory)
         {
-          {write(stream,i);}
-          {if(stream.error()){stream.trace_error("inventory",count);return;}}
+          i.write(stream);
           ++count;
         }
       }
-      if((tag&32)>0)
-      {
-        UInt32 len3 = (UInt32)value.quests.Count;
+      if((tag&32L)>0)      {
+        Int32 len3 = this.quests.Count;
         adata.stream.write(stream,len3);
         int count = 0;
-        foreach (my.game.quest i in value.quests)
+        foreach (my.game.quest i in this.quests)
         {
-          {my.game.quest_stream.write(stream,i);}
-          {if(stream.error()){stream.trace_error("quests",count);return;}}
+          i.write(stream);
           ++count;
         }
       }
-      {adata.stream.write(stream,value.factor);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
-      return;
+      adata.stream.write(stream,this.factor);
     }
 
-    public static void read(adata.zero_copy_buffer stream, ref player_v2 value)
+    public override void raw_read(adata.zero_copy_buffer stream)
     {
-      int offset = stream.read_length();
-      UInt64 tag = 0;
-      adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
-      Int32 len_tag = 0;
-      adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
-
-      if((tag&1)>0)      {adata.stream.read(stream,ref value.id);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)
+      adata.stream.read(stream,ref this.id);
       {
-        UInt32 len3 = adata.stream.check_read_size(stream,30);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
-        adata.stream.read(stream,ref value.name,len3);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
+        Int32 len3 = adata.stream.check_read_size(stream,30);
+        adata.stream.read(stream,ref this.name,len3);
       }
-      if((tag&4)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-      if((tag&8)>0)      {util.vec3_stream.read(stream,ref value.pos);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-      if((tag&16)>0)
+      adata.stream.read(stream,ref this.age);
+      this.pos.raw_read(stream);
       {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("inventory",-1);return;}}
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.inventory.Clear();
         for (int i = 0 ; i < len3 ; ++i)
         {
           item element= new item(); 
-          {read(stream,ref element);}
-          value.inventory.Add(element);
-          {if(stream.error()){stream.trace_error("inventory",(int)i);return;}}
+          element.raw_read(stream);
+          this.inventory.Add(element);
         }
       }
-      if((tag&32)>0)
       {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("quests",-1);return;}}
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.quests.Clear();
         for (int i = 0 ; i < len3 ; ++i)
         {
           my.game.quest element= new my.game.quest(); 
-          {my.game.quest_stream.read(stream,ref element);}
-          value.quests.Add(element);
-          {if(stream.error()){stream.trace_error("quests",(int)i);return;}}
+          element.raw_read(stream);
+          this.quests.Add(element);
         }
       }
-      if((tag&64)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
-      if((tag&128)>0)
+      adata.stream.read(stream,ref this.factor);
+    }
+
+    public override Int32 raw_size_of()
+    {
+      Int32 size = 0;
+      size += adata.stream.size_of(this.id);
+      size += adata.stream.size_of(this.name);
+      size += adata.stream.size_of(this.age);
+      size += this.pos.raw_size_of();
+      size += adata.stream.size_of(this.inventory.Count); 
+      foreach (item i in this.inventory)
       {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("friends",-1);return;}}
+        size += i.raw_size_of();
+      }
+      size += adata.stream.size_of(this.quests.Count); 
+      foreach (my.game.quest i in this.quests)
+      {
+        size += i.raw_size_of();
+      }
+      size += adata.stream.size_of(this.factor);
+      return size;
+    }
+
+    public override void raw_write(adata.zero_copy_buffer stream)
+    {
+      adata.stream.write(stream,this.id);
+      {
+        adata.stream.write(stream,this.name);
+      }
+      adata.stream.write(stream,this.age);
+      this.pos.raw_write(stream);
+      {
+        Int32 len3 = this.inventory.Count;
+        adata.stream.write(stream,len3);
+        int count = 0;
+        foreach (item i in this.inventory)
+        {
+          i.raw_write(stream);
+          ++count;
+        }
+      }
+      {
+        Int32 len3 = this.quests.Count;
+        adata.stream.write(stream,len3);
+        int count = 0;
+        foreach (my.game.quest i in this.quests)
+        {
+          i.raw_write(stream);
+          ++count;
+        }
+      }
+      adata.stream.write(stream,this.factor);
+    }
+
+  }
+
+  public partial class player_v2
+  {
+    public override void read(adata.zero_copy_buffer stream)
+    {
+      int offset = stream.read_length();
+      Int64 tag = 0;
+      adata.stream.read(stream,ref tag);
+      Int32 len_tag = 0;
+      adata.stream.read(stream,ref len_tag);
+
+      if((tag&1L)>0)      adata.stream.read(stream,ref this.id);
+      if((tag&2L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream,30);
+        adata.stream.read(stream,ref this.name,len3);
+      }
+      if((tag&4L)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);}
+      if((tag&8L)>0)      this.pos.read(stream);
+      if((tag&16L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.inventory.Clear();
+        for (int i = 0 ; i < len3 ; ++i)
+        {
+          item element= new item(); 
+          element.read(stream);
+          this.inventory.Add(element);
+        }
+      }
+      if((tag&32L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.quests.Clear();
+        for (int i = 0 ; i < len3 ; ++i)
+        {
+          my.game.quest element= new my.game.quest(); 
+          element.read(stream);
+          this.quests.Add(element);
+        }
+      }
+      if((tag&64L)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);}
+      if((tag&128L)>0)      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.friends.Clear();
         for (int i = 0 ; i < len3 ; ++i)
         {
           Int32 element= 0; 
-          {adata.stream.read(stream,ref element);}
-          value.friends.Add(element);
-          {if(stream.error()){stream.trace_error("friends",(int)i);return;}}
+          adata.stream.read(stream,ref element);
+          this.friends.Add(element);
         }
       }
       if(len_tag >= 0)
       {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
+        Int32 read_len = stream.read_length() - offset;
+        if(len_tag > read_len) stream.skip_read((UInt32)(len_tag - read_len));
       }
     }
 
-    public static void skip_read(adata.zero_copy_buffer stream, ref player_v2 value)
-    {
-      int offset = stream.read_length();
-      UInt64 tag = 0;
-      adata.stream.read(stream,ref tag);
-      if(stream.error()){return;}
-      Int32 len_tag = 0;
-      adata.stream.read(stream,ref len_tag);
-      if(stream.error()){return;}
-
-      if((tag&1)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream,30);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
-        stream.skip_read(len3);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
-      }
-      if((tag&4)>0)      {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("age",-1);return;}}}
-      if((tag&8)>0)      {util.vec3 dummy_value = null;util.vec3_stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-      if((tag&16)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("inventory",-1);return;}}
-        for (int i = 0 ; i < len3 ; ++i)
-        {
-          {item dummy_value = null;skip_read(stream,ref dummy_value);}
-          {if(stream.error()){stream.trace_error("inventory",(int)i);return;}}
-        }
-      }
-      if((tag&32)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("quests",-1);return;}}
-        for (int i = 0 ; i < len3 ; ++i)
-        {
-          {my.game.quest dummy_value = null;my.game.quest_stream.skip_read(stream,ref dummy_value);}
-          {if(stream.error()){stream.trace_error("quests",(int)i);return;}}
-        }
-      }
-      if((tag&64)>0)      {float dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);{if(stream.error()){stream.trace_error("factor",-1);return;}}}
-      if((tag&128)>0)
-      {
-        UInt32 len3 = adata.stream.check_read_size(stream);
-        {if(stream.error()){stream.trace_error("friends",-1);return;}}
-        for (int i = 0 ; i < len3 ; ++i)
-        {
-          {Int32 dummy_value = 0;adata.stream.skip_read(stream,ref dummy_value);}
-          {if(stream.error()){stream.trace_error("friends",(int)i);return;}}
-        }
-      }
-      if(len_tag >= 0)
-      {
-        UInt32 read_len = (UInt32)(stream.read_length() - offset);
-        UInt32 len = (UInt32)len_tag;
-        if(len > read_len) stream.skip_read(len - read_len);
-      }
-    }
-
-    public static Int32 size_of(player_v2 value)
+    public override Int32 size_of()
     {
       Int32 size = 0;
-      UInt64 tag = 9;
-      if(value.name.Length > 0){tag|=2;}
-      if(value.inventory.Count > 0){tag|=16;}
-      if(value.quests.Count > 0){tag|=32;}
-      if(value.friends.Count > 0){tag|=128;}
+      Int64 tag = 9L;
+      if(this.name.Length > 0){tag|=2L;}
+      if(this.inventory.Count > 0){tag|=16L;}
+      if(this.quests.Count > 0){tag|=32L;}
+      if(this.friends.Count > 0){tag|=128L;}
+      size += adata.stream.size_of(this.id);
+      if((tag&2L)>0)
       {
-        size += adata.stream.size_of(value.id);
+        size += adata.stream.size_of(this.name);
       }
-      if((tag&2)>0)
+      //this.age deleted , skip write.
+      size += this.pos.size_of();
+      if((tag&16L)>0)
       {
-        UInt32 len4 = (UInt32)value.name.Length;
+        Int32 len4 = this.inventory.Count;
         size += adata.stream.size_of(len4);
-        size += (Int32)len4;
-      }
-      //value.age deleted , skip write.
-      {
-        size += util.vec3_stream.size_of(value.pos);
-      }
-      if((tag&16)>0)
-      {
-        UInt32 len4 = (UInt32)value.inventory.Count;
-        size += adata.stream.size_of(len4);
-        foreach (item i in value.inventory)
+        foreach (item i in this.inventory)
         {
-          size += size_of(i);
+          size += i.size_of();
         }
       }
-      if((tag&32)>0)
+      if((tag&32L)>0)
       {
-        UInt32 len4 = (UInt32)value.quests.Count;
+        Int32 len4 = this.quests.Count;
         size += adata.stream.size_of(len4);
-        foreach (my.game.quest i in value.quests)
+        foreach (my.game.quest i in this.quests)
         {
-          size += my.game.quest_stream.size_of(i);
+          size += i.size_of();
         }
       }
-      //value.factor deleted , skip write.
-      if((tag&128)>0)
+      //this.factor deleted , skip write.
+      if((tag&128L)>0)
       {
-        UInt32 len4 = (UInt32)value.friends.Count;
+        Int32 len4 = this.friends.Count;
         size += adata.stream.size_of(len4);
-        foreach (Int32 i in value.friends)
+        foreach (Int32 i in this.friends)
         {
           size += adata.stream.size_of(i);
         }
@@ -484,69 +410,158 @@ class player_stream
       return size;
     }
 
-    public static void write(adata.zero_copy_buffer stream , player_v2 value)
+    public override void write(adata.zero_copy_buffer stream)
     {
-      UInt64 tag = 9;
-      if(value.name.Length > 0){tag|=2;}
-      if(value.inventory.Count > 0){tag|=16;}
-      if(value.quests.Count > 0){tag|=32;}
-      if(value.friends.Count > 0){tag|=128;}
+      Int64 tag = 9L;
+      if(this.name.Length > 0){tag|=2L;}
+      if(this.inventory.Count > 0){tag|=16L;}
+      if(this.quests.Count > 0){tag|=32L;}
+      if(this.friends.Count > 0){tag|=128L;}
       adata.stream.write(stream,tag);
-      if(stream.error()){ return; }
-      adata.stream.write(stream,size_of(value));
-      if(stream.error()){return;}
-      {adata.stream.write(stream,value.id);{if(stream.error()){stream.trace_error("id",-1);return;}}}
-      if((tag&2)>0)
-      {
-        UInt32 len3 = (UInt32)value.name.Length;
-        adata.stream.write(stream,len3);
-        adata.stream.write(stream,value.name,len3);
-        {if(stream.error()){stream.trace_error("name",-1);return;}}
+      adata.stream.write(stream,this.size_of());
+      adata.stream.write(stream,this.id);
+      if((tag&2L)>0)      {
+        adata.stream.write(stream,this.name);
       }
-    //value.age deleted , skip write.
-      {util.vec3_stream.write(stream,value.pos);{if(stream.error()){stream.trace_error("pos",-1);return;}}}
-      if((tag&16)>0)
-      {
-        UInt32 len3 = (UInt32)value.inventory.Count;
+    //this.age deleted , skip write.
+      this.pos.write(stream);
+      if((tag&16L)>0)      {
+        Int32 len3 = this.inventory.Count;
         adata.stream.write(stream,len3);
         int count = 0;
-        foreach (item i in value.inventory)
+        foreach (item i in this.inventory)
         {
-          {write(stream,i);}
-          {if(stream.error()){stream.trace_error("inventory",count);return;}}
+          i.write(stream);
           ++count;
         }
       }
-      if((tag&32)>0)
-      {
-        UInt32 len3 = (UInt32)value.quests.Count;
+      if((tag&32L)>0)      {
+        Int32 len3 = this.quests.Count;
         adata.stream.write(stream,len3);
         int count = 0;
-        foreach (my.game.quest i in value.quests)
+        foreach (my.game.quest i in this.quests)
         {
-          {my.game.quest_stream.write(stream,i);}
-          {if(stream.error()){stream.trace_error("quests",count);return;}}
+          i.write(stream);
           ++count;
         }
       }
-    //value.factor deleted , skip write.
-      if((tag&128)>0)
-      {
-        UInt32 len3 = (UInt32)value.friends.Count;
+    //this.factor deleted , skip write.
+      if((tag&128L)>0)      {
+        Int32 len3 = this.friends.Count;
         adata.stream.write(stream,len3);
         int count = 0;
-        foreach (Int32 i in value.friends)
+        foreach (Int32 i in this.friends)
         {
-          {adata.stream.write(stream,i);}
-          {if(stream.error()){stream.trace_error("friends",count);return;}}
+          adata.stream.write(stream,i);
           ++count;
         }
       }
-      return;
+    }
+
+    public override void raw_read(adata.zero_copy_buffer stream)
+    {
+      adata.stream.read(stream,ref this.id);
+      {
+        Int32 len3 = adata.stream.check_read_size(stream,30);
+        adata.stream.read(stream,ref this.name,len3);
+      }
+      this.pos.raw_read(stream);
+      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.inventory.Clear();
+        for (int i = 0 ; i < len3 ; ++i)
+        {
+          item element= new item(); 
+          element.raw_read(stream);
+          this.inventory.Add(element);
+        }
+      }
+      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.quests.Clear();
+        for (int i = 0 ; i < len3 ; ++i)
+        {
+          my.game.quest element= new my.game.quest(); 
+          element.raw_read(stream);
+          this.quests.Add(element);
+        }
+      }
+      {
+        Int32 len3 = adata.stream.check_read_size(stream);
+        this.friends.Clear();
+        for (int i = 0 ; i < len3 ; ++i)
+        {
+          Int32 element= 0; 
+          adata.stream.read(stream,ref element);
+          this.friends.Add(element);
+        }
+      }
+    }
+
+    public override Int32 raw_size_of()
+    {
+      Int32 size = 0;
+      size += adata.stream.size_of(this.id);
+      size += adata.stream.size_of(this.name);
+      size += this.pos.raw_size_of();
+      size += adata.stream.size_of(this.inventory.Count); 
+      foreach (item i in this.inventory)
+      {
+        size += i.raw_size_of();
+      }
+      size += adata.stream.size_of(this.quests.Count); 
+      foreach (my.game.quest i in this.quests)
+      {
+        size += i.raw_size_of();
+      }
+      size += adata.stream.size_of(this.friends.Count); 
+      foreach (Int32 i in this.friends)
+      {
+        size += adata.stream.size_of(i);
+      }
+      return size;
+    }
+
+    public override void raw_write(adata.zero_copy_buffer stream)
+    {
+      adata.stream.write(stream,this.id);
+      {
+        adata.stream.write(stream,this.name);
+      }
+      this.pos.raw_write(stream);
+      {
+        Int32 len3 = this.inventory.Count;
+        adata.stream.write(stream,len3);
+        int count = 0;
+        foreach (item i in this.inventory)
+        {
+          i.raw_write(stream);
+          ++count;
+        }
+      }
+      {
+        Int32 len3 = this.quests.Count;
+        adata.stream.write(stream,len3);
+        int count = 0;
+        foreach (my.game.quest i in this.quests)
+        {
+          i.raw_write(stream);
+          ++count;
+        }
+      }
+      {
+        Int32 len3 = this.friends.Count;
+        adata.stream.write(stream,len3);
+        int count = 0;
+        foreach (Int32 i in this.friends)
+        {
+          adata.stream.write(stream,i);
+          ++count;
+        }
+      }
     }
 
   }
-
 
 }}
 
