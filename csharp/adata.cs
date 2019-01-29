@@ -132,7 +132,7 @@ namespace adata
         size = the_buffer.Length;
       }
       this.buffer = the_buffer;
-      this.data_len = the_buffer.Length;
+      this.data_len = size;
       this.read_len = 0;
       this.write_len = 0;
     }
@@ -1070,8 +1070,8 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
         stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1091,8 +1091,8 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
         stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1114,10 +1114,10 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1139,10 +1139,10 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1161,21 +1161,21 @@ namespace adata
         stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1194,21 +1194,21 @@ namespace adata
         stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1230,10 +1230,10 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1252,21 +1252,21 @@ namespace adata
         stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1339,6 +1339,13 @@ namespace adata
       {
         return;
       }
+      
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
+
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
@@ -1350,7 +1357,6 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1375,7 +1381,7 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte1 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
@@ -1443,7 +1449,7 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte1 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
@@ -1469,6 +1475,13 @@ namespace adata
       {
         return;
       }
+
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
+
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
@@ -1480,7 +1493,6 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1520,20 +1532,20 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
+              stream.value.Byte2 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
@@ -1618,20 +1630,20 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
+              stream.value.Byte2 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
@@ -1659,6 +1671,13 @@ namespace adata
       {
         return;
       }
+
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
+      
       int read_bytes = (int)(value & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
@@ -1671,7 +1690,6 @@ namespace adata
         return;
       }
       stream.value.VU64 = 0;
-      bool signed = (value & const_negative_bit_value) > 0;
       if (IsLittleEndian)
       {
         switch (read_bytes)
@@ -1752,58 +1770,58 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
             {
-              stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
+              stream.value.Byte4 = stream.buffer[stream.read_len++];
               break;
             }
           case 5:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 6:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 7:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 8:
@@ -1934,58 +1952,58 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
             {
-              stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
+              stream.value.Byte4 = stream.buffer[stream.read_len++];
               break;
             }
           case 5:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 6:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 7:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 8:
@@ -2174,7 +2192,7 @@ namespace adata
       {
         byte tag = const_tag_as_type;
         UInt32 temp = (UInt32)value;
-        if (temp < 0)
+        if (value < 0)
         {
           tag += const_negative_bit_value;
           temp = (UInt32)(-value);
@@ -2206,8 +2224,8 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
+            stream.buffer[stream.write_len++] = stream.value.Byte2;
           }
         }
         else if (temp < 0x1000000)
@@ -2228,9 +2246,9 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2240,7 +2258,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2300,8 +2318,8 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
+            stream.buffer[stream.write_len++] = stream.value.Byte2;
           }
         }
         else if (value < 0x1000000)
@@ -2321,9 +2339,9 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2400,8 +2418,8 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
           }
         }
         else if (temp < 0x1000000)
@@ -2422,9 +2440,9 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
           }
         }
         else if (temp < 0x100000000L)
@@ -2446,10 +2464,10 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
+            stream.buffer[stream.write_len++] = stream.value.Byte4;
           }
         }
         else if (temp < 0x10000000000L)
@@ -2472,11 +2490,11 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else if (temp < 0x1000000000000L)
@@ -2500,12 +2518,12 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else if (temp < 0x100000000000000L)
@@ -2530,13 +2548,13 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
             stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2614,8 +2632,8 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
           }
         }
         else if (value < 0x1000000)
@@ -2635,9 +2653,9 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
           }
         }
         else if (value < 0x100000000UL)
@@ -2658,10 +2676,10 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
+            stream.buffer[stream.write_len++] = stream.value.Byte4;
           }
         }
         else if (value < 0x10000000000UL)
@@ -2683,11 +2701,11 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else if (value < 0x1000000000000UL)
@@ -2710,12 +2728,12 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else if (value < 0x100000000000000UL)
@@ -2739,13 +2757,13 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
             stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else

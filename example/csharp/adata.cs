@@ -99,21 +99,40 @@ namespace adata
       error_code = error_code_t.success;
     }
 
-    public zero_copy_buffer(byte[] buf)
+    public zero_copy_buffer(byte[] buf , int size = -1)
     {
       buffer = buf;
-      data_len = buf.Length;
+      if(buf != null)
+      {
+        if (buf.Length < size)
+        {
+          size = buf.Length;
+        }
+        else if (size == -1)
+        {
+          size = buf.Length;
+        }
+      }
+      else
+      {
+        size = 0;
+      }
+      data_len = size;
       read_len = 0;
       write_len = 0;
       value = new UType();
-      this.trace_info_count = 64;
+      this.trace_info_count = 0;
       trace_infos = new trace_info[64];
       error_code = error_code_t.success;
     }
-    public void reset(byte[] the_buffer)
+    public void reset(byte[] the_buffer , int size = -1)
     {
+      if(size == -1)
+      {
+        size = the_buffer.Length;
+      }
       this.buffer = the_buffer;
-      this.data_len = the_buffer.Length;
+      this.data_len = size;
       this.read_len = 0;
       this.write_len = 0;
     }
@@ -133,6 +152,10 @@ namespace adata
 
     public void trace_error(string tag, int sub)
     {
+      if (trace_info_count > 63)
+      {
+        return;
+      }
       trace_infos[trace_info_count].m_tag_name = tag;
       trace_infos[trace_info_count++].m_sub_index = sub;
     }
@@ -187,7 +210,7 @@ namespace adata
 
     public int write_length()
     {
-      return read_len;
+      return write_len;
     }
   }
 
@@ -281,49 +304,49 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static Int32 fix_size_of(sbyte value)
+    public static UInt32 fix_size_of(sbyte value)
     {
       return 1;
     }
 
-    public static Int32 fix_size_of(byte value)
+    public static UInt32 fix_size_of(byte value)
     {
       return 1;
     }
 
-    public static Int32 fix_size_of(Int16 value)
+    public static UInt32 fix_size_of(Int16 value)
     {
       return 2;
     }
 
-    public static Int32 fix_size_of(UInt16 value)
+    public static UInt32 fix_size_of(UInt16 value)
     {
       return 2;
     }
 
-    public static Int32 fix_size_of(Int32 value)
+    public static UInt32 fix_size_of(Int32 value)
     {
       return 4;
     }
 
-    public static Int32 fix_size_of(UInt32 value)
+    public static UInt32 fix_size_of(UInt32 value)
     {
       return 4;
     }
 
-    public static Int32 fix_size_of(Int64 value)
+    public static UInt32 fix_size_of(Int64 value)
     {
       return 8;
     }
 
-    public static Int32 fix_size_of(UInt64 value)
+    public static UInt32 fix_size_of(UInt64 value)
     {
       return 8;
     }
 
     public static void skip_read(zero_copy_buffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -339,7 +362,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -349,7 +372,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref byte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -365,7 +388,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -375,7 +398,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref Int16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -391,7 +414,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -401,7 +424,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -417,7 +440,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -427,7 +450,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref Int32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -443,7 +466,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -453,7 +476,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -469,7 +492,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -479,7 +502,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref Int64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -495,7 +518,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -505,7 +528,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -521,7 +544,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -531,7 +554,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref float value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -541,7 +564,7 @@ namespace adata
 
     public static void skip_read(zero_copy_buffer stream, ref double value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -549,7 +572,7 @@ namespace adata
       stream.read_len += 8;
     }
 
-    public static Int32 size_of(sbyte value)
+    public static UInt32 size_of(sbyte value)
     {
       if ((value & const_tag_as_type) > 0)
       {
@@ -561,7 +584,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(byte value)
+    public static UInt32 size_of(byte value)
     {
       if (value < const_tag_as_type)
       {
@@ -573,7 +596,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(UInt16 value)
+    public static UInt32 size_of(UInt16 value)
     {
       if (value < const_tag_as_type)
       {
@@ -589,7 +612,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(Int16 value)
+    public static UInt32 size_of(Int16 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
@@ -597,11 +620,12 @@ namespace adata
       }
       else
       {
+        UInt16 temp = (UInt16)value;
         if (value < 0)
         {
-          value = (Int16)(-value);
+          temp = (UInt16)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           return 2;
         }
@@ -612,7 +636,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(UInt32 value)
+    public static UInt32 size_of(UInt32 value)
     {
       if (value < const_tag_as_type)
       {
@@ -636,7 +660,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(Int32 value)
+    public static UInt32 size_of(Int32 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
@@ -644,19 +668,20 @@ namespace adata
       }
       else
       {
+        UInt32 temp = (UInt32)value;
         if (value < 0)
         {
-          value = (Int32)(-value);
+          temp = (UInt32)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           return 2;
         }
-        if (value < 0x10000)
+        if (temp < 0x10000)
         {
           return 3;
         }
-        if (value < 0x1000000)
+        if (temp < 0x1000000)
         {
           return 4;
         }
@@ -667,7 +692,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(UInt64 value)
+    public static UInt32 size_of(UInt64 value)
     {
       if (value < const_tag_as_type)
       {
@@ -685,19 +710,19 @@ namespace adata
       {
         return 4;
       }
-      else if (value < 0x100000000)
+      else if (value < 0x100000000UL)
       {
         return 5;
       }
-      else if (value < 0x10000000000)
+      else if (value < 0x10000000000UL)
       {
         return 6;
       }
-      else if (value < 0x1000000000000)
+      else if (value < 0x1000000000000UL)
       {
         return 7;
       }
-      else if (value < 0x100000000000000)
+      else if (value < 0x100000000000000UL)
       {
         return 8;
       }
@@ -707,7 +732,7 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(Int64 value)
+    public static UInt32 size_of(Int64 value)
     {
       if (0 <= value && value < const_tag_as_type)
       {
@@ -715,35 +740,36 @@ namespace adata
       }
       else
       {
+        UInt64 temp = (UInt64)value;
         if (value < 0)
         {
-          value = (Int64)(-value);
+          temp = (UInt64)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           return 2;
         }
-        if (value < 0x10000)
+        if (temp < 0x10000)
         {
           return 3;
         }
-        if (value < 0x1000000)
+        if (temp < 0x1000000)
         {
           return 4;
         }
-        if (value < 0x100000000)
+        if (temp < 0x100000000L)
         {
           return 5;
         }
-        if (value < 0x10000000000)
+        if (temp < 0x10000000000L)
         {
           return 6;
         }
-        if (value < 0x1000000000000)
+        if (temp < 0x1000000000000L)
         {
           return 7;
         }
-        if (value < 0x100000000000000)
+        if (temp < 0x100000000000000L)
         {
           return 8;
         }
@@ -754,19 +780,27 @@ namespace adata
       }
     }
 
-    public static Int32 size_of(float value)
+    public static UInt32 size_of(float value)
     {
       return 4;
     }
 
-    public static Int32 size_of(double value)
+    public static UInt32 size_of(double value)
     {
       return 8;
     }
 
+    public static UInt32 size_of(string value)
+    {
+        UInt32 len = (UInt32)System.Text.Encoding.UTF8.GetByteCount(value);
+
+      len += adata.stream.size_of(len);
+      return len;
+    }
+
     public static void fix_read(zero_copy_buffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -776,7 +810,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref byte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -786,7 +820,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref Int16 value)
     {
-      if (stream.read_len + 2 >= stream.data_len)
+      if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -807,7 +841,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 2 >= stream.data_len)
+      if (stream.read_len + 2 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -828,7 +862,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref Int32 value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -853,7 +887,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -878,7 +912,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref Int64 value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -911,7 +945,7 @@ namespace adata
 
     public static void fix_read(zero_copy_buffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -944,7 +978,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref float value)
     {
-      if (stream.read_len + 4 >= stream.data_len)
+      if (stream.read_len + 4 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -969,7 +1003,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref double value)
     {
-      if (stream.read_len + 8 >= stream.data_len)
+      if (stream.read_len + 8 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1036,8 +1070,8 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
         stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1057,8 +1091,8 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
         stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1080,10 +1114,10 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1105,10 +1139,10 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1127,21 +1161,21 @@ namespace adata
         stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1160,21 +1194,21 @@ namespace adata
         stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1196,10 +1230,10 @@ namespace adata
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1218,21 +1252,21 @@ namespace adata
         stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
       }
       else
       {
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
-        stream.buffer[stream.write_len++] = stream.value.Byte2;
+        stream.buffer[stream.write_len++] = stream.value.Byte7;
+        stream.buffer[stream.write_len++] = stream.value.Byte6;
+        stream.buffer[stream.write_len++] = stream.value.Byte5;
+        stream.buffer[stream.write_len++] = stream.value.Byte4;
         stream.buffer[stream.write_len++] = stream.value.Byte3;
-        stream.buffer[stream.write_len++] = stream.value.Byte0;
-        stream.buffer[stream.write_len++] = stream.value.Byte1;
         stream.buffer[stream.write_len++] = stream.value.Byte2;
-        stream.buffer[stream.write_len++] = stream.value.Byte3;
+        stream.buffer[stream.write_len++] = stream.value.Byte1;
+        stream.buffer[stream.write_len++] = stream.value.Byte0;
       }
     }
 
@@ -1269,7 +1303,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref byte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1285,7 +1319,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1295,7 +1329,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref Int16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1305,18 +1339,24 @@ namespace adata
       {
         return;
       }
+      
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
+
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1341,7 +1381,7 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte1 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
@@ -1364,7 +1404,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1380,7 +1420,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1409,7 +1449,7 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte1 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
@@ -1425,7 +1465,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref Int32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1435,18 +1475,24 @@ namespace adata
       {
         return;
       }
+
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
+
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      bool signed = (value & const_negative_bit_value) > 0;
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1486,20 +1532,20 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
+              stream.value.Byte2 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
@@ -1524,7 +1570,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1540,7 +1586,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1584,20 +1630,20 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
+              stream.value.Byte2 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
+              stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
@@ -1615,7 +1661,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref Int64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1625,19 +1671,25 @@ namespace adata
       {
         return;
       }
+
+      bool signed = (value & const_negative_bit_value) > 0;
+      if (signed)
+      {
+        value -= const_negative_bit_value;
+      }
+      
       int read_bytes = (int)(value & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
       stream.value.VU64 = 0;
-      bool signed = (value & const_negative_bit_value) > 0;
       if (IsLittleEndian)
       {
         switch (read_bytes)
@@ -1718,58 +1770,58 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
             {
-              stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
+              stream.value.Byte4 = stream.buffer[stream.read_len++];
               break;
             }
           case 5:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 6:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 7:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 8:
@@ -1798,7 +1850,7 @@ namespace adata
 
     public static void read(zero_copy_buffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
+      if (stream.read_len + 1 > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1814,7 +1866,7 @@ namespace adata
         stream.error_code = error_code_t.value_too_large_to_integer_number;
         return;
       }
-      if (stream.read_len + read_bytes >= stream.data_len)
+      if (stream.read_len + read_bytes > stream.data_len)
       {
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
@@ -1900,58 +1952,58 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
             {
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               break;
             }
           case 3:
             {
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               break;
             }
           case 4:
             {
-              stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
+              stream.value.Byte4 = stream.buffer[stream.read_len++];
               break;
             }
           case 5:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
+              stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
-              stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 6:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
+              stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
-              stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 7:
             {
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               stream.value.Byte6 = stream.buffer[stream.read_len++];
               stream.value.Byte5 = stream.buffer[stream.read_len++];
               stream.value.Byte4 = stream.buffer[stream.read_len++];
               stream.value.Byte3 = stream.buffer[stream.read_len++];
               stream.value.Byte2 = stream.buffer[stream.read_len++];
               stream.value.Byte1 = stream.buffer[stream.read_len++];
-              stream.value.Byte0 = stream.buffer[stream.read_len++];
               break;
             }
           case 8:
@@ -1968,7 +2020,7 @@ namespace adata
             }
         }
       }
-      value = stream.value.VU32;
+      value = stream.value.VU64;
     }
 
     public static void write(zero_copy_buffer stream, sbyte value)
@@ -1985,10 +2037,11 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        byte temp = (byte)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = (sbyte)(-value);
+          temp = (byte)(-value);
         }
         if (stream.write_len + 2 >= stream.data_len)
         {
@@ -1996,7 +2049,7 @@ namespace adata
           return;
         }
         stream.buffer[stream.write_len++] = tag;
-        stream.buffer[stream.write_len++] = (byte)value;
+        stream.buffer[stream.write_len++] = temp;
       }
     }
 
@@ -2038,12 +2091,13 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        UInt16 temp = (UInt16)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = (Int16)(-value);
+          temp = (UInt16)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           if (stream.write_len + 2 >= stream.data_len)
           {
@@ -2051,7 +2105,7 @@ namespace adata
             return;
           }
           stream.buffer[stream.write_len++] = tag;
-          stream.buffer[stream.write_len++] = (byte)value;
+          stream.buffer[stream.write_len++] = (byte)temp;
         }
         else
         {
@@ -2060,7 +2114,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI16 = value;
+          stream.value.VU16 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2137,12 +2191,13 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        UInt32 temp = (UInt32)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = -value;
+          temp = (UInt32)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           if (stream.write_len + 2 >= stream.data_len)
           {
@@ -2150,16 +2205,16 @@ namespace adata
             return;
           }
           stream.buffer[stream.write_len++] = tag;
-          stream.buffer[stream.write_len++] = (byte)value;
+          stream.buffer[stream.write_len++] = (byte)temp;
         }
-        else if (value < 0x10000)
+        else if (temp < 0x10000)
         {
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2169,18 +2224,18 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
+            stream.buffer[stream.write_len++] = stream.value.Byte2;
           }
         }
-        else if (value < 0x1000000)
+        else if (temp < 0x1000000)
         {
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           tag += 2;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2191,9 +2246,9 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2203,7 +2258,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI32 = value;
+          stream.value.VU32 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2263,8 +2318,8 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
+            stream.buffer[stream.write_len++] = stream.value.Byte2;
           }
         }
         else if (value < 0x1000000)
@@ -2284,9 +2339,9 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2330,12 +2385,13 @@ namespace adata
       else
       {
         byte tag = const_tag_as_type;
+        UInt64 temp = (UInt64)value;
         if (value < 0)
         {
           tag += const_negative_bit_value;
-          value = -value;
+          temp = (UInt64)(-value);
         }
-        if (value < 0x100)
+        if (temp < 0x100)
         {
           if (stream.write_len + 2 >= stream.data_len)
           {
@@ -2343,16 +2399,16 @@ namespace adata
             return;
           }
           stream.buffer[stream.write_len++] = tag;
-          stream.buffer[stream.write_len++] = (byte)value;
+          stream.buffer[stream.write_len++] = (byte)temp;
         }
-        else if (value < 0x10000)
+        else if (temp < 0x10000)
         {
           if (stream.write_len + 3 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2362,18 +2418,18 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
           }
         }
-        else if (value < 0x1000000)
+        else if (temp < 0x1000000)
         {
           if (stream.write_len + 4 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 2;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2384,19 +2440,19 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
           }
         }
-        else if (value < 0x100000000)
+        else if (temp < 0x100000000L)
         {
           if (stream.write_len + 5 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2408,20 +2464,20 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
+            stream.buffer[stream.write_len++] = stream.value.Byte4;
           }
         }
-        else if (value < 0x10000000000)
+        else if (temp < 0x10000000000L)
         {
           if (stream.write_len + 6 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 4;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2434,21 +2490,21 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000000000)
+        else if (temp < 0x1000000000000L)
         {
           if (stream.write_len + 7 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 5;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2462,22 +2518,22 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000000000)
+        else if (temp < 0x100000000000000L)
         {
           if (stream.write_len + 8 >= stream.data_len)
           {
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 6;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2492,13 +2548,13 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
             stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2508,7 +2564,7 @@ namespace adata
             stream.error_code = error_code_t.stream_buffer_overflow;
             return;
           }
-          stream.value.VI64 = value;
+          stream.value.VU64 = temp;
           tag += 7;
           stream.buffer[stream.write_len++] = tag;
           if (IsLittleEndian)
@@ -2576,8 +2632,8 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
           }
         }
         else if (value < 0x1000000)
@@ -2597,12 +2653,12 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
           }
         }
-        else if (value < 0x100000000)
+        else if (value < 0x100000000UL)
         {
           if (stream.write_len + 5 >= stream.data_len)
           {
@@ -2620,13 +2676,13 @@ namespace adata
           }
           else
           {
-            stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
+            stream.buffer[stream.write_len++] = stream.value.Byte4;
           }
         }
-        else if (value < 0x10000000000)
+        else if (value < 0x10000000000UL)
         {
           if (stream.write_len + 6 >= stream.data_len)
           {
@@ -2645,14 +2701,14 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
+            stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
-            stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x1000000000000)
+        else if (value < 0x1000000000000UL)
         {
           if (stream.write_len + 7 >= stream.data_len)
           {
@@ -2672,15 +2728,15 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
+            stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
-            stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
-        else if (value < 0x100000000000000)
+        else if (value < 0x100000000000000UL)
         {
           if (stream.write_len + 8 >= stream.data_len)
           {
@@ -2701,13 +2757,13 @@ namespace adata
           }
           else
           {
+            stream.buffer[stream.write_len++] = stream.value.Byte7;
             stream.buffer[stream.write_len++] = stream.value.Byte6;
             stream.buffer[stream.write_len++] = stream.value.Byte5;
             stream.buffer[stream.write_len++] = stream.value.Byte4;
             stream.buffer[stream.write_len++] = stream.value.Byte3;
             stream.buffer[stream.write_len++] = stream.value.Byte2;
             stream.buffer[stream.write_len++] = stream.value.Byte1;
-            stream.buffer[stream.write_len++] = stream.value.Byte0;
           }
         }
         else
@@ -2773,12 +2829,8 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
-      char[] chars = new char[len];
-      for (int i = 0; i < len; ++i)
-      {
-        chars[i] = (char)stream.buffer[stream.read_len++];
-      }
-      value = new string(chars);
+      value = Encoding.UTF8.GetString(stream.buffer, stream.read_len, (int)len);
+      stream.read_len += (int)len;
       return;
     }
 
@@ -2789,11 +2841,36 @@ namespace adata
         stream.error_code = error_code_t.stream_buffer_overflow;
         return;
       }
+      byte[] buff = Encoding.UTF8.GetBytes(value);
       for (int i = 0; i < len; ++i)
       {
-        stream.buffer[stream.write_len++] = (byte)value[i];
+        stream.buffer[stream.write_len++] = buff[i];
       }
       return;
+    }
+
+    public static void read(zero_copy_buffer stream, ref string value)
+    {
+      UInt32 len = 0;
+      read(stream, ref len);
+      read(stream, ref value, len);
+    }
+
+    public static void write(zero_copy_buffer stream, string value)
+    {
+        byte[] buff = Encoding.UTF8.GetBytes(value);
+
+      UInt32 len = (UInt32)buff.Length;
+      if (stream.write_len + len > stream.data_len)
+      {
+        stream.error_code = error_code_t.stream_buffer_overflow;
+        return;
+      }
+      write(stream, len);
+      for (int i = 0; i < len; ++i)
+      {
+        stream.buffer[stream.write_len++] = buff[i];
+      }
     }
 
     public static void skip_read(zero_copy_buffer stream, ref string value, UInt32 len)
@@ -2806,5 +2883,26 @@ namespace adata
       stream.read_len += (int)len;
       return;
     }
+
+    public static void skip_read_compatible(zero_copy_buffer stream)
+    {
+      int offset = stream.read_len;
+      UInt64 tag = 0;
+      read(stream, ref tag);
+      if (stream.error()) { return; }
+      Int32 len_tag = 0;
+      read(stream, ref len_tag);
+      if (stream.error()) { return; }
+      UInt32 read_len = (UInt32)(stream.read_len - offset);
+      UInt32 len = (UInt32)len_tag;
+      if (len > read_len) stream.skip_read(len - read_len);
+    }
+  }
+
+  public abstract class base_obj
+  {
+    public abstract void read(adata.zero_copy_buffer stream);
+    public abstract UInt32 size_of();
+    public abstract void write(adata.zero_copy_buffer stream);
   }
 }
