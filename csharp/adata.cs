@@ -46,7 +46,7 @@ namespace adata
     public byte Byte7;
   }
 
-  public enum error_code_t
+  public enum EErrorCode
   {
     success,
     negative_assign_to_unsigned_integer_number,
@@ -57,55 +57,52 @@ namespace adata
     undefined_member_protocol_not_compatible,
   }
 
-  public class exception : SystemException
+  public class ADataException : SystemException
   {
-    error_code_t m_error;
-    public error_code_t ErrorCode
-    {
-      get { return m_error; }
-    }
-    public exception(error_code_t ec):base(to_message(ec))
+    public readonly EErrorCode m_error;
+    public ADataException(EErrorCode ec) : base(ToMessage(ec))
     {
       m_error = ec;
     }
-    static public string to_message(error_code_t ec)
+    static public string ToMessage(EErrorCode ec)
     {
-      switch(ec)
+      switch (ec)
       {
-        case error_code_t.negative_assign_to_unsigned_integer_number: return "assign negative value to unsigned.";
-        case error_code_t.value_too_large_to_integer_number:return "integer value out of range.";
-        case error_code_t.sequence_length_overflow:return "size out of range.";
-        case error_code_t.stream_buffer_overflow:return "buffer overflow.";
-        case error_code_t.number_of_element_not_macth:return "length too large.";
-        case error_code_t.undefined_member_protocol_not_compatible:return "undefined member, protocol not compatible.";
+        case EErrorCode.negative_assign_to_unsigned_integer_number: return "assign negative value to unsigned.";
+        case EErrorCode.value_too_large_to_integer_number: return "integer value out of range.";
+        case EErrorCode.sequence_length_overflow: return "size out of range.";
+        case EErrorCode.stream_buffer_overflow: return "buffer overflow.";
+        case EErrorCode.number_of_element_not_macth: return "length too large.";
+        case EErrorCode.undefined_member_protocol_not_compatible: return "undefined member, protocol not compatible.";
         default:
           return "";
       }
     }
   };
 
-  public class zero_copy_buffer
+  public class ZeroCopyBuffer
   {
     public byte[] buffer;
     public int data_len;
     public int read_len;
     public int write_len;
     internal UType value;
-    public error_code_t error_code;
-    public zero_copy_buffer()
+
+    EErrorCode error_code;
+    public ZeroCopyBuffer()
     {
       buffer = new byte[65536];
       data_len = 65536;
       read_len = 0;
       write_len = 0;
       value = new UType();
-      error_code = error_code_t.success;
+      error_code = EErrorCode.success;
     }
 
-    public zero_copy_buffer(byte[] buf , int size = -1)
+    public ZeroCopyBuffer(byte[] buf, int size = -1)
     {
       buffer = buf;
-      if(buf != null)
+      if (buf != null)
       {
         if (buf.Length < size)
         {
@@ -124,11 +121,11 @@ namespace adata
       read_len = 0;
       write_len = 0;
       value = new UType();
-      error_code = error_code_t.success;
+      error_code = EErrorCode.success;
     }
-    public void reset(byte[] the_buffer , int size = -1)
+    public void Reset(byte[] the_buffer, int size = -1)
     {
-      if(size == -1)
+      if (size == -1)
       {
         size = the_buffer.Length;
       }
@@ -138,53 +135,57 @@ namespace adata
       this.write_len = 0;
     }
 
-    public void clear()
+    public void Clear()
     {
       this.read_len = 0;
       this.write_len = 0;
-      error_code = error_code_t.success;
+      error_code = EErrorCode.success;
     }
 
-    public void trace_error(string tag)
+    public EErrorCode ErrorCode { get => error_code; }
+
+    public void RaiseErrorCode(EErrorCode ec)
     {
+      error_code = ec;
+      throw new ADataException(error_code);
     }
 
-    public void trace_error(string tag, int sub)
-    {
-    }
+    public bool Error { get => error_code != EErrorCode.success; }
 
-    public string get_trace_info()
-    {
-      return "";
-    }
-
-    public error_code_t get_error_code() { return error_code; }
-    public void set_error_code(error_code_t ec) { error_code = ec; }
-
-    public bool error() { return error_code != error_code_t.success; }
-
-    public void skip_read(UInt32 len)
+    public void CheckReadBuffer(Int32 len)
     {
       if (read_len + len > data_len)
       {
-        error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(error_code);
+        RaiseErrorCode(EErrorCode.stream_buffer_overflow);
       }
+    }
+
+    public void CheckWriteBuffer(Int32 len)
+    {
+      if (write_len + len > data_len)
+      {
+        RaiseErrorCode(EErrorCode.stream_buffer_overflow);
+      }
+    }
+
+    public void SkipRead(Int32 len)
+    {
+      CheckReadBuffer(len);
       read_len += (int)len;
     }
 
-    public int read_length()
+    public int ReadLength()
     {
       return read_len;
     }
 
-    public int write_length()
+    public int WriteLength()
     {
       return write_len;
     }
   }
 
-  public class stream
+  public class Stream
   {
     private const byte const_tag_as_value = 0x7f;
     private const byte const_tag_as_type = 0x80;
@@ -192,405 +193,223 @@ namespace adata
     private const byte const_negative_bit_value = 0x20;
     private const byte const_store_postive_integer_byte_mask = 0x80 - 2;
 
-    private static bool IsLittleEndian = BitConverter.IsLittleEndian;
+    private static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref sbyte value)
+    public static void SkipBytes(ZeroCopyBuffer stream, int count)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 1;
+      stream.SkipRead(count);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref byte value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 1;
+      SkipBytes(stream, 1);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref Int16 value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref byte value)
     {
-      if (stream.read_len + 2 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 2;
+      SkipBytes(stream, 1);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref UInt16 value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref Int16 value)
     {
-      if (stream.read_len + 2 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 2;
+      SkipBytes(stream, 2);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref Int32 value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 4 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 4;
+      SkipBytes(stream, 2);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref UInt32 value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref Int32 value)
     {
-      if (stream.read_len + 4 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 4;
+      SkipBytes(stream, 4);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref Int64 value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 8 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 8;
+      SkipBytes(stream, 4);
     }
 
-    public static void fix_skip_read(zero_copy_buffer stream, ref UInt64 value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref Int64 value)
     {
-      if (stream.read_len + 8 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 8;
+      SkipBytes(stream, 8);
     }
 
-    public static Int32 fix_size_of(sbyte value)
+    public static void FixSkipRead(ZeroCopyBuffer stream, ref UInt64 value)
+    {
+      SkipBytes(stream, 8);
+    }
+
+    public static Int32 FixSizeOf(sbyte value)
     {
       return 1;
     }
 
-    public static Int32 fix_size_of(byte value)
+    public static Int32 FixSizeOf(byte value)
     {
       return 1;
     }
 
-    public static Int32 fix_size_of(Int16 value)
+    public static Int32 FixSizeOf(Int16 value)
     {
       return 2;
     }
 
-    public static Int32 fix_size_of(UInt16 value)
+    public static Int32 FixSizeOf(UInt16 value)
     {
       return 2;
     }
 
-    public static Int32 fix_size_of(Int32 value)
+    public static Int32 FixSizeOf(Int32 value)
     {
       return 4;
     }
 
-    public static Int32 fix_size_of(UInt32 value)
+    public static Int32 FixSizeOf(UInt32 value)
     {
       return 4;
     }
 
-    public static Int32 fix_size_of(Int64 value)
+    public static Int32 FixSizeOf(Int64 value)
     {
       return 8;
     }
 
-    public static Int32 fix_size_of(UInt64 value)
+    public static Int32 FixSizeOf(UInt64 value)
     {
       return 8;
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref sbyte value)
+    public static void SkipReadValueImpl(ZeroCopyBuffer stream, int max_bytes)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       byte tag = stream.buffer[stream.read_len++];
       if (tag <= const_tag_as_value)
       {
         return;
       }
       int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 1)
+      if (read_bytes > max_bytes)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.read_len += read_bytes;
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref byte value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 1)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 1);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref Int16 value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref byte value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 2)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 1);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref UInt16 value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref Int16 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 2)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 2);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref Int32 value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 4)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 2);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref UInt32 value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref Int32 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 4)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 4);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref Int64 value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 8)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 4);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref UInt64 value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref Int64 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      byte tag = stream.buffer[stream.read_len++];
-      if (tag <= const_tag_as_value)
-      {
-        return;
-      }
-      int read_bytes = (int)(tag & const_interger_byte_msak) + 1;
-      if (read_bytes > 8)
-      {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
-      }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += read_bytes;
+      SkipReadValueImpl(stream, 8);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref float value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 4 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 4;
+      SkipReadValueImpl(stream, 8);
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref double value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref float value)
     {
-      if (stream.read_len + 8 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      stream.read_len += 8;
+      SkipBytes(stream, 4);
     }
 
-    public static UInt32 size_of(sbyte value)
+    public static void SkipRead(ZeroCopyBuffer stream, ref double value)
     {
-      if ((value & const_tag_as_type) > 0) return 2;
+      SkipBytes(stream, 8);
+    }
+
+    public static UInt32 SizeOf(sbyte value)
+    {
+      if ((value & const_tag_as_type) > 0)
+        return 2;
       else return 1;
     }
 
-    public static Int32 size_of(byte value)
+    public static Int32 SizeOf(byte value)
     {
-      if (value < const_tag_as_type) return 1;
+      if (value < const_tag_as_type)
+        return 1;
       else return 2;
     }
 
-    public static Int32 size_of(UInt16 value)
+    public static Int32 SizeOf(UInt16 value)
     {
-      if (value < const_tag_as_type) return 1;
-      else if (value < 0x100) return 2;
+      if (value < const_tag_as_type)
+        return 1;
+      else if (value < 0x100)
+        return 2;
       return 3;
     }
 
-    public static Int32 size_of(Int16 value)
+    public static Int32 SizeOf(Int16 value)
     {
-      if (0 <= value && value < const_tag_as_type) return 1;
+      if (0 <= value && value < const_tag_as_type)
+        return 1;
       UInt16 temp = (UInt16)value;
       if (value < 0) temp = (UInt16)(-value);
-      if (temp < 0x100) return 2;
+      if (temp < 0x100)
+        return 2;
       return 3;
     }
 
-    public static Int32 size_of(UInt32 value)
+    public static Int32 SizeOf(UInt32 value)
     {
-      if (value < const_tag_as_type) return 1;
-      else if (value < 0x100) return 2;
-      else if (value < 0x10000) return 3;
-      else if (value < 0x1000000) return 4;
+      if (value < const_tag_as_type)
+        return 1;
+      else if (value < 0x100)
+        return 2;
+      else if (value < 0x10000)
+        return 3;
+      else if (value < 0x1000000)
+        return 4;
       return 5;
     }
 
-    public static Int32 size_of(Int32 value)
+    public static Int32 SizeOf(Int32 value)
     {
-      if (0 <= value && value < const_tag_as_type) return 1;
+      if (0 <= value && value < const_tag_as_type)
+        return 1;
       UInt32 temp = (UInt32)value;
       if (value < 0) temp = (UInt32)(-value);
-      if (temp < 0x100) return 2;
-      if (temp < 0x10000) return 3;
-      if (temp < 0x1000000) return 4;
+      if (temp < 0x100)
+        return 2;
+      if (temp < 0x10000)
+        return 3;
+      if (temp < 0x1000000)
+        return 4;
       return 5;
     }
 
-    public static Int32 size_of(UInt64 value)
+    public static Int32 SizeOf(UInt64 value)
     {
       if (value < const_tag_as_type) return 1;
       else if (value < 0x100) return 2;
@@ -603,7 +422,7 @@ namespace adata
       return 9;
     }
 
-    public static Int32 size_of(Int64 value)
+    public static Int32 SizeOf(Int64 value)
     {
       if (0 <= value && value < const_tag_as_type) return 1;
       UInt64 temp = (UInt64)value;
@@ -618,58 +437,45 @@ namespace adata
       return 9;
     }
 
-    public static Int32 size_of(float value)
+    public static Int32 SizeOf(float value)
     {
       return 4;
     }
 
-    public static Int32 size_of(double value)
+    public static Int32 SizeOf(double value)
     {
       return 8;
     }
 
-    public static Int32 size_of(string value)
+    public static Int32 SizeOf(string value)
     {
       Int32 len = System.Text.Encoding.UTF8.GetByteCount(value);
-      len += adata.stream.size_of(len);
+      len += adata.Stream.SizeOf(len);
       return len;
     }
 
-    public static Int32 size_of(byte[] value)
+    public static Int32 SizeOf(byte[] value)
     {
       Int32 len = value.Length;
-      len += adata.stream.size_of(len);
+      len += adata.Stream.SizeOf(len);
       return len;
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref sbyte value)
+    public static void FixRead(ZeroCopyBuffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (sbyte)stream.buffer[stream.read_len++];
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref byte value)
+    public static void FixRead(ZeroCopyBuffer stream, ref byte value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = stream.buffer[stream.read_len++];
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref Int16 value)
+    public static void FixRead(ZeroCopyBuffer stream, ref Int16 value)
     {
-      if (stream.read_len + 2 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(2);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -683,14 +489,9 @@ namespace adata
       value = stream.value.VI16;
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref UInt16 value)
+    public static void FixRead(ZeroCopyBuffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 2 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(2);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -704,14 +505,9 @@ namespace adata
       value = stream.value.VU16;
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref Int32 value)
+    public static void FixRead(ZeroCopyBuffer stream, ref Int32 value)
     {
-      if (stream.read_len + 4 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(4);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -729,14 +525,9 @@ namespace adata
       value = stream.value.VI32;
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref UInt32 value)
+    public static void FixRead(ZeroCopyBuffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 4 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(4);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -754,14 +545,9 @@ namespace adata
       value = stream.value.VU32;
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref Int64 value)
+    public static void FixRead(ZeroCopyBuffer stream, ref Int64 value)
     {
-      if (stream.read_len + 8 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(8);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -787,14 +573,9 @@ namespace adata
       value = stream.value.VI64;
     }
 
-    public static void fix_read(zero_copy_buffer stream, ref UInt64 value)
+    public static void FixRead(ZeroCopyBuffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 8 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(8);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -820,14 +601,9 @@ namespace adata
       value = stream.value.VU64;
     }
 
-    public static void read(zero_copy_buffer stream, ref float value)
+    public static void Read(ZeroCopyBuffer stream, ref float value)
     {
-      if (stream.read_len + 4 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(4);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -845,14 +621,9 @@ namespace adata
       value = stream.value.VF32;
     }
 
-    public static void read(zero_copy_buffer stream, ref double value)
+    public static void Read(ZeroCopyBuffer stream, ref double value)
     {
-      if (stream.read_len + 8 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckReadBuffer(8);
       if (IsLittleEndian)
       {
         stream.value.Byte0 = stream.buffer[stream.read_len++];
@@ -878,34 +649,21 @@ namespace adata
       value = stream.value.VF64;
     }
 
-    public static void fix_write(zero_copy_buffer stream, sbyte value)
+    public static void FixWrite(ZeroCopyBuffer stream, sbyte value)
     {
-      if (stream.write_len + 1 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckWriteBuffer(1);
       stream.buffer[stream.write_len++] = (byte)value;
     }
 
-    public static void fix_write(zero_copy_buffer stream, byte value)
+    public static void FixWrite(ZeroCopyBuffer stream, byte value)
     {
-      if (stream.write_len + 1 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckWriteBuffer(1);
       stream.buffer[stream.write_len++] = (byte)value;
     }
 
-    public static void fix_write(zero_copy_buffer stream, Int16 value)
+    public static void FixWrite(ZeroCopyBuffer stream, Int16 value)
     {
-      if (stream.write_len + 2 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(2);
       stream.value.VI16 = value;
       if (IsLittleEndian)
       {
@@ -919,14 +677,9 @@ namespace adata
       }
     }
 
-    public static void fix_write(zero_copy_buffer stream, UInt16 value)
+    public static void FixWrite(ZeroCopyBuffer stream, UInt16 value)
     {
-      if (stream.write_len + 2 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(2);
       stream.value.VU16 = value;
       if (IsLittleEndian)
       {
@@ -940,14 +693,9 @@ namespace adata
       }
     }
 
-    public static void fix_write(zero_copy_buffer stream, Int32 value)
+    public static void FixWrite(ZeroCopyBuffer stream, Int32 value)
     {
-      if (stream.write_len + 4 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(4);
       stream.value.VI32 = value;
       if (IsLittleEndian)
       {
@@ -965,14 +713,9 @@ namespace adata
       }
     }
 
-    public static void fix_write(zero_copy_buffer stream, UInt32 value)
+    public static void FixWrite(ZeroCopyBuffer stream, UInt32 value)
     {
-      if (stream.write_len + 4 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(4);
       stream.value.VU32 = value;
       if (IsLittleEndian)
       {
@@ -990,14 +733,9 @@ namespace adata
       }
     }
 
-    public static void fix_write(zero_copy_buffer stream, Int64 value)
+    public static void FixWrite(ZeroCopyBuffer stream, Int64 value)
     {
-      if (stream.write_len + 8 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(8);
       stream.value.VI64 = value;
       if (IsLittleEndian)
       {
@@ -1023,14 +761,9 @@ namespace adata
       }
     }
 
-    public static void fix_write(zero_copy_buffer stream, UInt64 value)
+    public static void FixWrite(ZeroCopyBuffer stream, UInt64 value)
     {
-      if (stream.write_len + 8 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(8);
       stream.value.VU64 = value;
       if (IsLittleEndian)
       {
@@ -1056,14 +789,9 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, float value)
+    public static void Write(ZeroCopyBuffer stream, float value)
     {
-      if (stream.write_len + 4 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(4);
       stream.value.VF32 = value;
       if (IsLittleEndian)
       {
@@ -1081,14 +809,9 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, double value)
+    public static void Write(ZeroCopyBuffer stream, double value)
     {
-      if (stream.write_len + 8 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-
+      stream.CheckWriteBuffer(8);
       stream.value.VF64 = value;
       if (IsLittleEndian)
       {
@@ -1114,13 +837,9 @@ namespace adata
       }
     }
 
-    public static void read(zero_copy_buffer stream, ref sbyte value)
+    public static void Read(ZeroCopyBuffer stream, ref sbyte value)
     {
-      if (stream.read_len + 1 >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (sbyte)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1129,15 +848,10 @@ namespace adata
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 1)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
       bool signed = (value & const_negative_bit_value) > 0;
-      if (stream.read_len + read_bytes >= stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       value = (sbyte)stream.buffer[stream.read_len++];
       if (signed)
       {
@@ -1145,13 +859,9 @@ namespace adata
       }
     }
 
-    public static void read(zero_copy_buffer stream, ref byte value)
+    public static void Read(ZeroCopyBuffer stream, ref byte value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1160,24 +870,15 @@ namespace adata
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 1)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       value = stream.buffer[stream.read_len++];
     }
 
-    public static void read(zero_copy_buffer stream, ref Int16 value)
+    public static void Read(ZeroCopyBuffer stream, ref Int16 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (Int16)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1191,14 +892,9 @@ namespace adata
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1244,13 +940,9 @@ namespace adata
       }
     }
 
-    public static void read(zero_copy_buffer stream, ref UInt16 value)
+    public static void Read(ZeroCopyBuffer stream, ref UInt16 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (UInt16)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1259,14 +951,9 @@ namespace adata
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 2)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1305,13 +992,9 @@ namespace adata
       value = stream.value.VU16;
     }
 
-    public static void read(zero_copy_buffer stream, ref Int32 value)
+    public static void Read(ZeroCopyBuffer stream, ref Int32 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (Int32)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1325,14 +1008,9 @@ namespace adata
       int read_bytes = (value & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1408,29 +1086,20 @@ namespace adata
       }
     }
 
-    public static void read(zero_copy_buffer stream, ref UInt32 value)
+    public static void Read(ZeroCopyBuffer stream, ref UInt32 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (UInt32)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
         return;
       }
-      UInt32 read_bytes = (value & const_interger_byte_msak) + 1;
+      Int32 read_bytes = (Int32)(value & const_interger_byte_msak) + 1;
       if (read_bytes > 4)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1499,13 +1168,9 @@ namespace adata
       value = stream.value.VU32;
     }
 
-    public static void read(zero_copy_buffer stream, ref Int64 value)
+    public static void Read(ZeroCopyBuffer stream, ref Int64 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (Int64)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1519,14 +1184,9 @@ namespace adata
       int read_bytes = (int)(value & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1686,13 +1346,9 @@ namespace adata
       }
     }
 
-    public static void read(zero_copy_buffer stream, ref UInt64 value)
+    public static void Read(ZeroCopyBuffer stream, ref UInt64 value)
     {
-      if (stream.read_len + 1 > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(1);
       value = (UInt64)stream.buffer[stream.read_len++];
       if (value >= 0 && value <= const_tag_as_value)
       {
@@ -1701,14 +1357,9 @@ namespace adata
       int read_bytes = (int)(value & const_interger_byte_msak) + 1;
       if (read_bytes > 8)
       {
-        stream.error_code = error_code_t.value_too_large_to_integer_number;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.value_too_large_to_integer_number);
       }
-      if (stream.read_len + read_bytes > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(read_bytes);
       stream.value.VU64 = 0;
       if (IsLittleEndian)
       {
@@ -1790,7 +1441,7 @@ namespace adata
         {
           case 1:
             {
-              stream.value.Byte7= stream.buffer[stream.read_len++];
+              stream.value.Byte7 = stream.buffer[stream.read_len++];
               break;
             }
           case 2:
@@ -1861,15 +1512,11 @@ namespace adata
       value = stream.value.VU64;
     }
 
-    public static void write(zero_copy_buffer stream, sbyte value)
+    public static void Write(ZeroCopyBuffer stream, sbyte value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
@@ -1881,49 +1528,33 @@ namespace adata
           tag += const_negative_bit_value;
           temp = (byte)(-value);
         }
-        if (stream.write_len + 2 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(2);
         stream.buffer[stream.write_len++] = tag;
         stream.buffer[stream.write_len++] = temp;
       }
     }
 
-    public static void write(zero_copy_buffer stream, byte value)
+    public static void Write(ZeroCopyBuffer stream, byte value)
     {
       if (value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = value;
       }
       else
       {
         byte tag = const_tag_as_type;
-        if (stream.write_len + 2 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(2);
         stream.buffer[stream.write_len++] = tag;
         stream.buffer[stream.write_len++] = value;
       }
     }
 
-    public static void write(zero_copy_buffer stream, Int16 value)
+    public static void Write(ZeroCopyBuffer stream, Int16 value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
@@ -1937,21 +1568,13 @@ namespace adata
         }
         if (temp < 0x100)
         {
-          if (stream.write_len + 2 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(2);
           stream.buffer[stream.write_len++] = tag;
           stream.buffer[stream.write_len++] = (byte)temp;
         }
         else
         {
-          if (stream.write_len + 3 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(3);
           stream.value.VU16 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
@@ -1969,36 +1592,24 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, UInt16 value)
+    public static void Write(ZeroCopyBuffer stream, UInt16 value)
     {
       if (value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
       {
         if (value < 0x100)
         {
-          if (stream.write_len + 2 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(2);
           stream.buffer[stream.write_len++] = 0x80;
           stream.buffer[stream.write_len++] = (byte)value;
         }
         else
         {
-          if (stream.write_len + 3 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(3);
           stream.value.VU16 = value;
           stream.buffer[stream.write_len++] = 0x81;
           if (IsLittleEndian)
@@ -2015,15 +1626,11 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, Int32 value)
+    public static void Write(ZeroCopyBuffer stream, Int32 value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
@@ -2037,21 +1644,13 @@ namespace adata
         }
         if (temp < 0x100)
         {
-          if (stream.write_len + 2 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(2);
           stream.buffer[stream.write_len++] = tag;
           stream.buffer[stream.write_len++] = (byte)temp;
         }
         else if (temp < 0x10000)
         {
-          if (stream.write_len + 3 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(3);
           stream.value.VU32 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
@@ -2068,11 +1667,7 @@ namespace adata
         }
         else if (temp < 0x1000000)
         {
-          if (stream.write_len + 4 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(4);
           stream.value.VU32 = temp;
           tag += 2;
           stream.buffer[stream.write_len++] = tag;
@@ -2091,11 +1686,7 @@ namespace adata
         }
         else
         {
-          if (stream.write_len + 5 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(5);
           stream.value.VU32 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
@@ -2117,36 +1708,24 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, UInt32 value)
+    public static void Write(ZeroCopyBuffer stream, UInt32 value)
     {
       if (value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
       {
         if (value < 0x100)
         {
-          if (stream.write_len + 2 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(2);
           stream.buffer[stream.write_len++] = 0x80;
           stream.buffer[stream.write_len++] = (byte)value;
         }
         else if (value < 0x10000)
         {
-          if (stream.write_len + 3 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(3);
           stream.value.VU32 = value;
           stream.buffer[stream.write_len++] = 0x81;
           if (IsLittleEndian)
@@ -2162,11 +1741,7 @@ namespace adata
         }
         else if (value < 0x1000000)
         {
-          if (stream.write_len + 4 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(4);
           stream.value.VU32 = value;
           stream.buffer[stream.write_len++] = 0x82;
           if (IsLittleEndian)
@@ -2184,11 +1759,7 @@ namespace adata
         }
         else
         {
-          if (stream.write_len + 5 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(5);
           stream.value.VU32 = value;
           stream.buffer[stream.write_len++] = 0x83;
           if (IsLittleEndian)
@@ -2209,15 +1780,11 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, Int64 value)
+    public static void Write(ZeroCopyBuffer stream, Int64 value)
     {
       if (0 <= value && value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
@@ -2231,21 +1798,13 @@ namespace adata
         }
         if (temp < 0x100)
         {
-          if (stream.write_len + 2 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(2);
           stream.buffer[stream.write_len++] = tag;
           stream.buffer[stream.write_len++] = (byte)temp;
         }
         else if (temp < 0x10000)
         {
-          if (stream.write_len + 3 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(3);
           stream.value.VU64 = temp;
           ++tag;
           stream.buffer[stream.write_len++] = tag;
@@ -2262,11 +1821,7 @@ namespace adata
         }
         else if (temp < 0x1000000)
         {
-          if (stream.write_len + 4 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(4);
           stream.value.VU64 = temp;
           tag += 2;
           stream.buffer[stream.write_len++] = tag;
@@ -2285,11 +1840,7 @@ namespace adata
         }
         else if (temp < 0x100000000L)
         {
-          if (stream.write_len + 5 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(5);
           stream.value.VU64 = temp;
           tag += 3;
           stream.buffer[stream.write_len++] = tag;
@@ -2310,11 +1861,7 @@ namespace adata
         }
         else if (temp < 0x10000000000L)
         {
-          if (stream.write_len + 6 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(6);
           stream.value.VU64 = temp;
           tag += 4;
           stream.buffer[stream.write_len++] = tag;
@@ -2337,11 +1884,7 @@ namespace adata
         }
         else if (temp < 0x1000000000000L)
         {
-          if (stream.write_len + 7 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(7);
           stream.value.VU64 = temp;
           tag += 5;
           stream.buffer[stream.write_len++] = tag;
@@ -2366,11 +1909,7 @@ namespace adata
         }
         else if (temp < 0x100000000000000L)
         {
-          if (stream.write_len + 8 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(8);
           stream.value.VU64 = temp;
           tag += 6;
           stream.buffer[stream.write_len++] = tag;
@@ -2397,11 +1936,7 @@ namespace adata
         }
         else
         {
-          if (stream.write_len + 9 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(9);
           stream.value.VU64 = temp;
           tag += 7;
           stream.buffer[stream.write_len++] = tag;
@@ -2431,36 +1966,24 @@ namespace adata
       }
     }
 
-    public static void write(zero_copy_buffer stream, UInt64 value)
+    public static void Write(ZeroCopyBuffer stream, UInt64 value)
     {
       if (value <= const_tag_as_value)
       {
-        if (stream.write_len + 1 >= stream.data_len)
-        {
-          stream.error_code = error_code_t.stream_buffer_overflow;
-          throw new exception(stream.error_code);
-        }
+        stream.CheckWriteBuffer(1);
         stream.buffer[stream.write_len++] = (byte)value;
       }
       else
       {
         if (value < 0x100)
         {
-          if (stream.write_len + 2 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(2);
           stream.buffer[stream.write_len++] = 0x80;
           stream.buffer[stream.write_len++] = (byte)value;
         }
         else if (value < 0x10000)
         {
-          if (stream.write_len + 3 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(3);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x81;
           if (IsLittleEndian)
@@ -2476,11 +1999,7 @@ namespace adata
         }
         else if (value < 0x1000000)
         {
-          if (stream.write_len + 4 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(4);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x82;
           if (IsLittleEndian)
@@ -2498,11 +2017,7 @@ namespace adata
         }
         else if (value < 0x100000000UL)
         {
-          if (stream.write_len + 5 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(5);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x83;
           if (IsLittleEndian)
@@ -2522,11 +2037,7 @@ namespace adata
         }
         else if (value < 0x10000000000UL)
         {
-          if (stream.write_len + 6 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(6);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x84;
           if (IsLittleEndian)
@@ -2548,11 +2059,7 @@ namespace adata
         }
         else if (value < 0x1000000000000UL)
         {
-          if (stream.write_len + 7 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(7);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x85;
           if (IsLittleEndian)
@@ -2576,11 +2083,7 @@ namespace adata
         }
         else if (value < 0x100000000000000UL)
         {
-          if (stream.write_len + 8 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(8);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x86;
           if (IsLittleEndian)
@@ -2606,11 +2109,7 @@ namespace adata
         }
         else
         {
-          if (stream.write_len + 9 >= stream.data_len)
-          {
-            stream.error_code = error_code_t.stream_buffer_overflow;
-            throw new exception(stream.error_code);
-          }
+          stream.CheckWriteBuffer(9);
           stream.value.VU64 = value;
           stream.buffer[stream.write_len++] = 0x87;
           if (IsLittleEndian)
@@ -2639,167 +2138,153 @@ namespace adata
       }
     }
 
-    public static Int32 check_read_size(zero_copy_buffer stream)
+    public static Int32 CheckReadSize(ZeroCopyBuffer stream)
     {
-      return check_read_size(stream, 0);
+      return CheckReadSize(stream, 0);
     }
 
-    public static Int32 check_read_size(zero_copy_buffer stream, int size)
+    public static Int32 CheckReadSize(ZeroCopyBuffer stream, int size)
     {
       Int32 len = 0;
-      read(stream, ref len);
+      Read(stream, ref len);
       if (size > 0 && len > size)
       {
-        stream.error_code = error_code_t.number_of_element_not_macth;
-        throw new exception(stream.error_code);
+        stream.RaiseErrorCode(EErrorCode.number_of_element_not_macth);
       }
       return len;
     }
 
-    public static void read(zero_copy_buffer stream, ref string value, Int32 len)
+    public static void Read(ZeroCopyBuffer stream, ref string value, Int32 len)
     {
-      if (stream.read_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      value = Encoding.UTF8.GetString(stream.buffer, stream.read_len, (int)len);
+      stream.CheckReadBuffer(len);
+      value = Encoding.UTF8.GetString(stream.buffer, stream.read_len, len);
       stream.read_len += (int)len;
     }
 
-    public static void read(zero_copy_buffer stream, ref byte[] value, Int32 len)
+    public static void Read(ZeroCopyBuffer stream, ref byte[] value, Int32 len)
     {
       if (len == 0)
         return;
-      if (stream.read_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(len);
       value = new byte[len];
       System.Buffer.BlockCopy(stream.buffer, stream.read_len, value, 0, len);
       stream.read_len += (int)len;
     }
 
-    public static void write(zero_copy_buffer stream, string value, Int32 len)
+    public static void Write(ZeroCopyBuffer stream, string value, Int32 len)
     {
-      if (stream.write_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
       byte[] buff = Encoding.UTF8.GetBytes(value);
+      if (buff.Length > len)
+      {
+        stream.RaiseErrorCode(EErrorCode.sequence_length_overflow);
+      }
+      stream.CheckWriteBuffer(buff.Length);
       for (int i = 0; i < len; ++i)
       {
         stream.buffer[stream.write_len++] = buff[i];
       }
     }
 
-    public static void write(zero_copy_buffer stream, byte[] buff, Int32 len)
+    public static void Write(ZeroCopyBuffer stream, byte[] buff, Int32 len)
     {
-      if (stream.write_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckWriteBuffer(len);
       for (int i = 0; i < len; ++i)
       {
         stream.buffer[stream.write_len++] = buff[i];
       }
     }
 
-
-    public static void read(zero_copy_buffer stream, ref string value)
+    public static void Read(ZeroCopyBuffer stream, ref string value)
     {
       Int32 len = 0;
-      read(stream, ref len);
-      read(stream, ref value, len);
+      Read(stream, ref len);
+      Read(stream, ref value, len);
     }
 
-    public static void read(zero_copy_buffer stream, ref byte[] value)
+    public static void Read(ZeroCopyBuffer stream, ref byte[] value)
     {
       Int32 len = 0;
-      read(stream, ref len);
-      read(stream, ref value, len);
+      Read(stream, ref len);
+      Read(stream, ref value, len);
     }
 
-    public static void write(zero_copy_buffer stream, string value)
+    public static void Write(ZeroCopyBuffer stream, string value)
     {
       byte[] buff = Encoding.UTF8.GetBytes(value);
 
       Int32 len = buff.Length;
-      if (stream.write_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      write(stream, len);
+      Write(stream, len);
+      stream.CheckWriteBuffer(len);
       for (int i = 0; i < len; ++i)
       {
         stream.buffer[stream.write_len++] = buff[i];
       }
     }
 
-    public static void write(zero_copy_buffer stream, byte[] buff)
+    public static void Write(ZeroCopyBuffer stream, byte[] buff)
     {
       Int32 len = buff.Length;
-      if (stream.write_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
-      write(stream, len);
+      Write(stream, len);
+      stream.CheckWriteBuffer(len);
       for (int i = 0; i < len; ++i)
       {
         stream.buffer[stream.write_len++] = buff[i];
       }
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref string value, UInt32 len)
+    public static void SkipRead(ZeroCopyBuffer stream, ref string value)
     {
-      if (stream.read_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      Int32 len = 0;
+      Read(stream, ref len);
+      stream.CheckReadBuffer(len);
       stream.read_len += (int)len;
     }
 
-    public static void skip_read(zero_copy_buffer stream, ref byte[] value, UInt32 len)
+    public static void SkipRead(ZeroCopyBuffer stream, ref string value, Int32 len)
     {
-      if (stream.read_len + len > stream.data_len)
-      {
-        stream.error_code = error_code_t.stream_buffer_overflow;
-        throw new exception(stream.error_code);
-      }
+      stream.CheckReadBuffer(len);
       stream.read_len += (int)len;
     }
 
-    public static void skip_read_compatible(zero_copy_buffer stream)
+    public static void SkipRead(ZeroCopyBuffer stream, ref byte[] value)
+    {
+      Int32 len = 0;
+      Read(stream, ref len);
+      stream.CheckReadBuffer(len);
+      stream.read_len += (int)len;
+    }
+
+    public static void SkipRead(ZeroCopyBuffer stream, ref byte[] value, Int32 len)
+    {
+      stream.CheckReadBuffer(len);
+      stream.read_len += (int)len;
+    }
+
+    public static void SkipReadCompatible(ZeroCopyBuffer stream)
     {
       int offset = stream.read_len;
       Int64 tag = 0;
-      read(stream, ref tag);
+      Read(stream, ref tag);
       Int32 len_tag = 0;
-      read(stream, ref len_tag);
+      Read(stream, ref len_tag);
       Int32 read_len = stream.read_len - offset;
-      if (len_tag > read_len) stream.skip_read((UInt32)(len_tag - read_len));
+      if (len_tag > read_len) stream.SkipRead(len_tag - read_len);
     }
   }
 
-  public abstract class base_obj
+  public abstract class BaseObj
   {
-    public abstract void read(adata.zero_copy_buffer stream);
-    public abstract Int32 size_of();
-    public abstract void write(adata.zero_copy_buffer stream);
-    public abstract void raw_read(adata.zero_copy_buffer stream);
-    public abstract Int32 raw_size_of();
-    public abstract void raw_write(adata.zero_copy_buffer stream);
+    public abstract void Read(ZeroCopyBuffer stream);
+    public abstract Int32 SizeOf();
+    public abstract void Write(ZeroCopyBuffer stream);
+    public abstract void RawRead(ZeroCopyBuffer stream);
+    public abstract Int32 RawSizeOf();
+    public abstract void RawWrite(ZeroCopyBuffer stream);
+    public abstract void Reset();
 
-    public void skip_read(adata.zero_copy_buffer stream)
+    public void SkipRead(ZeroCopyBuffer stream)
     {
-      adata.stream.skip_read_compatible(stream);
+      Stream.SkipReadCompatible(stream);
     }
-
   }
 }

@@ -1,4 +1,4 @@
-ADATA v1.3
+ADATA v1.4
 =======
 
 ADATA is an efficient cross platform serialization library for C/C++, with support for Lua, C#, JavaScript and Java.
@@ -442,9 +442,9 @@ Assuming you have written a schema using the above language in say player.adl, y
 
 Assuming adatac exe under adata/example/adl, player.adl under adata/example/adl/my/game, quest.adl under adata/example/adl/my/game, vec3.adl under adata/example/adl/util, the adatac command are:
 
-* player.adl.cs: adatac -Imy/game/player.adl -Putil -Pmy/game -Gcsharp
-* quest.adl.cs: adatac -Imy/game/quest.adl -Gcsharp
-* vec3.adl.cs: adatac -Iutil/vec3.adl -Gcsharp
+* player.adl.cs: adatac -Imy/game/player.adl -Putil -Pmy/game -Gcsharp -C
+* quest.adl.cs: adatac -Imy/game/quest.adl -Gcsharp -C
+* vec3.adl.cs: adatac -Iutil/vec3.adl -Gcsharp -C
 
 ### Serialization
 
@@ -453,16 +453,16 @@ First, create adata.zero_copy_buffer:
 ```csharp
 
 var bytes = new bytes[4096];
-var stream = new adata.zero_copy_buffer(bytes);
+var stream = new adata.ZeroCopyBuffer(bytes);
 
 ```
 
-Now create player_v1 object and set its value to serialize:
+Now create PlayerV1 object and set its value to serialize:
 
 ```csharp
 
 // create a my.game.player_v1 object
-var pv1 = new my.game.player_v1();
+var pv1 = new my.game.PlayerV1();
 
 // set its value
 pv1.id = 152001
@@ -476,13 +476,7 @@ Serialize:
 ```csharp
 
 // rule: adata.[adl file name]_stream.stream_write
-my.game.player_stream.write(stream, pv1);
-if (stream.error())
-{
-  // some error, print
-  System.Console.WriteLine(stream.get_error_msg());
-  System.Diagnostics.Debug.Assert(false);
-}
+pv1.Write(stream);
 
 // serialize success
 
@@ -494,17 +488,11 @@ C#'s adata.zero_copy_buffer read and write shared same byte array, so this just 
 
 ```csharp
 
-// create other player_v1 to deserialize
-var pv1_other = new my.game.player_v1();
+// create other PlayerV1 to deserialize
+var pv1_other = new my.game.PlayerV1();
 
 // deserialize
-my.game.player_stream.read(stream, ref pv1_other);
-if (stream.error())
-{
-  // some error, print
-  System.Console.WriteLine(stream.get_error_msg());
-  System.Diagnostics.Debug.Assert(false);
-}
+pv1_other.Read(stream);
 
 // deserialize success
 
@@ -605,6 +593,10 @@ var callback_fn = function (){
 
 
 Change log:
+*v1.4
+1.add buffer type
+2.clear c# code compatible c# name rule
+
 *v1.3.1
 1.add kotlin suport
 

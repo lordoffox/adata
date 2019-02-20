@@ -12,71 +12,71 @@ namespace example
     static void Main(string[] args)
     {
       PlayerComparer plyCmp = new PlayerComparer();
-      var pv1 = new my.game.player_v1();
+      var pv1 = new my.game.PlayerV1();
 
       pv1.id = 1;
       pv1.age = 22;
       pv1.factor = 2.0f;
       pv1.name = "pv1";
 
-      var itm = new my.game.item();
+      var itm = new my.game.Item();
       itm.id = 11;
       itm.level = 321110;
       itm.type = 3;
       pv1.inventory.Add(itm);
-      itm = new my.game.item();
+      itm = new my.game.Item();
       itm.id = 12;
       pv1.inventory.Add(itm);
 
-      var qst = new my.game.quest();
+      var qst = new my.game.Quest();
       qst.id = 50;
       qst.name = "quest1";
       qst.description = "There are something unusual...";
       pv1.quests.Add(qst);
 
       var bytes = new byte[4096];
-      var stream = new adata.zero_copy_buffer(bytes);
+      var stream = new adata.ZeroCopyBuffer(bytes);
       Int32 buf_len = 0;
 
       // serialize
-      buf_len = pv1.size_of();
-      pv1.write(stream);
+      buf_len = pv1.SizeOf();
+      pv1.Write(stream);
 
-      var pv1_other = new my.game.player_v1();
+      var pv1_other = new my.game.PlayerV1();
 
       // deserialize
-      pv1_other.read(stream);
-      stream.clear();
+      pv1_other.Read(stream);
+      stream.Clear();
 
-      var pv2 = new my.game.player_v2();
+      var pv2 = new my.game.PlayerV2();
 
       // forward compat (old data, new struct)
-      pv2.read(stream);
+      pv2.Read(stream);
 
       Debug.Assert(plyCmp.Equals(pv1, pv2));
 
-      stream.clear();
-      pv1 = new my.game.player_v1();
+      stream.Clear();
+      pv1 = new my.game.PlayerV1();
 
       // backward compat (new data, old struct)
       pv2.id = 6543;
       pv2.name = "pv2";
       pv2.friends.Add(2);
       pv2.friends.Add(100);
-      buf_len = pv2.size_of();
+      buf_len = pv2.SizeOf();
 
-      pv2.write(stream);
+      pv2.Write(stream);
 
-      pv1.read(stream);
+      pv1.Read(stream);
 
       Debug.Assert(plyCmp.Equals(pv1, pv2));
 
       Console.WriteLine("done.");
     }
   }
-  class Vec3Comparer : IEqualityComparer<util.vec3>
+  class Vec3Comparer : IEqualityComparer<util.Vec3>
   {
-    public bool Equals(util.vec3 lhs, util.vec3 rhs)
+    public bool Equals(util.Vec3 lhs, util.Vec3 rhs)
     {
       if (Object.ReferenceEquals(lhs, rhs))
       {
@@ -94,7 +94,7 @@ namespace example
         lhs.z == rhs.z
         ;
     }
-    public int GetHashCode(util.vec3 itm)
+    public int GetHashCode(util.Vec3 itm)
     {
       // Check whether the object is null
       if (Object.ReferenceEquals(itm, null)) return 0;
@@ -106,9 +106,9 @@ namespace example
         ;
     }
   }
-  class ItemComparer : IEqualityComparer<my.game.item>
+  class ItemComparer : IEqualityComparer<my.game.Item>
   {
-    public bool Equals(my.game.item lhs, my.game.item rhs)
+    public bool Equals(my.game.Item lhs, my.game.Item rhs)
     {
       if (Object.ReferenceEquals(lhs, rhs))
       {
@@ -126,7 +126,7 @@ namespace example
         lhs.type == rhs.type
         ;
     }
-    public int GetHashCode(my.game.item itm)
+    public int GetHashCode(my.game.Item itm)
     {
       // Check whether the object is null
       if (Object.ReferenceEquals(itm, null)) return 0;
@@ -138,9 +138,9 @@ namespace example
         ;
     }
   }
-  class QuestComparer : IEqualityComparer<my.game.quest>
+  class QuestComparer : IEqualityComparer<my.game.Quest>
   {
-    public bool Equals(my.game.quest lhs, my.game.quest rhs)
+    public bool Equals(my.game.Quest lhs, my.game.Quest rhs)
     {
       if (Object.ReferenceEquals(lhs, rhs))
       {
@@ -158,7 +158,7 @@ namespace example
         lhs.description == rhs.description
         ;
     }
-    public int GetHashCode(my.game.quest qst)
+    public int GetHashCode(my.game.Quest qst)
     {
       // Check whether the object is null
       if (Object.ReferenceEquals(qst, null)) return 0;
@@ -170,12 +170,12 @@ namespace example
         ;
     }
   }
-  class PlayerComparer : IEqualityComparer<my.game.player_v1>
+  class PlayerComparer : IEqualityComparer<my.game.PlayerV1>
   {
     private Vec3Comparer vec3Cmp = new Vec3Comparer();
     private ItemComparer itemCmp = new ItemComparer();
     private QuestComparer questCmp = new QuestComparer();
-    public bool Equals(my.game.player_v1 lhs, my.game.player_v1 rhs)
+    public bool Equals(my.game.PlayerV1 lhs, my.game.PlayerV1 rhs)
     {
       if (Object.ReferenceEquals(lhs, rhs))
       {
@@ -197,7 +197,7 @@ namespace example
         lhs.quests.SequenceEqual(rhs.quests, questCmp)
         ;
     }
-    public bool Equals(my.game.player_v1 lhs, my.game.player_v2 rhs)
+    public bool Equals(my.game.PlayerV1 lhs, my.game.PlayerV2 rhs)
     {
       if (Object.ReferenceEquals(lhs, rhs))
       {
@@ -217,7 +217,7 @@ namespace example
         lhs.quests.SequenceEqual(rhs.quests, questCmp)
         ;
     }
-    public int GetHashCode(my.game.player_v1 pv1)
+    public int GetHashCode(my.game.PlayerV1 pv1)
     {
       // Check whether the object is null
       if (Object.ReferenceEquals(pv1, null)) return 0;
