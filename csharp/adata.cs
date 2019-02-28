@@ -142,7 +142,7 @@ namespace adata
       error_code = EErrorCode.success;
     }
 
-    public EErrorCode ErrorCode { get => error_code; }
+    public EErrorCode ErrorCode { get { return error_code;} }
 
     public void RaiseErrorCode(EErrorCode ec)
     {
@@ -150,7 +150,7 @@ namespace adata
       throw new ADataException(error_code);
     }
 
-    public bool Error { get => error_code != EErrorCode.success; }
+    public bool Error { get { return error_code != EErrorCode.success; }}
 
     public void CheckReadBuffer(Int32 len)
     {
@@ -347,7 +347,7 @@ namespace adata
       SkipBytes(stream, 8);
     }
 
-    public static UInt32 SizeOf(sbyte value)
+    public static Int32 SizeOf(sbyte value)
     {
       if ((value & const_tag_as_type) > 0)
         return 2;
