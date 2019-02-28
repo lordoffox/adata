@@ -716,7 +716,14 @@ public:
       std::string member_name = parser_string();
       if(opt.camel_case)
       {
-        member_name = camel_case_str(member_name, false);
+        if (opt.member_header_upper)
+        {
+          member_name = camel_case_str(member_name, true);
+        }
+        else
+        {
+          member_name = camel_case_str(member_name, false);
+        }
       }
       if (member_name.empty())
       {

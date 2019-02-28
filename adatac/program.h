@@ -23,6 +23,7 @@ struct options
   std::string pack_output_file = "pack";
   std::string adata_header;
   bool camel_case = false;
+  bool member_header_upper = false;
 };
 
 options& get_options();
