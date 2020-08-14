@@ -1160,7 +1160,7 @@ namespace adata
         negative_bit = const_negative_bit_value;
         temp = -value;
       }
-      uint8_t * ptr = (uint8_t *)&value;
+      uint8_t * ptr = (uint8_t *)&temp;
       if (temp < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS4_0];
@@ -1299,7 +1299,7 @@ namespace adata
         negative_bit = const_negative_bit_value;
         temp = -value;
       }
-      uint8_t * ptr = (uint8_t *)&value;
+      uint8_t * ptr = (uint8_t *)&temp;
       if (temp < 0x100)
       {
         bytes[1] = ptr[ADATA_LEPOS8_0];
@@ -2133,7 +2133,7 @@ namespace adata
         negative_bit = const_negative_bit_value;
         temp = -value;
       }
-      uint8_t * ptr = (uint8_t *)&value;
+      uint8_t * ptr = (uint8_t *)&temp;
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
@@ -2211,7 +2211,7 @@ namespace adata
         negative_bit = const_negative_bit_value;
         temp = -value;
       }
-      uint8_t * ptr = (uint8_t *)&value;
+      uint8_t * ptr = (uint8_t *)&temp;
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
@@ -2352,7 +2352,7 @@ namespace adata
         negative_bit = const_negative_bit_value;
         temp = -value;
       }
-      uint8_t * ptr = (uint8_t *)&value;
+      uint8_t * ptr = (uint8_t *)&temp;
       if (temp < 0x100)
       {
         uint8_t * wptr = stream.append_write(2);
