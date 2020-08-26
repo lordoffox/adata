@@ -2509,6 +2509,31 @@ namespace adata
     stream.write(str.data(), len);
   }
 
+  template<typename alloc_type>
+  ADATA_INLINE int32_t size_of(std::basic_string<std::byte, std::char_traits<std::byte>, alloc_type> const& str)
+  {
+    int32_t len = (int32_t)str.length();
+    len += size_of(len);
+    return len;
+  }
+
+  template<typename stream_ty, typename alloc_type>
+  ADATA_INLINE void read(stream_ty& stream, std::basic_string<std::byte, std::char_traits<std::byte>, alloc_type>& str)
+  {
+    int32_t len;
+    read(stream, len);
+    str.resize(len);
+    stream.read((char*)str.data(), len);
+  }
+
+  template<typename stream_ty, typename alloc_type>
+  ADATA_INLINE void write(stream_ty& stream, std::basic_string<std::byte, std::char_traits<std::byte>, alloc_type> const& str)
+  {
+    int32_t len = (int32_t)str.length();
+    write(stream, len);
+    stream.write((char*)str.data(), len);
+  }
+
 #ifndef MAX_ADATA_LEN 
 # define MAX_ADATA_LEN 65535
 #endif
@@ -2604,6 +2629,76 @@ namespace adata
   {
     static const bool value = false;
   };
+
+  template<typename stream_ty, typename T, typename alloc_ty>
+  void to_string(stream_ty& stream, std::vector<T, alloc_ty> const& v)
+  {
+    stream << '[';
+    bool first = true;
+    for (auto const& i : v)
+    {
+      if (first)
+      {
+        first = false;
+      }
+      else
+      {
+        stream << ',';
+      }
+      stream << i;
+    }
+    stream << ']';
+  }
+
+  template<typename stream_ty, typename KT, typename VT, typename PT, typename alloc_ty>
+  void to_string(stream_ty& stream, std::map<KT, VT, PT, alloc_ty> const& v)
+  {
+    stream << '[';
+    bool first = true;
+    for (auto const& i : v)
+    {
+      if (first)
+      {
+        first = false;
+      }
+      else
+      {
+        stream << ',';
+      }
+      stream << i.first << ':' << i.second;
+    }
+    stream << ']';
+  }
+}
+
+template<typename stream_ty, typename alloc_ty>
+stream_ty& operator << (stream_ty& stream, std::basic_string<std::byte, std::char_traits<std::byte>, alloc_ty> const& str)
+{
+  for (size_t i = 0; i < str.length(); ++i)
+  {
+    std::byte c = str[i];
+    char c1 = char(c >> 4);
+    if (c1 < 0xa)
+    {
+      c1 += '0';
+    }
+    else
+    {
+      c1 += ('a' - 10);
+    }
+    stream << c1;
+    c1 = char(c & std::byte(0xf));
+    if (c1 < 0xa)
+    {
+      c1 += '0';
+    }
+    else
+    {
+      c1 += ('a' - 10);
+    }
+    stream << c1;
+  }
+  return stream;
 }
 
 #undef ADATA_LEPOS2_0

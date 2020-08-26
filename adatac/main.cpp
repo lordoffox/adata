@@ -27,7 +27,8 @@ int main(int ac, char* av[])
     ao.add('p', "pack_file", "pack adt files", opt.pack_files);
     ao.add('o', "pack_output_file", "output package path", opt.pack_output_file);
     ao.add('C', "camel_case", "class name and file name use Camel-Case", opt.camel_case);
-    ao.add('U', "camel_case", "Member Field Head Upper", opt.member_header_upper);
+    ao.add('U', "member_header_upper", "Member Field Head Upper", opt.member_header_upper);
+    ao.add('S', "to_string", "gen source to string", opt.to_string);
 
     ao.parse(ac, av);
 

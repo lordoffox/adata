@@ -14,6 +14,7 @@
 #include <vector>
 #include <fstream>
 #include <ctime>
+#include "program.h"
 
 using namespace std;
 
@@ -88,7 +89,7 @@ namespace cpp_gen
       type_name = make_typename(desc_define, define.m_typename);
       if (desc_define.m_option.m_cpp_allocator.length())
       {
-        type_name = "::std::basic_string<<char, char_traits<char>,";
+        type_name = "::std::basic_string<<std::byte, char_traits<std::byte>,";
         type_name += desc_define.m_option.m_cpp_allocator;
         type_name += " > ";
       }
@@ -146,6 +147,64 @@ namespace cpp_gen
     }
     }
     return "";
+  }
+
+  void gen_member_to_string_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name)
+  {
+    if (mdefine.m_type == e_base_type::list || mdefine.m_type == e_base_type::map)
+    {
+      os << tabs(tab_indent) << "adata::to_string(stream ," << var_name << ");" << std::endl;
+    }
+    else
+    {
+      os << tabs(tab_indent);
+      os << "stream << " << var_name << ";";
+      os << std::endl;
+    }
+  }
+
+  inline std::string gen_inline_code(const type_define& def)
+  {
+    if (def.m_cpp_opt.force_inline)
+    {
+      return "ADATA_INLINE ";
+    }
+    return "inline ";
+  }
+
+  void gen_adata_operator_to_string_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
+  {
+    std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
+    os << tabs(2) << "template<typename stream_ty>" << std::endl;
+    os << tabs(2) << gen_inline_code(tdefine) << " friend stream_ty& operator << (stream_ty& stream , " << full_type_name << " const& value)" << std::endl;
+    //os << tabs(2) << gen_inline_code(tdefine) << "stream_ty& operator << (stream_ty& stream)" << std::endl;
+    os << tabs(2) << "{" << std::endl;
+
+    os << tabs(3) << "stream << '{';" << std::endl;
+
+    bool first = true;
+
+    for (const auto& member : tdefine.m_members)
+    {
+      std::string var_name = "value.";
+      var_name += member.m_name;
+      if (!member.m_deleted)
+      {
+        if (first)
+        {
+          first = false;
+        }
+        else
+        {
+          os << tabs(3) << "stream << ',';" << std::endl;
+        }
+        os << tabs(3) << "stream << \"" << member.m_name << ":\";" << std::endl;
+        gen_member_to_string_type_code(desc_define, tdefine, member, os, 3, var_name);
+      }
+    }
+    os << tabs(3) << "stream << '}';" << std::endl;
+    os << tabs(3) << "return stream;" << std::endl;
+    os << tabs(2) << "}" << std::endl << std::endl;
   }
 
   void gen_code_type(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
@@ -221,6 +280,11 @@ namespace cpp_gen
       }
     }
     os << tabs(2) << "{}" << std::endl;
+    options& opt = get_options();
+    if (opt.to_string)
+    {
+      gen_adata_operator_to_string_type_code(desc_define, tdefine, os);
+    }
     os << tabs(1) << "};" << std::endl << std::endl;
   }
 
@@ -336,15 +400,6 @@ namespace cpp_gen
     }
   }
 
-  inline std::string gen_inline_code(const type_define& def)
-  {
-    if(def.m_cpp_opt.force_inline)
-    {
-      return "ADATA_INLINE ";
-    }
-    return "inline ";
-  }
-
   void gen_adata_operator_reset_type_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
   {
     std::string full_type_name = desc_define.m_namespace.m_cpp_fullname + tdefine.m_name;
@@ -353,6 +408,8 @@ namespace cpp_gen
 
     for (const auto& member : tdefine.m_members)
     {
+      if (member.m_deleted)
+        continue;
       std::string var_name = "value.";
       var_name += member.m_name;
       if (member.is_multi())
@@ -462,11 +519,11 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
       ++tab_indent;
-      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
-      os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
+      os << tabs(tab_indent) << "int32_t len" << tab_indent << " = (int32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent) << "size += size_of(len" << tab_indent << ");" << std::endl;
       if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
-        os << tabs(tab_indent) << "size += len;";
+        os << tabs(tab_indent) << "size += len" << tab_indent << ";";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)
@@ -703,11 +760,11 @@ namespace cpp_gen
     {
       os << tabs(tab_indent) << "{" << std::endl;
       ++tab_indent;
-      os << tabs(tab_indent) << "int32_t len = (int32_t)(" << var_name << ").size();" << std::endl;
-      os << tabs(tab_indent) << "size += size_of(len);" << std::endl;
+      os << tabs(tab_indent) << "int32_t len" << tab_indent << " = (int32_t)(" << var_name << ").size();" << std::endl;
+      os << tabs(tab_indent) << "size += size_of(len" << tab_indent << ");" << std::endl;
       if (mdefine.m_type == e_base_type::string || mdefine.m_type == e_base_type::buffer)
       {
-        os << tabs(tab_indent) << "size += len;";
+        os << tabs(tab_indent) << "size += len" << tab_indent << ";";
         os << std::endl;
       }
       else if (mdefine.m_type == e_base_type::list)

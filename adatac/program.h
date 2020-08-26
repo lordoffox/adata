@@ -24,6 +24,7 @@ struct options
   std::string adata_header;
   bool camel_case = false;
   bool member_header_upper = false;
+  bool to_string = true;
 };
 
 options& get_options();
