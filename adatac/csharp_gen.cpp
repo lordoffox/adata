@@ -892,6 +892,10 @@ namespace csharp_gen
         {
           os << tabs(3) << var_name << " = \"\";" << std::endl;
         }
+        else if (member.m_type == e_base_type::buffer)
+        {
+          os << tabs(3) << var_name << " = new byte[0];" << std::endl;
+        }
         else if (member.is_multi())
         {
           os << tabs(3) << var_name << ".Clear();" << std::endl;
@@ -902,6 +906,91 @@ namespace csharp_gen
         }
       }
     }
+  }
+
+  void gen_member_write_stream_type_code(const descrip_define& desc_define, const type_define& tdefine, const member_define& mdefine, std::ofstream& os, int tab_indent, const std::string& var_name, bool trace_error = true)
+  {
+    if (mdefine.m_type == e_base_type::string)
+    {
+      os << tabs(tab_indent) << "builder.Append(" << var_name << ");" << std::endl;
+    }
+    else if (mdefine.m_type == e_base_type::buffer)
+    {
+      os << tabs(tab_indent) << "adata.Stream.WriteStream(builder," << var_name << ");" << std::endl;
+    }
+    else if (mdefine.is_multi())
+    {
+      os << tabs(tab_indent) << "{" << std::endl;
+
+      if (mdefine.m_type == e_base_type::list)
+      {
+        os << tabs(tab_indent + 1) << "int count = 0;" << std::endl;
+        std::string decl_type = make_type_desc(desc_define, mdefine.m_template_parameters[0]);
+        os << tabs(tab_indent + 1) << "builder.Append('[');" << std::endl;
+        os << tabs(tab_indent + 1) << "foreach (" << decl_type << " i in " << var_name << ")" << std::endl;
+        os << tabs(tab_indent + 1) << "{" << std::endl;
+        os << tabs(tab_indent + 1) << "if(count > 0)builder.Append(',');" << std::endl;
+        gen_member_write_stream_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "i", false);
+        os << tabs(tab_indent + 2) << "++count;" << std::endl;
+        os << tabs(tab_indent + 1) << "}" << std::endl;
+        os << tabs(tab_indent + 1) << "builder.Append(']');" << std::endl;
+      }
+      else if (mdefine.m_type == e_base_type::map)
+      {
+        os << tabs(tab_indent + 1) << "int count = 0;" << std::endl;
+        os << tabs(tab_indent + 1) << "builder.Append('{');" << std::endl;
+        os << tabs(tab_indent + 1) << "foreach (var i in " << var_name << ")" << std::endl;
+        os << tabs(tab_indent + 1) << "{" << std::endl;
+        os << tabs(tab_indent + 1) << "if(count > 0)builder.Append(',');" << std::endl;
+        gen_member_write_stream_type_code(desc_define, tdefine, mdefine.m_template_parameters[0], os, tab_indent + 2, "i.Key", false);
+        os << tabs(tab_indent + 1) << "if(count > 0)builder.Append(':');" << std::endl;
+        gen_member_write_stream_type_code(desc_define, tdefine, mdefine.m_template_parameters[1], os, tab_indent + 2, "i.Value", false);
+        os << tabs(tab_indent + 2) << "++count;" << std::endl;
+        os << tabs(tab_indent + 1) << "}" << std::endl;
+        os << tabs(tab_indent + 1) << "builder.Append('}');" << std::endl;
+      }
+      os << tabs(tab_indent) << "}" << std::endl;
+    }
+    else
+    {
+      if (mdefine.m_type != e_base_type::type)
+      {
+        os << tabs(tab_indent) << "builder.Append(" << var_name << ");" << std::endl;
+      }
+      else
+      {
+        os << tabs(tab_indent) << var_name << ".WriteStream(builder);" << std::endl;
+      }
+    }
+  }
+
+  void gen_adata_operator_write_stream_code(const descrip_define& desc_define, const type_define& tdefine, std::ofstream& os)
+  {
+    std::string full_type_name = tdefine.m_name;
+
+    os << tabs(3) << "builder.Append('{');" << std::endl;
+
+    bool first = true;
+    for (const auto& member : tdefine.m_members)
+    {
+      std::string var_name = "";
+      var_name += member.m_name;
+      if (!member.m_deleted)
+      {
+        if (first)
+        {
+          first = false;
+        }
+        else
+        {
+          os << tabs(3) << "builder.Append(',');" << std::endl;
+        }
+        os << tabs(3) << "builder.Append(\""<< var_name << "\");" << std::endl;
+        os << tabs(3) << "builder.Append(':');" << std::endl;
+        gen_member_write_stream_type_code(desc_define, tdefine, member, os, 3, var_name);        
+      }
+    }
+    os << tabs(3) << "builder.Append('}');" << std::endl;
   }
 
   void gen_adata_operator_code(const descrip_define& desc_define, std::ofstream& os)
@@ -938,6 +1027,10 @@ namespace csharp_gen
       gen_adata_operator_reset_type_code(desc_define, tdefine, os);
       os << tabs(2) << "}" << std::endl << std::endl;
 
+      os << tabs(2) << "public override void WriteStream(StringBuilder builder)" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_write_stream_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
       os << tabs(1) << "}" << std::endl << std::endl;
     }
   }
@@ -959,6 +1052,7 @@ namespace csharp_gen
 
   const char * using_define = R"(using System;
 using System.Collections.Generic;
+using System.Text;
 using adata;
 
 )";

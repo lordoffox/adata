@@ -11,7 +11,7 @@
 #include <string>
 #include <iostream>
 
-#include "string_view.h"
+#include <string_view>
 
 #include "program.h"
 #include "parser.h"
@@ -87,7 +87,7 @@ void run_program()
   {
     output_file_name = output_file_name.substr(path_pos + 1);
   }
-  std::string filename = output_file_name.to_string();
+  std::string filename(output_file_name);
 
   std::string outputfile = opt.output_path;
   
