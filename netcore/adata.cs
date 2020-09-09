@@ -210,6 +210,11 @@ namespace adata
         {
             return WriteMemory.Span.Slice(0, WriteLen);
         }
+
+        public Memory<byte> GetMemory()
+        {
+            return WriteMemory.Slice(0, WriteLen);
+        }
     }
 
     public class Stream
@@ -2220,39 +2225,41 @@ namespace adata
 
         public static void Read(ZeroCopyBufferReader stream, ref string value, Int32 len)
         {
+            if (len == 0)
+            {
+                value = string.Empty;
+                return;
+            }
             var buffer = stream.ReadMemory.Span;
             stream.CheckReadBuffer(len);
             var bytes = buffer.Slice(stream.ReadLen, len);
             value = Encoding.UTF8.GetString(bytes);
-            stream.ReadLen += (int)len;
+            stream.ReadLen += len;
         }
 
         public static void Read(ZeroCopyBufferReader stream, ref byte[] value, Int32 len)
         {
-            var buffer = stream.ReadMemory.Span;
             if (len == 0)
+            {
+                value = new byte[0];
                 return;
+            }
+            var buffer = stream.ReadMemory.Span;
             stream.CheckReadBuffer(len);
             value = new byte[len];
             Span<byte> value_bytes = value;
             var bytes = buffer.Slice(stream.ReadLen, len);
             bytes.CopyTo(value_bytes);
-            stream.ReadLen += (int)len;
+            stream.ReadLen += len;
         }
 
         public static void Write(ZeroCopyBufferWriter stream, string value, Int32 len)
         {
-            byte[] buff = Encoding.UTF8.GetBytes(value);
-            if (buff.Length > len)
-            {
-                stream.RaiseErrorCode(EErrorCode.sequence_length_overflow);
-            }
-            stream.CheckWriteBuffer(buff.Length);
+            stream.CheckWriteBuffer(len);
             var buffer = stream.WriteMemory.Span;
-            for (int i = 0; i < len; ++i)
-            {
-                buffer[stream.WriteLen++] = buff[i];
-            }
+            var bytes = buffer.Slice(stream.WriteLen, len);
+            Encoding.UTF8.GetBytes(value, bytes);
+            stream.WriteLen += len;
         }
 
         public static void Write(ZeroCopyBufferWriter stream, byte[] buff, Int32 len)
@@ -2281,27 +2288,18 @@ namespace adata
 
         public static void Write(ZeroCopyBufferWriter stream, string value)
         {
-            byte[] buff = Encoding.UTF8.GetBytes(value);
+            var len = Encoding.UTF8.GetByteCount(value);
             var buffer = stream.WriteMemory.Span;
-            Int32 len = buff.Length;
             Write(stream, len);
-            stream.CheckWriteBuffer(len);
-            for (int i = 0; i < len; ++i)
-            {
-                buffer[stream.WriteLen++] = buff[i];
-            }
+            Write(stream, value, len);
         }
 
         public static void Write(ZeroCopyBufferWriter stream, byte[] buff)
         {
-            var buffer = stream.WriteMemory.Span;
             Int32 len = buff.Length;
             Write(stream, len);
             stream.CheckWriteBuffer(len);
-            for (int i = 0; i < len; ++i)
-            {
-                buffer[stream.WriteLen++] = buff[i];
-            }
+            Write(stream, buff, len);
         }
 
         public static void SkipRead(ZeroCopyBufferReader stream, ref string value)
