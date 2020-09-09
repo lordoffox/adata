@@ -33,7 +33,7 @@ namespace cpp2lua_gen
 
 namespace csharp_gen
 {
-  void gen_code(const descrip_define&, const std::string&);
+  void gen_code(const descrip_define&, const std::string&, bool netcore = false);
 }
 
 namespace kotlin_gen
@@ -132,6 +132,10 @@ void run_program()
     else if (gen_type == "csharp")
     {
       csharp_gen::gen_code(define, outputfile + ".adl.cs");
+    }
+    else if (gen_type == "netcore")
+    {
+      csharp_gen::gen_code(define, outputfile + ".adl.cs", true);
     }
     else if (gen_type == "java")
     {

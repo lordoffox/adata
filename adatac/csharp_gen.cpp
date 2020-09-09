@@ -1035,6 +1035,48 @@ namespace csharp_gen
     }
   }
 
+  void gen_adata_operator_code_netcore(const descrip_define& desc_define, std::ofstream& os)
+  {
+    for (auto& tdefine : desc_define.m_types)
+    {
+      os << tabs(1) << "public partial class " << tdefine.m_name << std::endl << "  {" << std::endl;
+
+      os << tabs(2) << "public override void Read(ZeroCopyBufferReader stream)" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_read_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override Int32 SizeOf()" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_size_of_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override void Write(ZeroCopyBufferWriter stream)" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_write_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override void RawRead(ZeroCopyBufferReader stream)" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_raw_read_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override Int32 RawSizeOf()" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_raw_size_of_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override void RawWrite(ZeroCopyBufferWriter stream)" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_raw_write_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override void Reset()" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_reset_type_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(2) << "public override void WriteStream(StringBuilder builder)" << std::endl << tabs(2) << "{" << std::endl;
+      gen_adata_operator_write_stream_code(desc_define, tdefine, os);
+      os << tabs(2) << "}" << std::endl << std::endl;
+
+      os << tabs(1) << "}" << std::endl << std::endl;
+    }
+  }
+
   void gen_type_code(const descrip_define& desc_define, std::ofstream& os)
   {
     for (const auto& name : desc_define.m_namespace.m_names)
@@ -1057,7 +1099,7 @@ using adata;
 
 )";
 
-  void	gen_code(const descrip_define& define, const std::string& csharp_file)
+  void	gen_code(const descrip_define& define, const std::string& csharp_file, bool netcore = false)
   {
     ofstream os(csharp_file);
 
@@ -1065,7 +1107,14 @@ using adata;
 
     gen_type_code(define, os);
 
-    gen_adata_operator_code(define, os);
+    if (netcore)
+    {
+      gen_adata_operator_code_netcore(define, os);
+    }
+    else
+    {
+      gen_adata_operator_code(define, os);
+    }
 
     for (const auto& name : define.m_namespace.m_names)
     {
