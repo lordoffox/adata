@@ -144,7 +144,7 @@ namespace adata
         }
     }
 
-    public class ZeroCopyBufferWriter
+    public class ZeroCopyBufferWriter : IDisposable
     {
         IMemoryOwner<byte> WriteMemoryOwner;
         public Memory<byte> WriteMemory { get; private set; }
@@ -214,6 +214,11 @@ namespace adata
         public Memory<byte> GetMemory()
         {
             return WriteMemory.Slice(0, WriteLen);
+        }
+
+        public void Dispose()
+        {
+            WriteMemoryOwner.Dispose();
         }
     }
 
