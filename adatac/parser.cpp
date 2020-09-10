@@ -417,6 +417,11 @@ public:
         throw parse_execption("typename syntax error , usage data.xyz;", m_lines, m_cols, m_include);
       }
 
+      if (opt.camel_case)
+      {
+        identity = camel_case_str(identity, true);
+      }
+
       char c = parser_typename_delim();
       if (c == '.')
       {
@@ -426,8 +431,6 @@ public:
       }
       else
       {
-        if (opt.camel_case)
-          identity = camel_case_str(identity, true);
         type_name += identity;
         break;
       }
@@ -559,6 +562,11 @@ public:
       do
       {
         std::string identity = parser_string();
+        const options& opt = get_options();
+        if (opt.camel_case)
+        {
+          identity = camel_case_str(identity, true);
+        }
         if (identity.empty())
         {
           throw parse_execption("namespace syntax error , usage namespace = data.xyz;", m_lines, m_cols, m_include);
