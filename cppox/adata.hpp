@@ -85,14 +85,11 @@ namespace adata
 
   namespace
   {
-    enum
-    {
-      const_tag_as_value = 0x7f,
-      const_tag_as_type,
-      const_interger_byte_msak = 0x1f,
-      const_negative_bit_value = 0x20,
-      const_store_postive_integer_byte_mask = 0x80 - 2,
-    };
+    constexpr inline uint8_t const_tag_as_value = 0x7f;
+    constexpr inline uint8_t const_tag_as_type = 0x80;
+    constexpr inline uint8_t const_interger_byte_msak = 0x1f;
+    constexpr inline uint8_t const_negative_bit_value = 0x20;
+    constexpr inline uint8_t const_store_postive_integer_byte_mask = 0x80 - 2;
   }
 
   enum error_code_t
@@ -923,7 +920,7 @@ namespace adata
     stream.skip_read(sizeof(value_type));
   }
 
-  inline void check_negative_assaigned_to_unsined_interger(long value)
+  inline void check_negative_assaigned_to_unsined_interger(uint8_t value)
   {
     if (value & const_negative_bit_value)
     {
@@ -980,11 +977,11 @@ namespace adata
       if (tag > const_tag_as_value)
       {
         int sign = 1;
-        if ((long)tag & const_negative_bit_value)
+        if (tag & const_negative_bit_value)
         {
           sign = -1;
         }
-        int read_bytes = (int(tag) & const_interger_byte_msak) + 1;
+        int read_bytes = (tag & const_interger_byte_msak) + 1;
         check_value_too_large_to_integer_number(bytes, read_bytes);
         value = stream.get_char();
         if (sign < 0)
@@ -1001,10 +998,10 @@ namespace adata
     {
       value_type read_value[2] = { 0 };
       stream.read((char*)&value, 1);
-      if (value > const_tag_as_value)
+      if ((uint8_t)value > const_tag_as_value)
       {
         int sign = 1;
-        if ((long)value & const_negative_bit_value)
+        if (value & const_negative_bit_value)
         {
           sign = -1;
         }
@@ -1039,16 +1036,16 @@ namespace adata
     uint8_t byte[bytes];
     if constexpr (detail::has_getchar<stream_ty>::value)
     {
-      byte[0] = (value_type)stream.get_char();
+      byte[0] = (uint8_t)stream.get_char();
     }
     else
     {
       stream.read((char*)byte, 1);
     }
     value = byte[0];
-    if (value > const_tag_as_value)
+    if (byte[0] > const_tag_as_value)
     {
-      check_negative_assaigned_to_unsined_interger((long)value);
+      check_negative_assaigned_to_unsined_interger(byte[0]);
       int read_bytes = (value & const_interger_byte_msak) + 1;
       check_value_too_large_to_integer_number(bytes, read_bytes);
       value = 0;
@@ -1079,7 +1076,7 @@ namespace adata
   {
     typedef ty value_type;
     constexpr size_t bytes = sizeof(value_type);
-    uint8_t byte[2];
+    uint8_t byte[bytes];
     if constexpr (detail::has_getchar<stream_ty>::value)
     {
       byte[0] = (value_type)stream.get_char();
@@ -1089,10 +1086,10 @@ namespace adata
       stream.read((char*)byte, 1);
     }
     value = byte[0];
-    if (value > const_tag_as_value)
+    if (byte[0] > const_tag_as_value)
     {
       int sign = 1;
-      if ((long)value & const_negative_bit_value)
+      if (byte[0] & const_negative_bit_value)
       {
         sign = -1;
       }
