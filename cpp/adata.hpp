@@ -234,7 +234,7 @@ namespace adata
   {
     if (0 <= value && value < const_tag_as_type) return 1;
     uint64_t temp = value;
-    if (value < 0) value = -value;
+    if (value < 0) temp = -value;
     if (temp < 0x100) return 2;
     else if (temp < 0x10000) return 3;
     else if (temp < 0x1000000) return 4;
