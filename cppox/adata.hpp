@@ -90,6 +90,7 @@ namespace adata
     constexpr inline uint8_t const_interger_byte_msak = 0x1f;
     constexpr inline uint8_t const_negative_bit_value = 0x20;
     constexpr inline uint8_t const_store_postive_integer_byte_mask = 0x80 - 2;
+    constexpr inline size_t max_adata_len = 65535;
   }
 
   enum error_code_t
@@ -808,7 +809,7 @@ namespace adata
     }
     else
     {
-      const int bytes = sizeof(value_type);
+      constexpr size_t bytes = sizeof(value_type);
       stream.read((char*)&value, 1);
       if (value > const_tag_as_value)
       {
@@ -834,7 +835,7 @@ namespace adata
     }
     else
     {
-      const int bytes = sizeof(value_type);
+      constexpr size_t bytes = sizeof(value_type);
       stream.read((char*)&value, 1);
       if (value > const_tag_as_value)
       {
@@ -860,7 +861,7 @@ namespace adata
     }
     else
     {
-      const int bytes = sizeof(value_type);
+      constexpr size_t bytes = sizeof(value_type);
       stream.read((char*)&value, 1);
       if (value > const_tag_as_value)
       {
@@ -970,7 +971,7 @@ namespace adata
   inline void read(stream_ty& stream, int8_t& value)
   {
     typedef int8_t value_type;
-    const int bytes = sizeof(value_type);
+    constexpr size_t bytes = sizeof(value_type);
     if constexpr (detail::has_getchar<stream_ty>::value)
     {
       uint8_t tag = stream.get_char();
@@ -1854,12 +1855,8 @@ namespace adata
     stream.write(str.data(), len);
   }
 
-#ifndef MAX_ADATA_LEN 
-# define MAX_ADATA_LEN 65535
-#endif
-
   template<typename stream_ty>
-  inline int32_t check_read_size(stream_ty& stream, int size = 0)
+  inline int32_t check_read_size(stream_ty& stream, size_t size = 0)
   {
     int32_t len;
     read(stream, len);
@@ -1867,7 +1864,7 @@ namespace adata
     {
       throw exception(number_of_element_not_match);
     }
-    else if (len > MAX_ADATA_LEN)
+    else if (len > max_adata_len)
     {
       throw exception(number_of_element_not_match);
     }
@@ -1946,7 +1943,7 @@ namespace adata
   template<typename T>
   struct is_adata
   {
-    static const bool value = false;
+    constexpr static inline bool value = false;
   };
 }
 
